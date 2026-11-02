@@ -1,0 +1,606 @@
+[bench-daemon] start; watching ~/workspace/rebot_isaac_rl/sim2real_so101/delivery/rl_output/det_TP304_refac_smoke9t; bench node <<workstation>-node>; every 45s
+[bench-daemon] stopped stale bench_graphic_auto_e128k_1785666346
+[bench-daemon] new approach ckpt @ 128k (mtime 1785666325) -> bench
+2026-08-02 19:27:32,276	WARNING working_dir.py:86 -- Directory '__pycache__' is now ignored by default when packaging the working directory. To disable this behavior, set the `RAY_OVERRIDE_RUNTIME_ENV_DEFAULT_EXCLUDES=''` environment variable.
+2026-08-02 19:27:32,328	INFO dashboard_sdk.py:416 -- Package gcs://_ray_pkg_<id>.zip already exists, skipping upload.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e128k.png | RSR 0.0% | RSR_DCUBE 92.8% | SEARCH 96.9% | 90/90
+[bench-daemon] bench e128k: RSR 0.0% | RSR_DCUBE 92.8% | SEARCH 96.9% | 90/90
+[bench-daemon] new approach ckpt @ 153k (mtime 1785666723) -> bench
+2026-08-02 19:32:46,624	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 19:32:46,624	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e153k.png | RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 95.6% | 90/90
+[bench-daemon] bench e153k: RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 95.6% | 90/90
+[bench-daemon] new approach ckpt @ 204k (mtime 1785667664) -> bench
+2026-08-02 19:47:58,142	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 19:47:58,142	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e204k.png | RSR 0.0% | RSR_DCUBE 91.4% | SEARCH 94.7% | 90/90
+[bench-daemon] bench e204k: RSR 0.0% | RSR_DCUBE 91.4% | SEARCH 94.7% | 90/90
+[bench-daemon] new approach ckpt @ 230k (mtime 1785668062) -> bench
+2026-08-02 19:54:54,926	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 19:54:54,926	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e230k.png | RSR 0.0% | RSR_DCUBE 95.1% | SEARCH 98.7% | 90/90
+[bench-daemon] bench e230k: RSR 0.0% | RSR_DCUBE 95.1% | SEARCH 98.7% | 90/90
+[bench-daemon] new approach ckpt @ 256k (mtime 1785668459) -> bench
+2026-08-02 20:01:52,174	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:01:52,174	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e256k.png | RSR 0.0% | RSR_DCUBE 91.7% | SEARCH 98.4% | 90/90
+[bench-daemon] bench e256k: RSR 0.0% | RSR_DCUBE 91.7% | SEARCH 98.4% | 90/90
+[bench-daemon] new approach ckpt @ 281k (mtime 1785668857) -> bench
+2026-08-02 20:07:54,570	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:07:54,571	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e281k.png | RSR 0.0% | RSR_DCUBE 93.5% | SEARCH 98.1% | 90/90
+[bench-daemon] bench e281k: RSR 0.0% | RSR_DCUBE 93.5% | SEARCH 98.1% | 90/90
+[bench-daemon] new approach ckpt @ 307k (mtime 1785669403) -> bench
+2026-08-02 20:17:06,541	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:17:06,541	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e307k.png | RSR 0.0% | RSR_DCUBE 93.9% | SEARCH 96.7% | 89/90 (partial)
+[bench-daemon] bench e307k: RSR 0.0% | RSR_DCUBE 93.9% | SEARCH 96.7% | 89/90 (partial)
+[bench-daemon] new approach ckpt @ 332k (mtime 1785669801) -> bench
+2026-08-02 20:23:34,383	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:23:34,383	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e332k.png | RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 96.2% | 90/90
+[bench-daemon] bench e332k: RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 96.2% | 90/90
+[bench-daemon] new approach ckpt @ 384k (mtime 1785670592) -> bench
+2026-08-02 20:37:06,481	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:37:06,481	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e384k.png | RSR 0.0% | RSR_DCUBE 88.4% | SEARCH 95.0% | 90/90
+[bench-daemon] bench e384k: RSR 0.0% | RSR_DCUBE 88.4% | SEARCH 95.0% | 90/90
+[bench-daemon] new approach ckpt @ 409k (mtime 1785671251) -> bench
+2026-08-02 20:47:48,859	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:47:48,859	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e409k.png | RSR 0.0% | RSR_DCUBE 94.4% | SEARCH 98.6% | 90/90
+[bench-daemon] bench e409k: RSR 0.0% | RSR_DCUBE 94.4% | SEARCH 98.6% | 90/90
+[bench-daemon] new approach ckpt @ 435k (mtime 1785671647) -> bench
+2026-08-02 20:54:35,982	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 20:54:35,983	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e435k.png | RSR 0.0% | RSR_DCUBE 95.2% | SEARCH 98.4% | 90/90
+[bench-daemon] bench e435k: RSR 0.0% | RSR_DCUBE 95.2% | SEARCH 98.4% | 90/90
+[bench-daemon] new approach ckpt @ 460k (mtime 1785672044) -> bench
+2026-08-02 21:01:23,339	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:01:23,340	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[ntfy] heat render err timed out
+[bench-daemon] (no heatmap rendered) bench e460k | RSR 0.0% | RSR_DCUBE 94.7% | SEARCH 97.8% | 90/90
+[bench-daemon] bench e460k: RSR 0.0% | RSR_DCUBE 94.7% | SEARCH 97.8% | 90/90
+[bench-daemon] new approach ckpt @ 486k (mtime 1785672440) -> bench
+2026-08-02 21:07:36,985	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:07:36,986	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e486k.png | RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 95.6% | 90/90
+[bench-daemon] bench e486k: RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 95.6% | 90/90
+[bench-daemon] new approach ckpt @ 512k (mtime 1785672986) -> bench
+2026-08-02 21:16:48,873	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:16:48,873	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e512k.png | RSR 0.0% | RSR_DCUBE 86.5% | SEARCH 94.2% | 90/90
+[bench-daemon] bench e512k: RSR 0.0% | RSR_DCUBE 86.5% | SEARCH 94.2% | 90/90
+[bench-daemon] new approach ckpt @ 563k (mtime 1785673778) -> bench
+2026-08-02 21:30:20,569	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:30:20,570	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e563k.png | RSR 0.0% | RSR_DCUBE 92.2% | SEARCH 96.3% | 90/90
+[bench-daemon] bench e563k: RSR 0.0% | RSR_DCUBE 92.2% | SEARCH 96.3% | 90/90
+[bench-daemon] new approach ckpt @ 588k (mtime 1785674174) -> bench
+2026-08-02 21:36:53,220	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:36:53,220	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e588k.png | RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 95.9% | 90/90
+[bench-daemon] bench e588k: RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 95.9% | 90/90
+[bench-daemon] new approach ckpt @ 614k (mtime 1785674722) -> bench
+2026-08-02 21:45:45,640	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:45:45,640	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e614k.png | RSR 0.0% | RSR_DCUBE 88.6% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e614k: RSR 0.0% | RSR_DCUBE 88.6% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 640k (mtime 1785675118) -> bench
+2026-08-02 21:52:22,138	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:52:22,138	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e640k.png | RSR 0.0% | RSR_DCUBE 86.1% | SEARCH 94.5% | 90/90
+[bench-daemon] bench e640k: RSR 0.0% | RSR_DCUBE 86.1% | SEARCH 94.5% | 90/90
+[bench-daemon] new approach ckpt @ 665k (mtime 1785675516) -> bench
+2026-08-02 21:59:09,447	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 21:59:09,447	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e665k.png | RSR 0.0% | RSR_DCUBE 88.7% | SEARCH 94.4% | 90/90
+[bench-daemon] bench e665k: RSR 0.0% | RSR_DCUBE 88.7% | SEARCH 94.4% | 90/90
+[bench-daemon] new approach ckpt @ 691k (mtime 1785675915) -> bench
+2026-08-02 22:05:56,054	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:05:56,054	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e691k.png | RSR 0.0% | RSR_DCUBE 90.0% | SEARCH 95.6% | 90/90
+[bench-daemon] bench e691k: RSR 0.0% | RSR_DCUBE 90.0% | SEARCH 95.6% | 90/90
+[bench-daemon] new approach ckpt @ 742k (mtime 1785676856) -> bench
+2026-08-02 22:21:43,081	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:21:43,082	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e742k.png | RSR 0.0% | RSR_DCUBE 86.8% | SEARCH 94.6% | 90/90
+[bench-daemon] bench e742k: RSR 0.0% | RSR_DCUBE 86.8% | SEARCH 94.6% | 90/90
+[bench-daemon] new approach ckpt @ 768k (mtime 1785677252) -> bench
+2026-08-02 22:27:45,218	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:27:45,218	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e768k.png | RSR 0.0% | RSR_DCUBE 86.4% | SEARCH 94.1% | 90/90
+[bench-daemon] bench e768k: RSR 0.0% | RSR_DCUBE 86.4% | SEARCH 94.1% | 90/90
+[bench-daemon] new approach ckpt @ 793k (mtime 1785677648) -> bench
+2026-08-02 22:34:32,171	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:34:32,171	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e793k.png | RSR 0.0% | RSR_DCUBE 87.6% | SEARCH 94.7% | 90/90
+[bench-daemon] bench e793k: RSR 0.0% | RSR_DCUBE 87.6% | SEARCH 94.7% | 90/90
+[bench-daemon] new approach ckpt @ 819k (mtime 1785678296) -> bench
+2026-08-02 22:45:08,573	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:45:08,574	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e819k.png | RSR 0.0% | RSR_DCUBE 85.7% | SEARCH 95.0% | 90/90
+[bench-daemon] bench e819k: RSR 0.0% | RSR_DCUBE 85.7% | SEARCH 95.0% | 90/90
+[bench-daemon] new approach ckpt @ 844k (mtime 1785678692) -> bench
+2026-08-02 22:51:55,225	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:51:55,225	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e844k.png | RSR 0.0% | RSR_DCUBE 87.9% | SEARCH 95.4% | 90/90
+[bench-daemon] bench e844k: RSR 0.0% | RSR_DCUBE 87.9% | SEARCH 95.4% | 90/90
+[bench-daemon] new approach ckpt @ 870k (mtime 1785679087) -> bench
+2026-08-02 22:58:42,267	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 22:58:42,267	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e870k.png | RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 98.2% | 90/90
+[bench-daemon] bench e870k: RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 98.2% | 90/90
+[bench-daemon] new approach ckpt @ 921k (mtime 1785680031) -> bench
+2026-08-02 23:14:28,964	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:14:28,964	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e921k.png | RSR 0.0% | RSR_DCUBE 87.3% | SEARCH 95.2% | 90/90
+[bench-daemon] bench e921k: RSR 0.0% | RSR_DCUBE 87.3% | SEARCH 95.2% | 90/90
+[bench-daemon] new approach ckpt @ 947k (mtime 1785680429) -> bench
+2026-08-02 23:21:15,372	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:21:15,372	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e947k.png | RSR 0.0% | RSR_DCUBE 92.1% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e947k: RSR 0.0% | RSR_DCUBE 92.1% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 972k (mtime 1785680827) -> bench
+2026-08-02 23:27:52,473	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:27:52,473	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e972k.png | RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e972k: RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 998k (mtime 1785681224) -> bench
+2026-08-02 23:33:54,195	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:33:54,195	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e998k.png | RSR 0.0% | RSR_DCUBE 91.7% | SEARCH 97.8% | 90/90
+[bench-daemon] bench e998k: RSR 0.0% | RSR_DCUBE 91.7% | SEARCH 97.8% | 90/90
+[bench-daemon] new approach ckpt @ 1024k (mtime 1785681776) -> bench
+2026-08-02 23:43:41,193	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:43:41,193	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1024k.png | RSR 0.0% | RSR_DCUBE 90.0% | SEARCH 99.4% | 90/90
+[bench-daemon] bench e1024k: RSR 0.0% | RSR_DCUBE 90.0% | SEARCH 99.4% | 90/90
+[bench-daemon] new approach ckpt @ 1075k (mtime 1785682570) -> bench
+2026-08-02 23:56:27,595	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-02 23:56:27,596	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1075k.png | RSR 0.0% | RSR_DCUBE 88.8% | SEARCH 95.9% | 90/90
+[bench-daemon] bench e1075k: RSR 0.0% | RSR_DCUBE 88.8% | SEARCH 95.9% | 90/90
+[bench-daemon] new approach ckpt @ 1100k (mtime 1785682966) -> bench
+2026-08-03 00:03:14,532	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:03:14,532	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1100k.png | RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 95.7% | 90/90
+[bench-daemon] bench e1100k: RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 95.7% | 90/90
+[bench-daemon] new approach ckpt @ 1126k (mtime 1785683513) -> bench
+2026-08-03 00:12:19,152	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:12:19,152	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1126k.png | RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 98.2% | 90/90
+[bench-daemon] bench e1126k: RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 98.2% | 90/90
+[bench-daemon] new approach ckpt @ 1152k (mtime 1785683913) -> bench
+2026-08-03 00:19:06,413	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:19:06,413	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1152k.png | RSR 0.0% | RSR_DCUBE 90.8% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e1152k: RSR 0.0% | RSR_DCUBE 90.8% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 1177k (mtime 1785684311) -> bench
+2026-08-03 00:25:52,811	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:25:52,812	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1177k.png | RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e1177k: RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 1203k (mtime 1785684968) -> bench
+2026-08-03 00:36:24,557	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:36:24,557	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1203k.png | RSR 0.0% | RSR_DCUBE 88.8% | SEARCH 95.3% | 90/90
+[bench-daemon] bench e1203k: RSR 0.0% | RSR_DCUBE 88.8% | SEARCH 95.3% | 90/90
+[bench-daemon] new approach ckpt @ 1254k (mtime 1785685763) -> bench
+2026-08-03 00:49:56,065	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:49:56,065	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1254k.png | RSR 0.0% | RSR_DCUBE 91.8% | SEARCH 98.9% | 90/90
+[bench-daemon] bench e1254k: RSR 0.0% | RSR_DCUBE 91.8% | SEARCH 98.9% | 90/90
+[bench-daemon] new approach ckpt @ 1280k (mtime 1785686160) -> bench
+2026-08-03 00:56:42,807	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 00:56:42,807	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1280k.png | RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 97.9% | 90/90
+[bench-daemon] bench e1280k: RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 97.9% | 90/90
+[bench-daemon] new approach ckpt @ 1305k (mtime 1785686710) -> bench
+2026-08-03 01:05:44,471	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:05:44,471	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1305k.png | RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 95.8% | 90/90
+[bench-daemon] bench e1305k: RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 95.8% | 90/90
+[bench-daemon] new approach ckpt @ 1331k (mtime 1785687108) -> bench
+2026-08-03 01:12:31,179	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:12:31,179	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1331k.png | RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 96.5% | 90/90
+[bench-daemon] bench e1331k: RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 96.5% | 90/90
+[bench-daemon] new approach ckpt @ 1356k (mtime 1785687506) -> bench
+2026-08-03 01:18:33,831	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:18:33,832	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1356k.png | RSR 0.0% | RSR_DCUBE 91.4% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e1356k: RSR 0.0% | RSR_DCUBE 91.4% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 1382k (mtime 1785687905) -> bench
+2026-08-03 01:25:20,313	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:25:20,313	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1382k.png | RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e1382k: RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 1433k (mtime 1785688857) -> bench
+2026-08-03 01:41:07,243	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:41:07,243	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1433k.png | RSR 0.0% | RSR_DCUBE 87.5% | SEARCH 95.8% | 90/90
+[bench-daemon] bench e1433k: RSR 0.0% | RSR_DCUBE 87.5% | SEARCH 95.8% | 90/90
+[bench-daemon] new approach ckpt @ 1459k (mtime 1785689255) -> bench
+2026-08-03 01:47:54,509	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:47:54,509	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1459k.png | RSR 0.0% | RSR_DCUBE 88.5% | SEARCH 95.2% | 90/90
+[bench-daemon] bench e1459k: RSR 0.0% | RSR_DCUBE 88.5% | SEARCH 95.2% | 90/90
+[bench-daemon] new approach ckpt @ 1484k (mtime 1785689654) -> bench
+2026-08-03 01:54:51,172	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 01:54:51,172	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1484k.png | RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 95.8% | 90/90
+[bench-daemon] bench e1484k: RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 95.8% | 90/90
+[bench-daemon] new approach ckpt @ 1510k (mtime 1785690204) -> bench
+2026-08-03 02:03:52,528	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:03:52,528	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1510k.png | RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e1510k: RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 1536k (mtime 1785690601) -> bench
+2026-08-03 02:10:39,123	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:10:39,123	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1536k.png | RSR 0.0% | RSR_DCUBE 90.4% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e1536k: RSR 0.0% | RSR_DCUBE 90.4% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 1561k (mtime 1785690999) -> bench
+2026-08-03 02:16:50,901	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:16:50,901	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1561k.png | RSR 0.0% | RSR_DCUBE 86.5% | SEARCH 95.9% | 90/90
+[bench-daemon] bench e1561k: RSR 0.0% | RSR_DCUBE 86.5% | SEARCH 95.9% | 90/90
+[bench-daemon] new approach ckpt @ 1612k (mtime 1785692071) -> bench
+2026-08-03 02:34:53,640	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:34:53,640	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1612k.png | RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e1612k: RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 1638k (mtime 1785692470) -> bench
+2026-08-03 02:41:50,257	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:41:50,257	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1638k.png | RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 98.8% | 90/90
+[bench-daemon] bench e1638k: RSR 0.0% | RSR_DCUBE 89.1% | SEARCH 98.8% | 90/90
+[bench-daemon] new approach ckpt @ 1664k (mtime 1785692868) -> bench
+2026-08-03 02:48:02,034	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:48:02,034	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1664k.png | RSR 0.0% | RSR_DCUBE 93.7% | SEARCH 99.0% | 90/90
+[bench-daemon] bench e1664k: RSR 0.0% | RSR_DCUBE 93.7% | SEARCH 99.0% | 90/90
+[bench-daemon] new approach ckpt @ 1689k (mtime 1785693267) -> bench
+2026-08-03 02:54:48,536	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 02:54:48,536	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1689k.png | RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 96.0% | 90/90
+[bench-daemon] bench e1689k: RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 96.0% | 90/90
+[bench-daemon] new approach ckpt @ 1715k (mtime 1785693817) -> bench
+2026-08-03 03:03:50,302	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:03:50,302	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1715k.png | RSR 0.0% | RSR_DCUBE 86.1% | SEARCH 95.6% | 90/90
+[bench-daemon] bench e1715k: RSR 0.0% | RSR_DCUBE 86.1% | SEARCH 95.6% | 90/90
+[bench-daemon] new approach ckpt @ 1740k (mtime 1785694216) -> bench
+2026-08-03 03:10:37,275	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:10:37,275	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1740k.png | RSR 0.0% | RSR_DCUBE 91.1% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e1740k: RSR 0.0% | RSR_DCUBE 91.1% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 1792k (mtime 1785695013) -> bench
+2026-08-03 03:24:09,413	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:24:09,413	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1792k.png | RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.3% | 90/90
+[bench-daemon] bench e1792k: RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.3% | 90/90
+[bench-daemon] new approach ckpt @ 1817k (mtime 1785695565) -> bench
+2026-08-03 03:33:10,893	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:33:10,894	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1817k.png | RSR 0.0% | RSR_DCUBE 88.3% | SEARCH 95.7% | 90/90
+[bench-daemon] bench e1817k: RSR 0.0% | RSR_DCUBE 88.3% | SEARCH 95.7% | 90/90
+[bench-daemon] new approach ckpt @ 1843k (mtime 1785695964) -> bench
+2026-08-03 03:39:47,010	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:39:47,010	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1843k.png | RSR 0.0% | RSR_DCUBE 88.9% | SEARCH 97.5% | 90/90
+[bench-daemon] bench e1843k: RSR 0.0% | RSR_DCUBE 88.9% | SEARCH 97.5% | 90/90
+[bench-daemon] new approach ckpt @ 1868k (mtime 1785696364) -> bench
+2026-08-03 03:46:33,978	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:46:33,979	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1868k.png | RSR 0.0% | RSR_DCUBE 92.0% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e1868k: RSR 0.0% | RSR_DCUBE 92.0% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 1894k (mtime 1785696765) -> bench
+2026-08-03 03:53:20,928	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 03:53:20,929	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1894k.png | RSR 0.0% | RSR_DCUBE 88.3% | SEARCH 95.3% | 90/90
+[bench-daemon] bench e1894k: RSR 0.0% | RSR_DCUBE 88.3% | SEARCH 95.3% | 90/90
+[bench-daemon] new approach ckpt @ 1920k (mtime 1785697319) -> bench
+2026-08-03 04:02:22,276	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:02:22,277	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1920k.png | RSR 0.0% | RSR_DCUBE 85.2% | SEARCH 93.8% | 90/90
+[bench-daemon] bench e1920k: RSR 0.0% | RSR_DCUBE 85.2% | SEARCH 93.8% | 90/90
+[bench-daemon] new approach ckpt @ 1971k (mtime 1785698118) -> bench
+2026-08-03 04:15:54,198	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:15:54,198	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1971k.png | RSR 0.0% | RSR_DCUBE 87.0% | SEARCH 95.3% | 90/90
+[bench-daemon] bench e1971k: RSR 0.0% | RSR_DCUBE 87.0% | SEARCH 95.3% | 90/90
+[bench-daemon] new approach ckpt @ 1996k (mtime 1785698518) -> bench
+2026-08-03 04:22:50,752	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:22:50,752	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e1996k.png | RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 96.5% | 90/90
+[bench-daemon] bench e1996k: RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 96.5% | 90/90
+[bench-daemon] new approach ckpt @ 2022k (mtime 1785699177) -> bench
+2026-08-03 04:33:22,131	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:33:22,131	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2022k.png | RSR 0.0% | RSR_DCUBE 87.1% | SEARCH 95.1% | 90/90
+[bench-daemon] bench e2022k: RSR 0.0% | RSR_DCUBE 87.1% | SEARCH 95.1% | 90/90
+[bench-daemon] new approach ckpt @ 2048k (mtime 1785699575) -> bench
+2026-08-03 04:40:09,351	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:40:09,352	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2048k.png | RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 93.7% | 90/90
+[bench-daemon] bench e2048k: RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 93.7% | 90/90
+[bench-daemon] new approach ckpt @ 2073k (mtime 1785699972) -> bench
+2026-08-03 04:46:41,240	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 04:46:41,241	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2073k.png | RSR 0.0% | RSR_DCUBE 89.3% | SEARCH 95.5% | 90/90
+[bench-daemon] bench e2073k: RSR 0.0% | RSR_DCUBE 89.3% | SEARCH 95.5% | 90/90
+[bench-daemon] new approach ckpt @ 2124k (mtime 1785700923) -> bench
+2026-08-03 05:02:37,583	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:02:37,583	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2124k.png | RSR 0.0% | RSR_DCUBE 86.4% | SEARCH 95.1% | 90/90
+[bench-daemon] bench e2124k: RSR 0.0% | RSR_DCUBE 86.4% | SEARCH 95.1% | 90/90
+[bench-daemon] new approach ckpt @ 2150k (mtime 1785701323) -> bench
+2026-08-03 05:09:24,426	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:09:24,426	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2150k.png | RSR 0.0% | RSR_DCUBE 90.4% | SEARCH 96.6% | 90/90
+[bench-daemon] bench e2150k: RSR 0.0% | RSR_DCUBE 90.4% | SEARCH 96.6% | 90/90
+[bench-daemon] new approach ckpt @ 2176k (mtime 1785701722) -> bench
+2026-08-03 05:15:35,958	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:15:35,958	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2176k.png | RSR 0.0% | RSR_DCUBE 92.8% | SEARCH 97.8% | 90/90
+[bench-daemon] bench e2176k: RSR 0.0% | RSR_DCUBE 92.8% | SEARCH 97.8% | 90/90
+[bench-daemon] new approach ckpt @ 2201k (mtime 1785702121) -> bench
+2026-08-03 05:22:33,093	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:22:33,094	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2201k.png | RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 96.5% | 90/90
+[bench-daemon] bench e2201k: RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 96.5% | 90/90
+[bench-daemon] new approach ckpt @ 2227k (mtime 1785702679) -> bench
+2026-08-03 05:31:44,773	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:31:44,773	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2227k.png | RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 96.4% | 90/90
+[bench-daemon] bench e2227k: RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 96.4% | 90/90
+[bench-daemon] new approach ckpt @ 2252k (mtime 1785703079) -> bench
+2026-08-03 05:38:31,222	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:38:31,222	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2252k.png | RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e2252k: RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 2304k (mtime 1785704031) -> bench
+2026-08-03 05:54:17,930	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 05:54:17,930	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2304k.png | RSR 0.0% | RSR_DCUBE 84.8% | SEARCH 93.9% | 90/90
+[bench-daemon] bench e2304k: RSR 0.0% | RSR_DCUBE 84.8% | SEARCH 93.9% | 90/90
+[bench-daemon] new approach ckpt @ 2329k (mtime 1785704431) -> bench
+2026-08-03 06:01:04,375	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:01:04,375	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[ntfy] heat render err timed out
+[bench-daemon] (no heatmap rendered) bench e2329k | RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 96.0% | 90/90
+[bench-daemon] bench e2329k: RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 96.0% | 90/90
+[bench-daemon] new approach ckpt @ 2355k (mtime 1785704832) -> bench
+2026-08-03 06:07:28,858	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:07:28,859	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2355k.png | RSR 0.0% | RSR_DCUBE 87.7% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e2355k: RSR 0.0% | RSR_DCUBE 87.7% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 2380k (mtime 1785705233) -> bench
+2026-08-03 06:14:25,562	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:14:25,562	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2380k.png | RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 97.8% | 90/90
+[bench-daemon] bench e2380k: RSR 0.0% | RSR_DCUBE 90.2% | SEARCH 97.8% | 90/90
+[bench-daemon] new approach ckpt @ 2406k (mtime 1785705892) -> bench
+2026-08-03 06:25:42,748	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:25:42,749	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2406k.png | RSR 0.0% | RSR_DCUBE 84.0% | SEARCH 94.5% | 90/90
+[bench-daemon] bench e2406k: RSR 0.0% | RSR_DCUBE 84.0% | SEARCH 94.5% | 90/90
+[bench-daemon] new approach ckpt @ 2432k (mtime 1785706291) -> bench
+2026-08-03 06:31:44,550	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:31:44,550	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2432k.png | RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 98.4% | 90/90
+[bench-daemon] bench e2432k: RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 98.4% | 90/90
+[bench-daemon] new approach ckpt @ 2483k (mtime 1785707089) -> bench
+2026-08-03 06:45:16,375	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:45:16,375	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2483k.png | RSR 0.0% | RSR_DCUBE 88.9% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e2483k: RSR 0.0% | RSR_DCUBE 88.9% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 2508k (mtime 1785707638) -> bench
+2026-08-03 06:54:20,964	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 06:54:20,964	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2508k.png | RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 98.8% | 90/90
+[bench-daemon] bench e2508k: RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 98.8% | 90/90
+[bench-daemon] new approach ckpt @ 2534k (mtime 1785708036) -> bench
+2026-08-03 07:01:08,390	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:01:08,390	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2534k.png | RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e2534k: RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 2560k (mtime 1785708435) -> bench
+2026-08-03 07:07:55,065	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:07:55,065	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2560k.png | RSR 0.0% | RSR_DCUBE 91.6% | SEARCH 98.3% | 90/90
+[bench-daemon] bench e2560k: RSR 0.0% | RSR_DCUBE 91.6% | SEARCH 98.3% | 90/90
+[bench-daemon] new approach ckpt @ 2585k (mtime 1785708834) -> bench
+2026-08-03 07:14:41,976	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:14:41,976	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2585k.png | RSR 0.0% | RSR_DCUBE 92.3% | SEARCH 97.8% | 90/90
+[bench-daemon] bench e2585k: RSR 0.0% | RSR_DCUBE 92.3% | SEARCH 97.8% | 90/90
+[bench-daemon] new approach ckpt @ 2611k (mtime 1785709388) -> bench
+2026-08-03 07:23:44,009	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:23:44,009	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2611k.png | RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e2611k: RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 2662k (mtime 1785710185) -> bench
+2026-08-03 07:37:15,693	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:37:15,694	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2662k.png | RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 96.9% | 90/90
+[bench-daemon] bench e2662k: RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 96.9% | 90/90
+[bench-daemon] new approach ckpt @ 2688k (mtime 1785710584) -> bench
+2026-08-03 07:43:17,610	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:43:17,610	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2688k.png | RSR 0.0% | RSR_DCUBE 87.3% | SEARCH 93.9% | 90/90
+[bench-daemon] bench e2688k: RSR 0.0% | RSR_DCUBE 87.3% | SEARCH 93.9% | 90/90
+[bench-daemon] new approach ckpt @ 2713k (mtime 1785711136) -> bench
+2026-08-03 07:52:29,749	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:52:29,749	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2713k.png | RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 95.5% | 90/90
+[bench-daemon] bench e2713k: RSR 0.0% | RSR_DCUBE 88.2% | SEARCH 95.5% | 90/90
+[bench-daemon] new approach ckpt @ 2739k (mtime 1785711535) -> bench
+2026-08-03 07:59:06,436	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 07:59:06,436	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2739k.png | RSR 0.0% | RSR_DCUBE 84.8% | SEARCH 92.1% | 90/90
+[bench-daemon] bench e2739k: RSR 0.0% | RSR_DCUBE 84.8% | SEARCH 92.1% | 90/90
+[bench-daemon] new approach ckpt @ 2764k (mtime 1785711933) -> bench
+2026-08-03 08:06:03,097	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:06:03,098	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2764k.png | RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 96.5% | 90/90
+[bench-daemon] bench e2764k: RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 96.5% | 90/90
+[bench-daemon] new approach ckpt @ 2790k (mtime 1785712332) -> bench
+2026-08-03 08:12:50,141	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:12:50,142	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2790k.png | RSR 0.0% | RSR_DCUBE 91.8% | SEARCH 97.3% | 90/90
+[bench-daemon] bench e2790k: RSR 0.0% | RSR_DCUBE 91.8% | SEARCH 97.3% | 90/90
+[bench-daemon] new approach ckpt @ 2841k (mtime 1785713554) -> bench
+2026-08-03 08:33:07,338	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:33:07,339	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2841k.png | RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 97.7% | 90/90
+[bench-daemon] bench e2841k: RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 97.7% | 90/90
+[bench-daemon] new approach ckpt @ 2867k (mtime 1785713952) -> bench
+2026-08-03 08:40:04,375	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:40:04,375	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2867k.png | RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 96.4% | 90/90
+[bench-daemon] bench e2867k: RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 96.4% | 90/90
+[bench-daemon] new approach ckpt @ 2892k (mtime 1785714352) -> bench
+2026-08-03 08:46:09,232	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:46:09,232	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2892k.png | RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 97.3% | 90/90
+[bench-daemon] bench e2892k: RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 97.3% | 90/90
+[bench-daemon] new approach ckpt @ 2918k (mtime 1785714903) -> bench
+2026-08-03 08:55:11,264	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 08:55:11,264	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2918k.png | RSR 0.0% | RSR_DCUBE 90.8% | SEARCH 96.7% | 90/90
+[bench-daemon] bench e2918k: RSR 0.0% | RSR_DCUBE 90.8% | SEARCH 96.7% | 90/90
+[bench-daemon] new approach ckpt @ 2944k (mtime 1785715302) -> bench
+2026-08-03 09:01:58,161	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:01:58,161	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2944k.png | RSR 0.0% | RSR_DCUBE 91.0% | SEARCH 97.9% | 90/90
+[bench-daemon] bench e2944k: RSR 0.0% | RSR_DCUBE 91.0% | SEARCH 97.9% | 90/90
+[bench-daemon] new approach ckpt @ 2995k (mtime 1785716102) -> bench
+2026-08-03 09:15:30,114	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:15:30,114	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e2995k.png | RSR 0.0% | RSR_DCUBE 89.6% | SEARCH 96.0% | 90/90
+[bench-daemon] bench e2995k: RSR 0.0% | RSR_DCUBE 89.6% | SEARCH 96.0% | 90/90
+[bench-daemon] new approach ckpt @ 3020k (mtime 1785716653) -> bench
+2026-08-03 09:24:31,804	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:24:31,804	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3020k.png | RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 95.2% | 90/90
+[bench-daemon] bench e3020k: RSR 0.0% | RSR_DCUBE 88.0% | SEARCH 95.2% | 90/90
+[bench-daemon] new approach ckpt @ 3046k (mtime 1785717052) -> bench
+2026-08-03 09:31:18,045	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:31:18,045	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3046k.png | RSR 0.0% | RSR_DCUBE 92.0% | SEARCH 97.5% | 90/90
+[bench-daemon] bench e3046k: RSR 0.0% | RSR_DCUBE 92.0% | SEARCH 97.5% | 90/90
+[bench-daemon] new approach ckpt @ 3072k (mtime 1785717449) -> bench
+2026-08-03 09:38:04,961	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:38:04,962	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3072k.png | RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 97.1% | 90/90
+[bench-daemon] bench e3072k: RSR 0.0% | RSR_DCUBE 90.1% | SEARCH 97.1% | 90/90
+[bench-daemon] new approach ckpt @ 3097k (mtime 1785717850) -> bench
+2026-08-03 09:44:51,789	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:44:51,789	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3097k.png | RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 96.7% | 90/90
+[bench-daemon] bench e3097k: RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 96.7% | 90/90
+[bench-daemon] new approach ckpt @ 3123k (mtime 1785718396) -> bench
+2026-08-03 09:53:53,508	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 09:53:53,508	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3123k.png | RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.3% | 90/90
+[bench-daemon] bench e3123k: RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.3% | 90/90
+[bench-daemon] new approach ckpt @ 3174k (mtime 1785719192) -> bench
+2026-08-03 10:06:40,408	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:06:40,408	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3174k.png | RSR 0.0% | RSR_DCUBE 84.9% | SEARCH 94.3% | 90/90
+[bench-daemon] bench e3174k: RSR 0.0% | RSR_DCUBE 84.9% | SEARCH 94.3% | 90/90
+[bench-daemon] new approach ckpt @ 3200k (mtime 1785719590) -> bench
+2026-08-03 10:13:27,673	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:13:27,674	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3200k.png | RSR 0.0% | RSR_DCUBE 88.6% | SEARCH 97.6% | 90/90
+[bench-daemon] bench e3200k: RSR 0.0% | RSR_DCUBE 88.6% | SEARCH 97.6% | 90/90
+[bench-daemon] new approach ckpt @ 3225k (mtime 1785720253) -> bench
+2026-08-03 10:24:44,880	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:24:44,880	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[ntfy] heat render err timed out
+[bench-daemon] (no heatmap rendered) bench e3225k | RSR 0.0% | RSR_DCUBE 91.1% | SEARCH 97.2% | 90/90
+[bench-daemon] bench e3225k: RSR 0.0% | RSR_DCUBE 91.1% | SEARCH 97.2% | 90/90
+[bench-daemon] new approach ckpt @ 3251k (mtime 1785720650) -> bench
+2026-08-03 10:30:59,210	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:30:59,211	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3251k.png | RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 98.4% | 90/90
+[bench-daemon] bench e3251k: RSR 0.0% | RSR_DCUBE 91.3% | SEARCH 98.4% | 90/90
+[bench-daemon] new approach ckpt @ 3276k (mtime 1785721046) -> bench
+2026-08-03 10:37:47,535	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:37:47,536	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3276k.png | RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 96.5% | 90/90
+[bench-daemon] bench e3276k: RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 96.5% | 90/90
+[bench-daemon] new approach ckpt @ 3302k (mtime 1785721439) -> bench
+2026-08-03 10:44:44,261	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:44:44,261	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3302k.png | RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.2% | 86/86
+[bench-daemon] bench e3302k: RSR 0.0% | RSR_DCUBE 89.4% | SEARCH 97.2% | 86/86
+[bench-daemon] new approach ckpt @ 3353k (mtime 1785722372) -> bench
+2026-08-03 10:59:53,555	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 10:59:53,556	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3353k.png | RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.8% | 86/86
+[bench-daemon] bench e3353k: RSR 0.0% | RSR_DCUBE 90.7% | SEARCH 98.8% | 86/86
+[bench-daemon] new approach ckpt @ 3379k (mtime 1785722764) -> bench
+2026-08-03 11:06:52,700	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:06:52,700	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3379k.png | RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 96.5% | 86/86
+[bench-daemon] bench e3379k: RSR 0.0% | RSR_DCUBE 89.0% | SEARCH 96.5% | 86/86
+[bench-daemon] new approach ckpt @ 3404k (mtime 1785723311) -> bench
+2026-08-03 11:16:04,526	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:16:04,526	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3404k.png | RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 97.2% | 86/86
+[bench-daemon] bench e3404k: RSR 0.0% | RSR_DCUBE 89.8% | SEARCH 97.2% | 86/86
+[bench-daemon] new approach ckpt @ 3430k (mtime 1785723702) -> bench
+2026-08-03 11:22:11,695	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:22:11,695	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3430k.png | RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 97.7% | 86/86
+[bench-daemon] bench e3430k: RSR 0.0% | RSR_DCUBE 89.7% | SEARCH 97.7% | 86/86
+[bench-daemon] new approach ckpt @ 3456k (mtime 1785724096) -> bench
+2026-08-03 11:28:59,118	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:28:59,118	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[ntfy] heat render err timed out
+[bench-daemon] (no heatmap rendered) bench e3456k | RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 97.9% | 86/86
+[bench-daemon] bench e3456k: RSR 0.0% | RSR_DCUBE 92.7% | SEARCH 97.9% | 86/86
+[bench-daemon] new approach ckpt @ 3481k (mtime 1785724492) -> bench
+2026-08-03 11:35:16,960	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:35:16,961	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3481k.png | RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 97.8% | 86/86
+[bench-daemon] bench e3481k: RSR 0.0% | RSR_DCUBE 91.2% | SEARCH 97.8% | 86/86
+[bench-daemon] new approach ckpt @ 3532k (mtime 1785725428) -> bench
+2026-08-03 11:51:16,511	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:51:16,512	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3532k.png | RSR 0.0% | RSR_DCUBE 92.1% | SEARCH 98.4% | 86/86
+[bench-daemon] bench e3532k: RSR 0.0% | RSR_DCUBE 92.1% | SEARCH 98.4% | 86/86
+[bench-daemon] new approach ckpt @ 3558k (mtime 1785725817) -> bench
+2026-08-03 11:57:19,440	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 11:57:19,440	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3558k.png | RSR 0.0% | RSR_DCUBE 90.5% | SEARCH 97.6% | 86/86
+[bench-daemon] bench e3558k: RSR 0.0% | RSR_DCUBE 90.5% | SEARCH 97.6% | 86/86
+[bench-daemon] new approach ckpt @ 3584k (mtime 1785726208) -> bench
+2026-08-03 12:04:06,831	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 12:04:06,831	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3584k.png | RSR 0.0% | RSR_DCUBE 91.6% | SEARCH 97.8% | 86/86
+[bench-daemon] bench e3584k: RSR 0.0% | RSR_DCUBE 91.6% | SEARCH 97.8% | 86/86
+[bench-daemon] new approach ckpt @ 3609k (mtime 1785726851) -> bench
+2026-08-03 12:14:48,263	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 12:14:48,263	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3609k.png | RSR 0.0% | RSR_DCUBE 88.1% | SEARCH 97.5% | 86/86
+[bench-daemon] bench e3609k: RSR 0.0% | RSR_DCUBE 88.1% | SEARCH 97.5% | 86/86
+[bench-daemon] new approach ckpt @ 3635k (mtime 1785727246) -> bench
+2026-08-03 12:20:59,649	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 12:20:59,650	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3635k.png | RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 98.8% | 86/86
+[bench-daemon] bench e3635k: RSR 0.0% | RSR_DCUBE 89.5% | SEARCH 98.8% | 86/86
+[bench-daemon] new approach ckpt @ 3660k (mtime 1785727643) -> bench
+2026-08-03 12:27:47,151	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 12:27:47,151	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3660k.png | RSR 0.0% | RSR_DCUBE 90.3% | SEARCH 98.3% | 86/86
+[bench-daemon] bench e3660k: RSR 0.0% | RSR_DCUBE 90.3% | SEARCH 98.3% | 86/86
+[bench-daemon] new approach ckpt @ 3712k (mtime 1785728585) -> bench
+2026-08-03 12:43:44,619	INFO dashboard_sdk.py:364 -- Uploading package gcs://_ray_pkg_<id>.zip.
+2026-08-03 12:43:44,620	INFO packaging.py:691 -- Creating a file package for local module '~/_stage_bench'.
+[bench-daemon] saved heatmap ~/bench_heatmaps/bench_e3712k.png | RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 97.8% | 86/86
+[bench-daemon] bench e3712k: RSR 0.0% | RSR_DCUBE 89.9% | SEARCH 97.8% | 86/86

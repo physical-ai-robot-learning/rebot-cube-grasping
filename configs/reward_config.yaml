@@ -1,0 +1,44 @@
+# ManiSkill-matched + Dopamine RPE enabled
+episode_length_s: 5.0
+sim_render_interval: 1
+enable_cameras: false
+
+# motor: DISABLED (ManiSkill uses 100N via PD gains)
+# effort_limit_nm: 3.5
+
+mass_curriculum:
+  - { until_iter: 200,         mass: 0.05,  label: "50g" }
+  - { until_iter: 1000,        mass: 0.1,   label: "100g" }
+  - { until_iter: 5000,        mass: 0.2,   label: "200g" }
+  - { until_iter: 99999999,    mass: 0.3,   label: "300g" }
+
+position_curriculum:
+  - { until_iter: 2000,        xy_cm: 0,    yaw_deg: 0,   label: "Fixed" }
+  - { until_iter: 10000,       xy_cm: 2,    yaw_deg: 10,  label: "Small" }
+  - { until_iter: 50000,       xy_cm: 5,    yaw_deg: 30,  label: "Medium" }
+  - { until_iter: 99999999,    xy_cm: 10,   yaw_deg: 60,  label: "Large" }
+
+ppo:
+  learning_rate: 3.0e-4
+  num_learning_epochs: 4
+  num_mini_batches: 32
+  gamma: 0.8
+  lam: 0.9
+  entropy_coef: 0.0
+  clip_param: 0.2
+  max_grad_norm: 0.5
+  desired_kl: 0.0              # disabled — ManiSkill uses fixed LR
+  init_noise_std: 0.6      # ManiSkill: exp(-0.5) ≈ 0.6
+  noise_std_type: "log"    # per-action learned std  # ManiSkill: per-action learned
+  actor_hidden_dims: [256, 256, 256]  # ManiSkill ppo.py: 3-layer
+  critic_hidden_dims: [256, 256, 256] # ManiSkill ppo.py: 3-layer
+  num_steps_per_env: 16
+
+data_collection:
+  hold_stable_min_steps: 10
+  hold_stable_height: 0.10
+  contact_force_min: 0.1
+  grasp_threshold: 0.30
+
+# Dopamine RPE — ENABLED on 171
+use_dopamine: false

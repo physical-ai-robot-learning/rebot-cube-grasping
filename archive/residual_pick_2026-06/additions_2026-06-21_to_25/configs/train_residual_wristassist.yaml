@@ -1,0 +1,116 @@
+# WRIST-ASSIST: keep the validated IK-RL flow INTACT (IK base ramp + bounded residual + SAC, base_noise
+# 0.025, residual_scale 0.10 — all unchanged vs train_residual_realistic). The ONLY behavioral change is a
+# HEIGHT-GATED wrist-centering reward (rewards.py r_wrist): once tcp_z is within wrist_assist_height (0.10m)
+# of the table — the ALIGN/GRASP fine phase — the policy is rewarded for keeping the cube CENTERED + VISIBLE
+# in the wrist cam (on the clean analytic wrist = true cube). The wrist thus guides align + grasp formation
+# in the close-range zone, without touching the base/residual/grip flow. (w_wrist_center=0 elsewhere -> the
+# main flow is unaffected; this config opts in.)
+# Wrist DR is moderated (distractor 0.4->0.15) so the obs wrist is trustworthy enough to act on — the 0.4
+# distractor was the proven ignore-driver. base_noise stays 0.025 = the wrist polishes FINE alignment here,
+# it is NOT asked to correct large base error (that was the separate, low-ROI wristforce experiment).
+exp_name: pick_residual_wristassist
+total_env_steps: 1500000
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 20000
+eval_episodes: 16
+eval_seed: 12345
+eval_holdout: {dr_mass_min: 0.35, dr_mass_max: 0.50}
+ckpt_every: 50000
+latest_every: 500
+
+env:
+  num_envs: 64
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  cube_mass: 0.02
+  dr_mass_min: 0.02
+  dr_mass_max: 0.05
+  decimation: 8
+  arm_step: 0.05
+  action_ema: 0.4
+  grip_step: 0.0143
+  grip_open_qpos: 0.035
+  grip_friction: 2.0
+  arm_limit_lo: [-0.85, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]
+  arm_limit_hi: [ 0.85,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]
+  table_center: [0.35, -0.187]
+  tilt_gate_deg: 42.0
+  rest_rand: 0.3
+  episode_len: 150
+  success_lift_height: 0.07
+  grasp_radius: 0.05
+  # ---- IK-RL FLOW: UNCHANGED vs realistic (base ramp + bounded residual + auto-grip) ----
+  residual_ik: true
+  grasp_table_path: "data/grasp_pose_table.pt"
+  residual_scale: 0.10          # UNCHANGED (flow intact)
+  residual_scale_min: 0.02
+  residual_scale_warmup: 40000
+  residual_descend_steps: 28
+  residual_lift_steps: 45
+  residual_grip_auto: true
+  residual_grip_schedule: true
+  residual_base_pos_noise: 0.025  # UNCHANGED — wrist polishes FINE alignment, not large base-error correction
+  wrist_assist_height: 0.10     # NEW: r_wrist active when tcp within 10cm above table (the align/grasp zone)
+  pos_rand_xy: 0.0
+  pos_rand_max: 1.0
+  pos_rand_step: 0.2
+  spawn_succ_thresh: 0.55
+  spawn_cooldown: 600
+  yaw_rand: 0.0
+  # ---- full DR ON (unchanged) ----
+  dr_enable: true
+  dr_obs_pos_noise: 0.01
+  dr_obs_qpos_noise: 0.01
+  dr_obs_qvel_noise: 0.15
+  dr_action_latency_max: 2
+  dr_action_noise: 0.02
+  dr_gain_scale: 0.35
+  dr_tcp_offset_xy: 0.03
+  dr_tcp_offset_z: 0.03
+  # ---- VISION tokens (deployable) ----
+  obs_wrist: true
+  obs_top_uv: true
+  obs_analytic_uv: true
+  obs_torque: false
+  top_occlusion_radius: 0.05
+  dr_top_uv_noise: 0.04
+  dr_top_uv_dropout: 0.30
+  # WRIST DR moderated so the wrist is a TRUSTWORTHY assist signal (0.4 distractor was the ignore-driver)
+  dr_wrist_uv_noise: 0.05       # was 0.06
+  dr_wrist_dropout: 0.15        # was 0.25
+  dr_wrist_distractor: 0.15     # was 0.4
+  dr_wrist_distractor_n: 2
+  dr_render_light: 0.3
+
+reward:
+  w_reach: 1.0
+  w_xy_align: 0.5
+  w_grasp: 0.5
+  w_lift: 25.0
+  w_vertical: 0.0
+  success_bonus: 80.0
+  w_action: 0.03
+  w_time: 0.001
+  fall_penalty: 5.0
+  w_hold_still: 1.0
+  w_wrist_center: 1.5           # NEW: ON (was 0). Height-gated (rewards.py) -> wrist guides ALIGN+GRASP in the fine zone. Modest so grasp(×25 lift)/+80 success still dominate (no hover-harvest; the IK base forces descend->grip->lift anyway).
+
+sac:
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  replay_size: 1000000
+  warmup_steps: 2000
+  updates_per_step: 1
+  target_entropy_scale: 1.0
+  layernorm: true
+  init_alpha: 0.2
+  demo_path: ""
+  demo_frac: 0.0

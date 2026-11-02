@@ -1,0 +1,276 @@
+{
+ "src/rebot_sim2real/deploy/dump_sim_spec.py": {
+  "original": "deploy_package/dump_sim_spec.py",
+  "ast_equal": true,
+  "fingerprint": "e3776cab164d370ecb9659ab5fe918e3b39020c7407ea84c826e839c2f317d01",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "b7741e4ac49394922aeda52cb6e22a01"
+ },
+ "src/rebot_sim2real/deploy/rebot_deploy.py": {
+  "original": "deploy_package/rebot_deploy.py",
+  "ast_equal": true,
+  "fingerprint": "68dd0eeb8e45fd2ad0eef60bc6bb3cb1ca197121eba6484aadb19dbe69ce14c0",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "738f38bcb849f4466511bf1fad390309"
+ },
+ "src/rebot_sim2real/deploy/rebot_deploy_visual.py": {
+  "original": "deploy_package/rebot_deploy_visual.py",
+  "ast_equal": true,
+  "fingerprint": "61290226ef7498c1bf0d4ea9fb03825f9d5e91c7d10b53e3faa1407915715514",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "d7731c3a8011d86573c435d7a153e770"
+ },
+ "src/rebot_sim2real/env/__init__.py": {
+  "original": "packages/sim/env_setup/__init__.py",
+  "ast_equal": true,
+  "fingerprint": "2e90ee3c424ceb25c1b3e06c69de8d1843a9805031a3478f3044fbac15c0f5e7",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "6d8786d1c40e61486c22abbfb09ef445"
+ },
+ "src/rebot_sim2real/env/env_config.py": {
+  "original": "packages/sim/env_setup/env_config.py",
+  "ast_equal": true,
+  "fingerprint": "a5a8166e89f62af588ee697d443b14880c2cda9e7e5895048c2f63757f5bc118",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "1e7cc5b9e4f2bd51b6e80edb7f6918ac"
+ },
+ "src/rebot_sim2real/env/maniskill_rewards.py": {
+  "original": "packages/sim/env_setup/maniskill_rewards.py",
+  "ast_equal": true,
+  "fingerprint": "30c811b59746eb8af5a1813a94eb050a0a2734c4231abfdb8bebe188962034d7",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "e4835bda39a65d3fedb7ec9238aa5d62"
+ },
+ "src/rebot_sim2real/env/target_delta_action.py": {
+  "original": "packages/sim/env_setup/target_delta_action.py",
+  "ast_equal": true,
+  "fingerprint": "7f9adde27264c8e2314b89593650717036bf5b934fe93fd64fc2b749e9c3173e",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "6081c2a619b3c908c059d66846a77685"
+ },
+ "src/rebot_sim2real/env/visual_obs.py": {
+  "original": "packages/sim/env_setup/visual_obs.py",
+  "ast_equal": true,
+  "fingerprint": "cf1d42976100a2a227109968b6f51d09a65c7c2736cd8ceb89528389547540f5",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "e4869609fb79222587ce5c6b940359d3"
+ },
+ "src/rebot_sim2real/student/train_c51_visual.py": {
+  "original": "packages/sim/train_c51_visual.py",
+  "ast_equal": true,
+  "fingerprint": "e7b8f2a17cf08020db8a85afcb81d8aa5695a7c2975725869c685150d5fe7dad",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "5108c8182eeaeaa21f5c63d9d952cdf0"
+ },
+ "src/rebot_sim2real/student/train_dagger_staged.py": {
+  "original": "packages/sim/train_dagger_staged.py",
+  "ast_equal": true,
+  "fingerprint": "d5071be900c46c18395b6bb8bf351e998fc87c302ec632aa1f27cc54f41c88cc",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "9d1eeacfed7794614bd7eb58f730fe5e"
+ },
+ "src/rebot_sim2real/student/train_dagger_visual.py": {
+  "original": "packages/sim/train_dagger_visual.py",
+  "ast_equal": true,
+  "fingerprint": "66a14ebb8389bcfcd42f66f1b31a3ea1d19f3cdb44aaae2d993bcd3bda96abde",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "e3b7ec93a78c322b804dd39211b4601c"
+ },
+ "src/rebot_sim2real/student/train_visual_rl.py": {
+  "original": "packages/sim/train_visual_rl.py",
+  "ast_equal": true,
+  "fingerprint": "59bdc80e286583d4c3199cfc6df1baf302a22f39dcf348b33a5c397bcc6d8eff",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "37248187837ec58be09b6119f87f071b"
+ },
+ "src/rebot_sim2real/student/train_visual_rl_staged.py": {
+  "original": "packages/sim/train_visual_rl_staged.py",
+  "ast_equal": true,
+  "fingerprint": "2927993c1eaf0a580e282630c50953e5aae299d0182fda03b450a0109ace87ae",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "03d8ff0493c521f299aa12a6385f8f75"
+ },
+ "src/rebot_sim2real/student/visual_nets.py": {
+  "original": "packages/sim/visual_nets.py",
+  "ast_equal": true,
+  "fingerprint": "9ac2badce571348ae119fec8a94e3ae69b69b710aa739f834c12a509a4990da0",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "a6c2559df700a2a8d6ef7f89f07ab317"
+ },
+ "src/rebot_sim2real/teacher/infer_staged.py": {
+  "original": "packages/sim/infer_staged.py",
+  "ast_equal": true,
+  "fingerprint": "4eb516dec99833a0cd5eba6c5aa423e46d58478d1f9150fdd1347101741a6626",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "8f5dfcb056b67296f5b7ef198e4fe33c"
+ },
+ "src/rebot_sim2real/teacher/train_c51.py": {
+  "original": "packages/sim/train_c51.py",
+  "ast_equal": true,
+  "fingerprint": "b338ac784a49f49482c007d7c8ec2520bf663b2420dba0ec5f30c5a73e6e3496",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "ae2bb89607c38b767ba488ee437551a2"
+ },
+ "src/rebot_sim2real/teacher/train_c51_joint.py": {
+  "original": "packages/sim/train_c51_joint.py",
+  "ast_equal": true,
+  "fingerprint": "0102c1cbfcaa12794c9a8d67db8c02f2593907301c995e6072afcbea29e61657",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "83d2c9bc232387f4101aa07c4d47a24a"
+ },
+ "src/rebot_sim2real/teacher/train_c51_staged.py": {
+  "original": "packages/sim/train_c51_staged.py",
+  "ast_equal": true,
+  "fingerprint": "e17582913b363583e15301db879ed9d7f33e26f45ef6030bd7e6c1e86d8a3f45",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "d86db882eec6deeb2f592c066a41d887"
+ },
+ "src/rebot_sim2real/tools/camera_spec_render.py": {
+  "original": "packages/sim/camera_spec_render.py",
+  "ast_equal": true,
+  "fingerprint": "7f2e567bdc4f3536ac353b8c9e34a6a65bf584812cc026d928e7ac335b513bf7",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "58e20f1f2868293b3b49a54033f63532"
+ },
+ "src/rebot_sim2real/tools/diag_cam_sweep2.py": {
+  "original": "packages/sim/diag_cam_sweep2.py",
+  "ast_equal": true,
+  "fingerprint": "fbaaa2b8cba2c9563120fea8feb65a28e984f382e687e7126bd13dcd4adf3294",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "1699315d16caf6474af9d219a6265753"
+ },
+ "src/rebot_sim2real/tools/diag_contactapi.py": {
+  "original": "diag_contactapi.py",
+  "ast_equal": true,
+  "fingerprint": "dc5713dcb95f56782940783409038161c2889e8aab2f3315977e67087927974f",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "ac73120fbc537568f424a3b348fbc97f"
+ },
+ "src/rebot_sim2real/tools/diag_dr_probe.py": {
+  "original": "packages/sim/diag_dr_probe.py",
+  "ast_equal": true,
+  "fingerprint": "7320ce55437a5dc9a0c62f5fa13923b730c7b45cc2a52ef9646d13dddfc6c496",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "7cd714e4038da768d2455c4d27d619c0"
+ },
+ "src/rebot_sim2real/tools/diag_env_gripper.py": {
+  "original": "diag_env_gripper.py",
+  "ast_equal": true,
+  "fingerprint": "336b84d3fa3a64729a705d9f8eb74132ea45a270d1650b11eb34c4fa764ce032",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "15db4e25334c0ffdfb60f02347b2d535"
+ },
+ "src/rebot_sim2real/tools/diag_finger_geom.py": {
+  "original": "packages/sim/diag_finger_geom.py",
+  "ast_equal": true,
+  "fingerprint": "0e514ce784090341e8f01b5fb9bc392897add77916057e85d39b685f8fc18e2c",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "1cd8f1eec3a49ab9bff39ab13d84a96c"
+ },
+ "src/rebot_sim2real/tools/diag_front_sweep.py": {
+  "original": "packages/sim/diag_front_sweep.py",
+  "ast_equal": true,
+  "fingerprint": "c5ad6d0d4168d2c32a9cf2b300fc6cf7e0dc01bba9a5e1deb6bf44dd6a2975bc",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "416680bfd08240dd00e217c39db4a6c6"
+ },
+ "src/rebot_sim2real/tools/diag_grasp.py": {
+  "original": "diag_grasp.py",
+  "ast_equal": true,
+  "fingerprint": "ce7791653d42280ce781473b63f9cfb829013f30151999631930819fa2ca7ec0",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "795c3f6862c0d4690a008803ede9a778"
+ },
+ "src/rebot_sim2real/tools/diag_grasp_wrist.py": {
+  "original": "packages/sim/diag_grasp_wrist.py",
+  "ast_equal": true,
+  "fingerprint": "8e4882b6176f9cdfcb1621316fa90676b9ebc389d096a6ab540f20fded70665d",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "f80725cee74c9592746157227bce1e9b"
+ },
+ "src/rebot_sim2real/tools/diag_gripper_mounts.py": {
+  "original": "packages/sim/diag_gripper_mounts.py",
+  "ast_equal": true,
+  "fingerprint": "f89fa1ec86bfd7caf402331d1942af05d11fe9ece42faab8eca6909570058b3b",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "6190d0561ad995c210ec10a229cbfeb0"
+ },
+ "src/rebot_sim2real/tools/diag_gripper_stroke.py": {
+  "original": "packages/sim/diag_gripper_stroke.py",
+  "ast_equal": true,
+  "fingerprint": "99eac8c0d39ac805b3e53d3472975dae540fc63203fd7dc5e26fe9d1b5b77e19",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "322bd2aee46716323188f64e496b1621"
+ },
+ "src/rebot_sim2real/tools/diag_gripper_view.py": {
+  "original": "packages/sim/diag_gripper_view.py",
+  "ast_equal": true,
+  "fingerprint": "5ab1fbc42187aa4b56582a6890edb7ac46dae59b1841ab3536666d1a33e3b2df",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "30f6b6d6dd3e85119113318946e9ae20"
+ },
+ "src/rebot_sim2real/tools/diag_mount_marker.py": {
+  "original": "packages/sim/diag_mount_marker.py",
+  "ast_equal": true,
+  "fingerprint": "c6e3641d99811d70bba254cef81e1c1eb81ef389e85fac6778a6701ab9387ef5",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "c960aac9b2ac3a8611bf3222d0dac8cc"
+ },
+ "src/rebot_sim2real/tools/diag_recalib.py": {
+  "original": "packages/sim/diag_recalib.py",
+  "ast_equal": true,
+  "fingerprint": "fb92a8cd6bc5cb995519738e9d58d080abbd5f88aa12a90349e10843dcd815a2",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "f50642701e0026d7b69c1f4eae7e21b8"
+ },
+ "src/rebot_sim2real/tools/diag_visual_obs.py": {
+  "original": "packages/sim/diag_visual_obs.py",
+  "ast_equal": true,
+  "fingerprint": "651f130bf9be59a26f2dd762643cfa80f60838c87dfe03d0a404d2b253313fdb",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "8d0f523787222da1224f06bfe539baf6"
+ },
+ "src/rebot_sim2real/tools/diag_wrist_calc.py": {
+  "original": "packages/sim/diag_wrist_calc.py",
+  "ast_equal": true,
+  "fingerprint": "04958a846ab2d31587a1e6f10a0067a56e9d7de69c0494815568e85708e7ea8e",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "f1af36d7ed0718b6c3aa13e7ce9b6292"
+ },
+ "src/rebot_sim2real/tools/diag_wrist_sweep.py": {
+  "original": "packages/sim/diag_wrist_sweep.py",
+  "ast_equal": true,
+  "fingerprint": "e6fdc387b1f8d79fa4cd720611e20830a1752fe32cb386f6a921e7764982cea9",
+  "original_repo": "rebot-dagger-visual@67a11b7",
+  "original_md5": "fcc44bb559a84778b883fe8e64de4025"
+ },
+ "src/rebot_sim2real/tools/rebot_dashboard.py": {
+  "original": "packages/sim/rebot_dashboard.py",
+  "ast_equal": false,
+  "fingerprint": "c0b8aa752d38c531dad27794e27e0993f73532e8c996517e441a583d54fe92f6",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "b7ffc430f6966b82fd3299504a4d0c7f",
+  "note": "three HTML label strings translated from Korean; code otherwise equal"
+ },
+ "src/rebot_sim2real/tools/render_successes.py": {
+  "original": "packages/sim/render_successes.py",
+  "ast_equal": true,
+  "fingerprint": "016de167835f13d5b6ba96a82c43e409299a1b0c14dcdb1633f33e5faba70d5e",
+  "original_repo": "rebot-sim2real-rl@c1407a3",
+  "original_md5": "d0dc7c58b2739243863f8dccee35d769"
+ },
+ "src/rebot_sim2real/tools/render_teacher_2cam.py": {
+  "original": "packages/sim/render_teacher_2cam.py",
+  "ast_equal": true,
+  "fingerprint": "a820e8fd0db80831fa56dcd57d13fa8caf1a66a85acb48ed8568cfbbd75f7c82",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "d62e05f69ae49e99bd74cdd317f13d4c"
+ },
+ "src/rebot_sim2real/tools/render_teacher_hq.py": {
+  "original": "packages/sim/render_teacher_hq.py",
+  "ast_equal": true,
+  "fingerprint": "6058f4775eee50275f23403c8f5e5c6a09ec68beee3d3f935be4d531f14aca5d",
+  "original_repo": "both (byte-identical copies)",
+  "original_md5": "bd85c1ad795767cc94df25798f8cfbbe"
+ }
+}

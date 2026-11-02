@@ -1,0 +1,170 @@
+# v6: DEFAULT residual recipe = SAC + n-step(5) + UTD(4) + LayerNorm critic + RLPD demos.
+# Rule base (top-cam -> IK/DLS-Jacobian reach -> pre-grasp hover, latched) + residual SAC for
+# Align->Grasp->Lift. Wrist (u,v) from the shared CSP+FPN detector. sparse reward (anneal->sparse).
+# Frame N (constants/config already migrated). Observer top-cam. See docs/06.
+#   If an algorithm comparison is needed, switch to algo: resfit (TD3-style deterministic, REDQ ensemble).
+
+# ===== v6a_YAW = Phase 2a (docs/08 §9): yaw-robust LEARNING via ANALYTIC yaw token (CNN detector blocked).
+# == train_v6a EXCEPT yaw_rand=0.785 (rotated cubes) + obs_wrist_yaw=true (analytic image-yaw, obs_dim 41).
+# Still analytic wrist (obs_wrist_cnn=false) -> no render, no CNN. Validates the residual rolling J6 to align
+# jaws to rotated cube faces from a yaw signal. CNN-wrist (deploy sensor) = separate task. =====
+exp_name: pick_v6b_deepreach   # v6b: deep_reach base (reach + DESCEND to the cube, gripper OPEN) + residual
+#   grasp/lift. A/B vs v6a (hover base + residual-descend). Plus the PEDESTAL base_pos z fix (sim==real).
+algo: sac                      # default SAC; switch to "resfit" for the TD3-style ablation
+total_env_steps: 3000000
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 1500               # A: finer CLEAN-eval cadence (~5min) to actually MONITOR RL validation
+                               # (policy-step based: 10000 gave only ~5 evals over the whole 47k-step run)
+eval_episodes: 16
+eval_seed: 12345
+eval_holdout: {dr_mass_min: 0.06, dr_mass_max: 0.10}
+ckpt_every: 50000
+latest_every: 500
+bootstrap_truncation: true     # n-step TD bootstraps THROUGH timeouts (terminal != done; §12⑧/②)
+curriculum_use_eval: true      # spawn-widen on CLEAN eval success, not noisy train success (§12⑤)
+
+env:
+  num_envs: 64
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  base_pos: [0.0, 0.06, 0.02]  # PEDESTAL fix: real J1 base sits on a 2cm riser -> z=+0.02 (config default was
+  #   -0.03, off by 5cm = the deploy z-gap). sim now matches the real base height (reach check: 0.97 at_cube).
+  # ---- residual + DEEP-REACH base ----
+  residual_base: deep_reach    # base = deep_reach_step (reach + DESCEND to the cube surface, gripper OPEN,
+  #   wrist unproj XY + J6 yaw); the residual then owns GRASP(close)+LIFT + fine correction. (vs "rule" = reach
+  #   to hover only, residual descends.) IBVS dropped — deep_reach uses the world-unprojection fusion (ibvs=False).
+  residual_arm_step: 0.015     # residual joint step (< arm_step 0.05)
+  residual_gain: 1.0
+  reach_eps: 0.03              # handoff: tcp_xy within 3cm of cube_xy
+  reach_z_tol: 0.03
+  z_hover: 0.15                # docs/08 Phase1-B: was 0.23 (TCP 25cm) but the high cam-down hover couldn't REACH
+                               # the workspace extremes -> back/corner demo SR 29-31%. z_hover=0.15 lifts back
+                               # 29->95%, corner 31->93%, overall 58->89% (extreme_fix_sweep). Keeps ~15cm wrist
+                               # IBVS runway. reach_orient_weight stays 0.6 (ow0.3 was worse).
+  dls_lambda: 0.05
+  reach_use_detected_uv: true  # rule reaches the DETECTED top-(u,v)->world (sim-real consistent, §4)
+  reach_orient: true           # 6-DOF reach: wrist-cam axis straight DOWN at hover (clean top-down IBVS)
+  reach_look_at: true          # docs/08 §9: aim wrist cam AT cube (center it -> wrist sees cube)
+  reach_orient_weight: 0.6     # cam-axis vs position weight in the DLS
+  rule_arm_step: 0.12          # RULE IK speed (rad/step), decoupled from residual_arm_step; faster reach->latch
+  reach_jaw_weight: 0.4        # JAW-yaw align term in the privileged DEMO IK (close on faces, not corners; docs/08)
+  grasp_tilt_deg: 6.0          # DEMO grasp tilt off-vertical. SWEEP (docs/08): 25deg(legacy side-grasp) WRECKED
+                               # seating (no_grasp 115/256); with jaw-align, tilt6 peaks (yaw0 66%, yaw45 58%).
+                               # near-vertical top-down + face-aligned jaws -> tilt is now just anti-knock.
+  grasp_tilt_dir: 1.0          # +1 = lean toward the cube
+  g_reach_overlay: 0.25        # §12⑦ residual authority DURING reach (overlay) -> ramps to residual_gain after latch
+  g_ramp_steps: 10             # policy-steps to ramp g overlay->1.0 after the reach latch (no hard 0->1 jump)
+  safety_shield: true          # §12② clamp the commanded TCP off the table / behind the base (reset-free)
+  asymmetric_critic: true      # §12⑥ critic also sees CLEAN privileged cube_pos/quat/rel (actor = keypoints only)
+  sparse_reward: true          # ResFiT-style binary success (+ shaping anneal early; keep safety penalties)
+  shaping_anneal_steps: 1500000   # env-steps to decay shaping_coef 1 -> floor (anneal->sparse, §12③)
+  shaping_floor: 0.0           # pure-sparse end-state (success bonus + bounded safety only)
+  wrist_cnn_ckpt: "ckpt/cube_detector_wrist_gt.pt"   # A: existing detector (no yaw head; loaded strict=False)
+  # ---- motion / grip (frame N inherited from config defaults) ----
+  cube_mass: 0.02
+  dr_mass_min: 0.02
+  dr_mass_max: 0.05
+  decimation: 8
+  arm_step: 0.05
+  action_ema: 0.4
+  grip_step: 0.0143
+  grip_open_qpos: 0.035
+  grip_friction: 5.0           # static+dynamic friction (raised 2.0->5.0: 2.0 slipped per memory; firmer hold)
+  # J1 FREED to +-90deg (was +-0.85): J1 aims the azimuth at the cube, the DLS servo reaches in that
+  # plane. The conservative +-0.85 box was the off-center grasp dead-zone; backward-tip is guarded in
+  # TASK SPACE by the y_back safety_shield (not by a tight J1 box) -> covers the full +y workspace.
+  arm_limit_lo: [-1.5708, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]
+  arm_limit_hi: [ 1.5708,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]   # J1=0 (faces +y center); the servo aims J1 per cube
+  tilt_gate_deg: 42.0
+  rest_rand: 0.3
+  episode_len: 220            # longer: the high overhead hover (TCP ~25cm) needs a long descend + grasp + hold
+  success_lift_height: 0.07
+  grasp_radius: 0.05
+  # ---- workspace: the FULL reachable +y region (rule reaches anywhere; per-cube IK demos cover it). ----
+  # reach sweep: x in [-0.35,0.35] x y[0.25,0.60] all position-reachable; J1 +-90deg aims to x=0.35@y=0.25 (61deg).
+  workspace_x: [-0.35, 0.35]
+  workspace_y: [0.28, 0.58]
+  # RANDOM spawn over the whole workspace from step 0 (NO tight curriculum): the rule solves reach and the
+  # residual is ego-centric, so the grasp is position-invariant -> train directly on the full distribution.
+  pos_rand_xy: 0.35           # half-range around table_center (0,0.43) -> x[-0.35,0.35], y[0.28,0.58] clamped
+  pos_rand_max: 0.35          # == pos_rand_xy -> curriculum OFF (full random spawn)
+  pos_rand_step: 0.05
+  spawn_succ_thresh: 0.40
+  spawn_cooldown: 600
+  yaw_rand: 0.785              # Phase 2a: rotated cubes ±45° (all distinct square orientations)
+  # ---- sim2real DR (Layer3; center on sysID estimates + margin) ----
+  dr_obs_pos_noise: 0.01
+  dr_obs_qpos_noise: 0.01
+  dr_obs_qvel_noise: 0.15
+  dr_action_latency_max: 2
+  dr_action_noise: 0.02
+  dr_gain_scale: 0.35
+  dr_tcp_offset_xy: 0.03
+  dr_tcp_offset_z: 0.03
+  # ---- perception tokens ----
+  obs_top_uv: true
+  obs_analytic_uv: true        # analytic (u,v) for fast training; deploy uses the CNN (analytic≈render≈CNN)
+  top_occlusion_radius: 0.05
+  top_cam_res: [320, 180]
+  dr_top_uv_noise: 0.04
+  dr_top_uv_dropout: 0.30
+  obs_wrist: true
+  obs_wrist_cnn: false         # A: ANALYTIC wrist (no render). The gate-fixed CNN-wrist path renders 64 wrist
+                               # cams/step -> RTX descriptor-set exhaustion ("Unable to allocate descriptor
+                               # sets", 404x) on the 5080. CNN-wrist render scaling (fewer envs / descriptor
+                               # pool) is a B prerequisite; A validates the RL STACK on the fast analytic path.
+  obs_wrist_yaw: true          # Phase 2a: ANALYTIC image-yaw token (cos4θ,sin4θ), obs_dim 39->41. Residual
+                               # rolls J6 to null it -> jaw aligns to rotated cube faces. (obs_wrist_cnn stays false)
+  wrist_cam_res: [320, 180]
+  dr_wrist_uv_noise: 0.06
+  dr_wrist_dropout: 0.25
+  dr_wrist_distractor: 0.4
+  obs_torque: false
+
+reward:                        # A REBALANCE (docs/08): the v6 weights gave a shaping local-optimum -- hovering
+  # near the cube earned ~450/ep (reach+align+wrist+vertical+hold, all satisfied by the rule-reached hover)
+  # while grasp+lift was hard+risky -> policy stopped grasping (grasp 14%->8%, success ~2%, no learning).
+  # FIX: cut the hover-lucrative shaping ~3-6x, boost grasp (w_grasp 0.5->3) + success (80->300), drop
+  # fall_penalty (stop punishing grasp attempts). KEEP w_lift=25 (strong pull ONCE grasped) + the 1.5M anneal
+  # (do NOT accelerate it -- shaping_coef scales r_lift/r_grasp too, so a fast anneal would kill that gradient).
+  w_reach: 0.4                 # was 1.0 (hover-lucrative; rule already reaches, so dense reach shaping is redundant)
+  w_xy_align: 0.2              # was 0.5
+  w_grasp: 3.0                 # was 0.5  -- BOOST: dense pull toward actually closing on the cube
+  w_lift: 25.0                 # keep: once grasped, strong lift gradient
+  w_vertical: 0.5             # was 3.0  -- biggest hover term; cut hard
+  w_wrist_center: 0.3          # was 1.0
+  success_bonus: 300.0         # was 80   -- sustained grasp+lift must clearly beat hovering
+  w_action: 0.03
+  w_time: 0.001
+  fall_penalty: 1.0            # was 5.0  -- stop discouraging grasp attempts
+  w_hold_still: 0.2            # was 1.0  (hover-lucrative)
+
+sac:                           # SAC + ResFiT/RLPD stabilizers
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  warmup_steps: 2000
+  updates_per_step: 4          # ★ UTD = 4
+  n_step: 5                    # ★ n-step = 5
+  target_entropy_scale: 1.0
+  layernorm: true              # ★ LayerNorm critic (RLPD)
+  init_alpha: 0.2
+  min_alpha: 0.02
+  demo_path: ""                # NO demos: v6a demos are HOVER-base (residual descends); deep_reach base does the
+  demo_frac: 0.0               #   reach+descend, so its residual (grasp+lift) is a DIFFERENT action dist -> the
+  #   old demos don't transfer. The deep_reach base bootstraps (reaches the cube ~90%); the residual learns
+  #   grasp+lift from the success bonus. Regenerate deep_reach-base demos later if learning is slow.
+  # Extra fields used only when algo: resfit (ignored by SAC)
+  ensemble_size: 5
+  subset_size: 2
+  policy_delay: 2
+  expl_noise: 0.1
+  policy_noise: 0.2
+  noise_clip: 0.5

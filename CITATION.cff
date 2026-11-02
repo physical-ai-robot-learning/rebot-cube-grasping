@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it as below."
+title: "reBot Cube Grasping: Staged RL in Simulation and Perception–IK Control on Hardware"
+type: software
+authors:
+  - family-names: "Lee"
+    given-names: "Jeong Hwan"
+repository-code: "https://github.com/physical-ai-robot-learning/rebot-cube-grasping"
+license: PolyForm-Noncommercial-1.0.0
+date-released: "2026-11-02"

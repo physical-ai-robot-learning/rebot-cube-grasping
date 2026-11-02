@@ -1,0 +1,122 @@
+# State-based SAC pick training config (overlays defaults in src/rebot_sim2real/rl/config.py).
+# v1: no rendering, joint delta-on-target, 43-D teacher obs, staged reward.
+# View curves:  tensorboard --logdir runs
+
+exp_name: pick_state_v4
+total_env_steps: 2000000      # per-env policy steps (total transitions = N * this)
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 20000
+eval_episodes: 16
+eval_seed: 12345              # fixed RNG -> eval episode set is reproducible across checkpoints
+# OOD validation: re-eval under unseen DR (heavier cube mass than the 0.05-0.30 train band) to
+# expose overfitting -> logs eval_holdout/* + eval/gen_gap_success. Comment out to skip.
+eval_holdout: {dr_mass_min: 0.35, dr_mass_max: 0.50}
+ckpt_every: 50000             # numbered snapshots <exp>_<envsteps>.pt
+latest_every: 500             # overwrite <exp>_latest.pt this often -> monitor loads a TRAINED policy within ~1-2 min (was 2000 -> monitor showed its own untrained policy for too long)
+
+env:
+  num_envs: 32                 # v4: wrist render ON (cameras) -> MODERATE envs (64 hangs with per-env cams)
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  cube_mass: 0.02              # 20 g (matches reference; light enough for the grip to lift)
+  dr_mass_min: 0.02            # light DR band (was 0.05-0.30 -> 300g was unliftable)
+  dr_mass_max: 0.05
+  decimation: 8                # 120 Hz physics / 8 = 15 Hz policy
+  arm_step: 0.05               # rad / step (reference hard limit)
+  action_ema: 0.4              # v4 ANTI-BOB: low-pass the arm action (0.4*prev + 0.6*new) -> no loop-rate oscillation
+  grip_step: 0.0143            # m / step
+  # NOTE: scripts/probe_gap.py shows grip qpos UP = gap WIDER (qpos0=0mm closed, 0.0715=142mm open).
+  # The grip control is INVERTED accordingly in pick_env._apply_action: the "close" action DECREASES
+  # qpos toward grip_close_qpos. open/close qpos are tuned for the 38mm cube (see config.py).
+  grip_open_qpos: 0.035
+  grip_friction: 2.0           # silicone-pad friction (gave 100% center grasp); 4.0 destabilized contact
+  # joint safety: per-joint absolute soft limits (rad), intersected with URDF hard limits.
+  # Pattern from rebot-sim2real-rl / rebot-dagger-visual target_delta_action: keep the REACH joints
+  # (joint2/joint3) at their full [-pi,0] range, only cap the rest. order = joint1..joint6.
+  # (a uniform symmetric band crushed joint2/3 to [-86,0] -> reach blocked -> that was the no-learn bug)
+  # SAFETY (no backward tip-over): keep the gripper on the +y (table) side. A joint box CANNOT
+  # enforce this -- e.g. J2=-0.85,J3=-pi folds tcp to y=-1.12 behind the base (scripts/probe_ybox.py)
+  # -- so the real guard is a TASK-SPACE tcp_y limit (y_forward_limit/y_back_term in config.py).
+  # Here we only cap J1 to +/-0.85 to kill the sideways-back swing (J1=+/-90 -> tcp_y -0.61) while
+  # still covering the workspace x-range. base_y=-0.54, workspace_y=[-0.30,-0.10] (moved +0.10 with base).
+  arm_limit_lo: [-0.85, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]   # J1 +/-49 (no back-swing); J2/J3 full reach
+  arm_limit_hi: [ 0.85,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  # bent pre-grasp rest pose (found by scripts/probe_rest.py): tcp starts ~(0.35,-0.30,0.102),
+  # i.e. hovering just above the table-center cube -> policy discovers grasp/lift fast instead of
+  # having to learn the full descent from the high USD-zero (all-0) home.
+  # ~28-deg compromise APPROACH (probe_vertical + probe_graspxy): hover ~6.8cm above the cube. Pure
+  # vertical (~16 deg) plunges onto the cube and knocks it (~50%); ~28 deg slides down the SIDE and
+  # grasps cleanly (100% scripted) while looking far more top-down than the old ~41-deg lean. GRASP
+  # pose ~[0,-1.85,-1.00,0.40] (~25 deg, at the cube), LIFT ~[0,-1.55,-1.30,0.80] (~30 deg, +13cm).
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]
+  table_center: [0.35, -0.187]  # moved +0.10 with the base (-0.64->-0.54); base-relative spawn kept, abs now matches real cube placement
+  tilt_gate_deg: 42.0          # admits the ~28-deg grasp AND the ~35-deg lift tilt (no vertical lift pose); rejects near-horizontal. corner grasp blocked by finger-gap.
+  rest_rand: 0.3               # APPROACH ROBUSTNESS: jitter the arm reset pose +/-0.3 rad/joint -> gripper starts OFF the cube, so the policy learns to APPROACH-correct (not assume a perfect pre-position)
+  episode_len: 150             # 10 s @ 15 Hz
+  success_lift_height: 0.07    # cube >= table_z+0.07 (=0.11): a clear, RELIABLY-HELD pick (the scripted lift holds ~0.12-0.13); 0.12 was above the demo's sustained height
+  grasp_radius: 0.05
+  pos_rand_xy: 0.0             # curriculum START: cube at center (warm-start from the converged center policy)
+  pos_rand_max: 0.10           # SPAWN CURRICULUM ON: auto-widen 0 -> 0.10. (probe_reach_ws: forward ~1/3 of a +/-0.15 box is unreachable at <=35deg; realistic symmetric reach ~+/-0.06, more backward. Auto-stalls at the reachable limit.)
+  pos_rand_step: 0.02
+  spawn_succ_thresh: 0.85
+  spawn_cooldown: 600
+  yaw_rand: 0.0                # still axis-aligned (yaw handled later via J5-align stage)
+  # ---- sim2real DR (reflecting the real deploy: bobbing under latency, noisy proprio, motor-gain &
+  #      grasp-point calibration gaps). Conservative starting magnitudes; tune by re-deploy. ----
+  dr_obs_pos_noise: 0.01       # cube/tcp OBS pos noise (real perception ~5mm; policy tolerates <=20mm)
+  dr_obs_qpos_noise: 0.01      # arm qpos OBS noise (~0.6 deg)
+  dr_obs_qvel_noise: 0.15      # arm qvel OBS noise (real vel = finite diff of noisy pos -> noisy)
+  dr_action_latency_max: 2     # v4: up to 2 policy-steps (~133ms) delay -> latency-robust (bobbing = latency signature)
+  dr_action_noise: 0.02        # motor tracking imperfection
+  dr_gain_scale: 0.35          # v4 Tier-1: per-env arm stiffness +/-35% (real motors softer; deploy trk~0.06)
+  dr_tcp_offset_xy: 0.03       # v4 Tier-1: +/-3cm per-env tcp OBS offset -> robust to JAW_FWD calib residual
+  dr_tcp_offset_z: 0.03        # v4 Tier-1: +/-3cm per-env tcp OBS z offset -> robust to FK_Z_CORR calib residual
+  # WRIST eye-in-hand cam in obs (D: learned IBVS via rendered detection). obs +3 (u,v,visible).
+  # v4: REVIVED with the clutter fix -- the v3 drop was because the real wrist view has background red the
+  # sim never had. Now: distractor blobs in-frame (below) + high dropout so the policy treats wrist as a
+  # SOFT, optional cue and falls back to state when it's wrong/absent (the v1 wrist bobbed by over-trusting it).
+  obs_wrist: true
+  wrist_cam_res: [320, 180]    # low-res; enough to locate the cube (high-res pointless for (u,v))
+  dr_wrist_uv_noise: 0.06      # v4: normalized (u,v) noise (detector jitter on a real cam)
+  dr_wrist_dropout: 0.25       # v4: 25% steps the detection drops -> policy must fall back to state (not hover)
+  dr_wrist_distractor: 0.4     # v4: 40% steps inject background red blobs -> SAME detector may lock onto clutter
+  dr_wrist_distractor_n: 2     # up to 2 distractor blobs per injected frame
+  dr_render_light: 0.3         # +/-30% dome-light jitter (rendered-detection sim2real)
+  # joint TORQUE in obs (sim2real torque sync). obs 43->50 -> RECOLLECT demos before training.
+  # OFF for v3: real Damiao torque magnitude is OUTSIDE the dr_torque_scale band -> OOD -> the policy
+  # under-commands (hovers ~5cm short) on the real rig. Pure state + validated perception instead.
+  obs_torque: false            # append arm joint efforts (6) + gripper effort (1)
+  torque_obs_scale: 0.2        # normalize raw effort -> O(1); deploy build_obs MUST use the same scale
+  dr_torque_noise: 0.05        # OBS torque noise
+  dr_torque_scale: 0.4         # per-env torque scale +/-40% -> robust to the uncertain sim<->real torque magnitude
+
+reward:
+  w_reach: 1.0
+  w_xy_align: 0.5
+  w_grasp: 0.5                 # was 2.0 — low so "grasp & hold on table" is not a lucrative camp
+  w_lift: 25.0                 # was 8.0 — real lifting (height x held) now dominates per-step reward
+  w_vertical: 3.0              # keep the gripper near-vertical near the cube (kills the ~41-deg edge grasp)
+  success_bonus: 80.0          # was 20.0 — exceeds the discounted hold stream so it finishes the lift
+  w_action: 0.03               # v4 ANTI-BOB: stronger penalty on action CHANGE ||a-a_prev||^2 (was 0.01)
+  w_time: 0.001
+  fall_penalty: 5.0
+  w_hold_still: 1.0            # v4 ANTI-BOB (was 0.5): reward settling (low arm speed) while near+closing -> commit-and-hold
+
+sac:
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  replay_size: 1000000
+  warmup_steps: 2000
+  updates_per_step: 1
+  target_entropy_scale: 1.0
+  layernorm: true
+  init_alpha: 0.2
+  demo_path: demos/pick_demos_wrist46.pt   # RLPD: 46-dim slice of pick_demos.pt = base43 + wrist3 (torque7 dropped)
+  demo_frac: 0.5

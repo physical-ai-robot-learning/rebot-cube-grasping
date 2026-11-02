@@ -1,0 +1,971 @@
+[TF32] enabled (matmul+cudnn allow_tf32, cudnn.benchmark)
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: ~/rebot_eval/.venv/lib/python3.11/site-packages/isaaclab/apps/isaaclab.python.headless.rendering.kit
+Loading user config located at: '~/rebot_eval/.venv/lib/python3.11/site-packages/isaacsim/kit/data/Kit/Isaac-Sim/5.1/user.config.json'
+[Info] [carb] Logging to file: ~/rebot_eval/.venv/lib/python3.11/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim/5.1/kit_20261102_215047.log
+2026-11-02T12:50:47Z [0ms] [Warning] [carb.crashreporter-breakpad.plugin] [previous crash] preventing upload of minidump due to user opt-out: '~/rebot_eval/.venv/lib/python3.11/site-packages/isaacsim/kit/data/Kit/Isaac-Sim/5.1/df633c62-a7ac-4b7b-c5ba4da5-da0c6a76.dmp'
+2026-11-02T12:50:47Z [111ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:47Z [112ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:47Z [128ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+2026-11-02T12:50:47Z [134ms] [Warning] [carb.cudainterop.plugin] CUDA_VISIBLE_DEVICES environment variable is set.
+2026-11-02T12:50:47Z [134ms] [Warning] [carb.cudainterop.plugin] Note CUDA device enumeration and Omniverse device enumeration are different.
+2026-11-02T12:50:47Z [134ms] [Warning] [carb.cudainterop.plugin] Setting CUDA_VISIBLE_DEVICES can lead to undesired behavior or crashes.
+2026-11-02T12:50:47Z [278ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:47Z [278ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:47Z [363ms] [Warning] [gpu.foundation.plugin] Skipping unsupported non-NVIDIA GPU: Intel(R) Graphics (ARL)
+2026-11-02T12:50:47Z [364ms] [Warning] [gpu.foundation.plugin] Skipping unsupported non-NVIDIA GPU: Intel(R) Graphics (ARL)
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 570.211.01    | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA GeForce RTX 5080          | Yes: 0 |     | 16303   MB | 10de      | 0          |
+|     |                                  |        |     |            | 2c02      | a4da2187.. |
+|     |                                  |        |     |            | 2         |            |
+|---------------------------------------------------------------------------------------------|
+| 1   | Intel(R) Graphics (ARL)          |        |     | 47751   MB | 8086      | 0          |
+|     |                                  |        |     |            | 7d67      | 8680677d.. |
+|     |                                  |        |     |            | 0         |            |
+|=============================================================================================|
+| OS: 24.04.4 LTS (Noble Numbat) ubuntu, Version: 24.04.4, Kernel: 6.17.0-35-generic
+| Processor: Intel(R) Core(TM) Ultra 9 285
+| Cores: 24 | Logical Cores: 24
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 63668 | Free Memory: 49223
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 4930
+|---------------------------------------------------------------------------------------------|
+2026-11-02T12:50:48Z [623ms] [Warning] [gpu.foundation.plugin] CPU performance profile is set to powersave. This profile sets the CPU to the lowest frequency reducing performance.
+2026-11-02T12:50:48Z [638ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-11-02T12:50:48Z [638ms] [Warning] [gpu.foundation.plugin] Detected IOMMU is enabled. Running CUDA peer-to-peer bandwidth and latency validation.
+Unidirectional P2P=Enabled Bandwidth (P2P Writes) Matrix (GB/s)
+   D\D     0 
+     0 818.92 
+P2P=Enabled Latency (P2P Writes) Matrix (us)
+   GPU     0 
+     0   2.06 
+
+   CPU     0 
+     0   1.53 
+2026-11-02T12:50:48Z [1,006ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,007ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,021ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,021ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,027ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,027ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,031ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,031ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,032ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,032ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,033ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-11-02T12:50:48Z [1,033ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-11-02T12:50:48Z [1,172ms] [Warning] [omni.log] Source: omni.hydra was already registered.
+2026-11-02T12:50:48Z [1,271ms] [Warning] [carb] Acquiring non optional plugin interface which is not listed as dependency: [omni::physx::IPhysxBenchmarks v1.0] (plugin: <default plugin>), by client: omni.physics.physx.plugin. Add it to CARB_PLUGIN_IMPL_DEPS() macro of a client.
+2026-11-02T12:50:48Z [1,367ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-11-02T12:50:49Z [1,751ms] [Warning] [pxr.Semantics] pxr.Semantics is deprecated - please use Semantics instead
+2026-11-02T12:50:49Z [1,808ms] [Warning] [omni.graph.core.plugin] Found duplicate of category 'Replicator' - was 'Annotators', adding 'Fabric Reader'
+2026-11-02T12:50:49Z [1,808ms] [Warning] [omni.graph.core.plugin] Category 'Replicator' not accepted on node type 'omni.replicator.core.FabricReader' in extension 'omni.replicator.core'
+2026-11-02T12:50:49Z [1,809ms] [Warning] [omni.replicator.core.scripts.extension] No material configuration file, adding configuration to material settings directly.
+2026-11-02T12:50:51Z [3,991ms] [Warning] [omni.fabric.plugin] Warning: attribute viewportHandle not found for bucket id 7
+
+[ROBOT] profile=ours arm_joints=('shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_yaw', 'wrist_roll') ee_candidates=('gripper_link', 'wrist_roll_link', 'wrist_link')
+[INFO]: Parsing configuration from: leisaac.tasks.lift_cube.lift_cube_env_cfg:LiftCubeEnvCfg
+[EVAL-HOOK] seed=0 out=~/rebot_sim2real_reeval_20261102/staged_e2e
+[SPAWN] cube spawn -> x(0.0, 0.8) y(-1.05, -0.4) (FOV restriction removed)
+[HIGH-START] init_state.joint_pos -> {'shoulder_pan': -1.5708, 'shoulder_lift': -1.6684, 'elbow_flex': -2.2227, 'wrist_flex': 1.55, 'wrist_roll': -0.0326, 'gripper': 0.0} (wrist_flex boot-cap 1.55, true target 2.3 applied post-REAL_JLIM)
+[HIGH-START] _REST_QPOS -> [-1.5708, -1.6684, -2.2227, 2.3, 0.0012, -0.0326]
+[ZOOM] front focal 18->26.4, wrist focal 12->26.4 (narrower FoV / cube bigger)
+[WRIST-OFF] wrist cam moved to pos=(-0.09, 0.0, -0.048) aim=(0.05, 0.0, 0.1) (gripper_link frame; -z=up)
+[DET] single-cube ON (P1-identical: distractors removed)
+[RENDER] render_interval 2 -> 10 (= decimation 10)
+[EP-LEN] episode_length_s -> 42.0 (= 420 steps @10Hz)
+[PHASE-BUDGET] SEARCH_MAX_S=20.0(200 steps) | APP_GUAR_S=20.0(200 steps) @ 10Hz
+[BASE-MOVE] robot base (0.35, -0.64, 0.01) -> (0.35, -1.15, 0.01)
+[FRONT-CAM] eye=(0.35, 0.05, 0.58) target=(0.35, -0.8499999999999999, 0.08)
+[TABLE-SCALE] scene.spawn.scale -> (2.285714285714286, 1.846153846153846, 1.0) (x1.60 y1.20 m)
+[TABLE-SHIFT] init pos +x 0.0 -> (0.0, 0.0, 0.0)
+
+[36m======================================================================================[0m
+[36m[1m[INFO][IsaacLab]: Logging to file: /tmp/isaaclab/logs/isaaclab_2026-11-02_21-50-51.log[0m
+[36m======================================================================================[0m
+
+[33m21:50:51 [simulation_context.py] WARNING: The `enable_external_forces_every_iteration` parameter in the PhysxCfg is set to False. If you are experiencing noisy velocities, consider enabling this flag. You may need to slightly increase the number of velocity iterations (setting it to 1 or 2 rather than 0), together with this flag, to improve the accuracy of velocity updates.[0m
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : 0
+	Physics step-size     : 0.01
+	Rendering step-size   : 0.1
+	Environment step-size : 0.1
+[INFO]: Time taken for scene creation : 0.291186 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 32
+	Environment spacing   : 8.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+2026-11-02T12:50:53Z [5,537ms] [Warning] [omni.fabric.plugin] getAttributeCount called on non-existent path /World/envs/env_9/Robot/link6/visuals/link6/node_STL_BINARY_
+2026-11-02T12:50:53Z [5,537ms] [Warning] [omni.fabric.plugin] getTypes called on non-existent path /World/envs/env_9/Robot/link6/visuals/link6/node_STL_BINARY_
+[INFO]: Time taken for simulation start : 2.161576 seconds
+[INFO] Command Manager:  <CommandManager> contains 0 active terms.
++------------------------+
+|  Active Command Terms  |
++--------+-------+-------+
+| Index  | Name  |  Type |
++--------+-------+-------+
++--------+-------+-------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++---------+--------------------------+
+|  Index  | Name                     |
++---------+--------------------------+
+|    0    | reset_all                |
+|    1    | reset_cubes_mixed        |
+|    2    | success_counter          |
++---------+--------------------------+
++---------------------------------------+
+| Active Event Terms in Mode: 'startup' |
++---------+-----------------------------+
+|  Index  | Name                        |
++---------+-----------------------------+
+|    0    | gripper_high_friction       |
++---------+-----------------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++---------------------+
+| Active Recorder Terms |
++-----------+---------+
+|   Index   | Name    |
++-----------+---------+
++-----------+---------+
+
+[INFO] Action Manager:  <ActionManager> contains 2 active terms.
++------------------------------------+
+|   Active Action Terms (shape: 7)   |
++-------+----------------+-----------+
+| Index | Name           | Dimension |
++-------+----------------+-----------+
+|   0   | arm_action     |         6 |
+|   1   | gripper_action |         1 |
++-------+----------------+-----------+
+
+[INFO] Observation Manager: <ObservationManager> contains 1 groups.
++------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (23,)) |
++------------+----------------------------+------------+
+|   Index    | Name                       |   Shape    |
++------------+----------------------------+------------+
+|     0      | qpos                       |    (8,)    |
+|     1      | target_qpos                |    (7,)    |
+|     2      | dist_to_rest               |    (6,)    |
+|     3      | contact_force              |    (2,)    |
++------------+----------------------------+------------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 2 active terms.
++----------------------------------+
+|     Active Termination Terms     |
++-------+---------------+----------+
+| Index | Name          | Time Out |
++-------+---------------+----------+
+|   0   | time_out      |   True   |
+|   1   | success_latch |  False   |
++-------+---------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 6 active terms.
++--------------------------------------------+
+|            Active Reward Terms             |
++-------+---------------+--------------------+
+| Index | Name          |             Weight |
++-------+---------------+--------------------+
+|   0   | reaching      |  3.333333333333333 |
+|   1   | grasped       |  3.333333333333333 |
+|   2   | table_penalty |              -10.0 |
+|   3   | not_lifted    | -3.333333333333333 |
+|   4   | lift          |  6.666666666666666 |
+|   5   | success       |               10.0 |
++-------+---------------+--------------------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++----------------------+
+| Active Curriculum Terms |
++-----------+----------+
+|   Index   | Name     |
++-----------+----------+
++-----------+----------+
+
+[INFO]: Completed setting up the environment...
+[Motor] velocity: unlimited
+[Gripper] friction=2.0 on 96 prims (Squint-exact)
+[Robot] base_link                 mass=0.7987 kg
+[Robot] link1                     mass=0.0841 kg
+[Robot] link2                     mass=0.7104 kg
+[Robot] link3                     mass=0.5249 kg
+[Robot] link4                     mass=0.1911 kg
+[Robot] link5                     mass=0.1500 kg
+[Robot] link6                     mass=0.0187 kg
+[Robot] gripper_link              mass=0.1818 kg
+[Robot] gripper_left              mass=0.0423 kg
+[Robot] gripper_right             mass=0.0423 kg
+[Robot] Total robot mass (env_0): 2.7445 kg
+[Cube] mass=0.0200 kg (20.0g) friction=0.3
+[Cube] Set 32 cubes to 20g
+[SCENE-DUMP] env_0/Scene (6 prims): ['Scene(Xform)', 'counter_right_main_group(Xform)', 'geometry_0(Mesh)', 'Looks()', 'counter_right_main_group(Material)', 'Shader(Shader)']
+[KILL-CUBE] embedded table cube prims DELETED: 32/32 -> ['/World/envs/env_0/Scene/cube', '/World/envs/env_1/Scene/cube', '/World/envs/env_2/Scene/cube', '/World/envs/env_3/Scene/cube']
+[TABLE-BBOX] size(x,y,z)=(1.600,1.200,0.030) | x[24.007,25.607] y[-17.250,-16.050] top_z=0.041
+[DET] profile=ours EE=gripper_link body=7 jacobi=6 joints=[0, 1, 2, 3, 4, 5]
+[DET] start num_envs=32 act=7 state=28 buffer=1000000@cuda UTD=128
+[DET] YOLO-OBB detector loaded: ~/rebot_eval/det_cube_obb_yolo26m_ft3.pt (conf=0.15) -> replaces HSV
+[FRONT-FOV] env-local  X[-0.605, 1.305]  Y[-2.590, -0.394]  (fwd-dist Y+1.15 -> [-1.440, 0.756])  cam-local(0.35,0.05,0.58) plane_z=0.060  hits 240/256
+[UNPROJ] GATED err_xy med=0.002 p90=0.007 max=0.020 <5cm=100% | kept 100% of seen (rz>0.0) n_keep=29
+[DET-DIST fwd] 0.15-0.30(n8):F0.88/W0.00/cf0.77 | 0.30-0.45(n10):F0.90/W0.20/cf0.79 | 0.45-0.60(n5):F1.00/W0.80/cf0.83 | 0.60-0.90(n9):F0.89/W0.11/cf0.79  (F=front detection rate W=wrist detection rate cf=front mean conf)
+[FRACDBG] dist[0.40,0.70) frac_med=0.0127 n=7
+[UNPROJ-W] WRIST err_xy med=1.933 p90=3.048 max=3.423 <5cm=0% n_seen=7 n_keep=7
+[UNPROJ-W-STEEP] n=1 err(raw)=0.677 err(flipXY)=0.487 err(flipY)=0.733 err(flipX)=0.441  <- smallest = fix
+[CAMDBG] WRIST pos=[24.179689407348633, -17.149999618530273, 0.24970071017742157] quat_ros=[-0.3819970190525055, 0.5950449109077454, 0.5950474739074707, -0.3819926381111145] K[fx,fy,cx,cy]=[322.5,322.5,128.0,128.0] HW=256x256
+[CAMDBG] FRONT pos=[24.350000381469727, -15.949999809265137, 0.5799999833106995] quat_ros=[-3.677432802717817e-09, 1.0396866700901342e-09, 0.8618978261947632, -0.5070819854736328] K[fx,fy,cx,cy]=[322.5,322.5,128.0,128.0] HW=256x256
+[CALIB] SNAP targets: CTGT=(0.283,0.803) FRAC=0.230 GOFF=[-0.0189, -0.0037, 0.0027]
+[TP] ===== TWO-PHASE (search + approach) training =====
+[TP-EVAL] loaded search_last.pt (step 8038400) from <repo>/checkpoints/project2
+[TP-EVAL] loaded approach_last.pt (step 3712000) from <repo>/checkpoints/project2
+[TP-EVAL] step-through mode: set cube + STEP. deterministic, no training.
+[TP] UI http://0.0.0.0:8967 (bound)
+[REAL-JLIM] B601-DM SIM-FRAME joint limits applied: [('shoulder_pan', (-4.187, 1.043)), ('shoulder_lift', (-3.513, 0.037)), ('elbow_flex', (-3.878, 0.052)), ('wrist_flex', (-0.764, 3.126)), ('wrist_yaw', (-1.777, 1.553)), ('wrist_roll', (-5.619, 2.001))]
+[REAL-JLIM] wrist_flex START/rest -> 2.3 (default_joint_pos[3] overridden post-widen; was boot-capped 1.55)
+[GRIP-JLIM] 'gripper' idx6 USD-limit=(0.0, 0.0715) default=0.0000
+[GRIP-JLIM] 'gripper_joint2' idx7 USD-limit=(0.0, 0.0715) default=0.0000
+[GRIP-JLIM] applied stroke [0.0,0.045]m to ['gripper', 'gripper_joint2'] (DM=RS URDF); adjust via GRIP_LO/GRIP_HI if the printed zero differs
+[EVAL-SET] 86 fixed cases from <repo>/results/project2/eval_grids/evalgrid_86cells_2026-08-03.npy (round-robin, num-envs=32)
+[EVAL-SET] startup: placed 32 eval cubes (first round now counts)
+[TPDBG ph=0] CMD pan=-0.988 lift=+0.000 elbow=+0.000 wflex=-0.676 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.081 lift=-0.020 elbow=+0.011 wflex=-0.221 wyaw=-0.007 wroll=+0.033
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.151 lift=-0.003 elbow=+0.003 wflex=-0.004 wyaw=-0.004 wroll=+0.002
+[TPDBG ph=0] CMD pan=-0.689 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.138 lift=+0.002 elbow=+0.000 wflex=-0.085 wyaw=-0.000 wroll=-0.001
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.935 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.020 lift=-0.001 elbow=+0.001 wflex=-0.132 wyaw=+0.000 wroll=+0.001
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.570 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.139 lift=-0.002 elbow=+0.001 wflex=-0.123 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.599 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.162 lift=-0.002 elbow=+0.001 wflex=-0.106 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=+0.019 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.166 lift=-0.001 elbow=+0.000 wflex=-0.064 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.374 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.167 lift=-0.000 elbow=+0.001 wflex=-0.045 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.901 lift=+0.000 elbow=+0.000 wflex=-0.460 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.159 lift=-0.000 elbow=+0.001 wflex=-0.060 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.926 lift=+0.000 elbow=+0.000 wflex=+0.839 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.154 lift=-0.000 elbow=-0.001 wflex=+0.007 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=0] CMD pan=+0.811 lift=+0.000 elbow=+0.000 wflex=+0.981 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.145 lift=+0.000 elbow=+0.000 wflex=+0.096 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=0] CMD pan=+0.709 lift=+0.000 elbow=+0.000 wflex=+1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.129 lift=+0.001 elbow=-0.000 wflex=+0.136 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.876 lift=+0.000 elbow=+0.000 wflex=+0.440 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.134 lift=+0.001 elbow=-0.001 wflex=+0.119 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.958 lift=+0.000 elbow=+0.000 wflex=-0.439 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.151 lift=+0.001 elbow=-0.001 wflex=+0.038 wyaw=+0.000 wroll=+0.001
+[TPDBG ph=0] CMD pan=+0.402 lift=+0.000 elbow=+0.000 wflex=+0.061 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.113 lift=-0.000 elbow=-0.001 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+0.677 lift=+0.000 elbow=+0.000 wflex=-0.387 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.098 lift=+0.001 elbow=+0.000 wflex=-0.020 wyaw=+0.000 wroll=-0.000
+[TP-EVAL] 🔵→🟢 SEARCH→APPROACH (centered held 1 steps) @step 480
+[TPDBG ph=1] CMD pan=+0.978 lift=-0.642 elbow=+0.224 wflex=-0.832 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.081 lift=-0.059 elbow=+0.027 wflex=-0.039 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.413 lift=-0.237 elbow=+0.254 wflex=-0.935 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.036 lift=-0.048 elbow=+0.038 wflex=-0.053 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.285 lift=+0.196 elbow=+0.399 wflex=-0.702 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.024 lift=-0.010 elbow=+0.050 wflex=-0.039 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.168 lift=+0.389 elbow=+0.485 wflex=-0.610 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.014 lift=+0.007 elbow=+0.057 wflex=-0.033 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.045 lift=+0.469 elbow=+0.511 wflex=-0.577 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.015 elbow=+0.060 wflex=-0.031 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.016 lift=+0.520 elbow=+0.547 wflex=-0.592 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.020 elbow=+0.063 wflex=-0.032 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.003 lift=+0.555 elbow=+0.582 wflex=-0.623 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.023 elbow=+0.066 wflex=-0.034 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.007 lift=+0.588 elbow=+0.616 wflex=-0.644 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.027 elbow=+0.069 wflex=-0.036 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.043 lift=+0.644 elbow=+0.683 wflex=-0.669 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.032 elbow=+0.075 wflex=-0.038 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.068 lift=+0.682 elbow=+0.745 wflex=-0.709 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=+0.037 elbow=+0.080 wflex=-0.040 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.089 lift=+0.672 elbow=+0.796 wflex=-0.787 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.037 elbow=+0.084 wflex=-0.045 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.086 lift=+0.640 elbow=+0.806 wflex=-0.851 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.036 elbow=+0.085 wflex=-0.048 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.029 lift=+0.525 elbow=+0.743 wflex=-0.925 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=+0.028 elbow=+0.080 wflex=-0.052 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.130 lift=+0.539 elbow=+0.739 wflex=-0.906 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=+0.029 elbow=+0.080 wflex=-0.052 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.090 lift=+0.613 elbow=+0.790 wflex=-0.858 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=+0.036 elbow=+0.084 wflex=-0.049 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.133 lift=+0.427 elbow=+0.671 wflex=-0.914 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=+0.022 elbow=+0.073 wflex=-0.051 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.029 lift=+0.295 elbow=+0.551 wflex=-0.909 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=+0.011 elbow=+0.063 wflex=-0.051 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.162 lift=+0.298 elbow=+0.324 wflex=-0.691 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.011 elbow=+0.044 wflex=-0.037 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.121 lift=+0.088 elbow=+0.237 wflex=-0.838 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.011 lift=-0.005 elbow=+0.036 wflex=-0.046 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.095 lift=+0.595 elbow=+0.467 wflex=-0.569 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.035 elbow=+0.056 wflex=-0.032 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.196 lift=-0.151 elbow=+0.058 wflex=-0.922 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=-0.023 elbow=+0.021 wflex=-0.048 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.379 lift=+0.119 elbow=+0.283 wflex=-0.815 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.031 lift=-0.004 elbow=+0.040 wflex=-0.046 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.742 lift=+0.346 elbow=+0.281 wflex=+0.069 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.062 lift=+0.017 elbow=+0.037 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.348 lift=+0.469 elbow=+0.379 wflex=+0.085 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.028 lift=+0.028 elbow=+0.047 wflex=+0.008 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.080 lift=-0.090 elbow=-0.086 wflex=-0.039 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.018 elbow=+0.009 wflex=+0.005 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.038 lift=-0.027 elbow=-0.071 wflex=-0.082 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.014 elbow=+0.009 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.091 lift=+0.251 elbow=-0.108 wflex=-0.457 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.008 elbow=+0.007 wflex=-0.023 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.075 lift=+0.288 elbow=+0.198 wflex=-0.029 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=+0.014 elbow=+0.030 wflex=-0.003 wyaw=+0.001 wroll=-0.000
+2026-11-02T12:51:16Z [28,568ms] [Warning] [carb] Client gpu.foundation.plugin has acquired [gpu::unstable::IMemoryBudgetManagerFactory v0.1] 100 times. Consider accessing this interface with carb::getCachedInterface() (Performance warning)
+[TPDBG ph=1] CMD pan=-0.231 lift=+0.238 elbow=+0.099 wflex=-0.123 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.016 lift=+0.015 elbow=+0.015 wflex=-0.008 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.117 lift=-0.094 elbow=-0.154 wflex=-0.126 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.009 elbow=-0.008 wflex=+0.007 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=-0.038 elbow=-0.170 wflex=-0.212 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.008 elbow=-0.006 wflex=+0.004 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.174 lift=+0.589 elbow=+0.318 wflex=-0.194 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.014 lift=+0.042 elbow=+0.033 wflex=-0.024 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.080 lift=+0.210 elbow=+0.154 wflex=+0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=+0.017 elbow=+0.014 wflex=-0.012 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.181 lift=-0.092 elbow=-0.093 wflex=-0.042 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.015 lift=-0.007 elbow=-0.006 wflex=+0.007 wyaw=+0.001 wroll=-0.001
+[TP] step=1,600 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=0) rsr_old=0.0%(n=0) LSR=0.0% r_s=+0.419 r_a=-1.469 gz=0.042 gaxDown=84° headDown=84° wflex=51° mouthz=0.088 dcubeS=0.314 dcubeA=0.035 mxy=0.591 vis=0.56
+[REACH-DIAG] n=31 reached=False dcube=0.046 | horiz(xy)=0.035 vert(mouth-cube)=+0.027 | mouthz=0.088 cubez=0.061 gz(EE)=0.046 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=15 (horiz<0.06) wrist-cube pixel cx=0.457 cy=0.739  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=0.0% | covered 0/86 (0%) | full sweeps=0 cursor=32
+[TPDBG ph=1] CMD pan=-0.142 lift=-0.093 elbow=-0.096 wflex=-0.044 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=-0.008 elbow=-0.006 wflex=+0.006 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.153 lift=+0.325 elbow=+0.247 wflex=+0.017 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.012 lift=+0.025 elbow=+0.020 wflex=-0.018 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.173 lift=-0.074 elbow=-0.074 wflex=-0.034 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=-0.005 elbow=-0.004 wflex=+0.005 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.188 lift=-0.060 elbow=-0.067 wflex=-0.037 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.005 elbow=-0.004 wflex=+0.003 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.213 lift=-0.057 elbow=-0.072 wflex=-0.048 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=-0.005 elbow=-0.004 wflex=+0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.208 lift=-0.055 elbow=-0.073 wflex=-0.052 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=-0.005 elbow=-0.003 wflex=+0.003 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.168 lift=-0.067 elbow=-0.085 wflex=-0.056 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.006 elbow=-0.005 wflex=+0.004 wyaw=+0.002 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.085 lift=-0.107 elbow=-0.116 wflex=-0.058 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.010 elbow=-0.007 wflex=+0.006 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=-0.092 elbow=-0.120 wflex=-0.081 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.009 elbow=-0.007 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.099 lift=-0.075 elbow=-0.135 wflex=-0.120 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.008 elbow=-0.007 wflex=+0.006 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.089 lift=-0.032 elbow=-0.146 wflex=-0.184 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.006 elbow=-0.005 wflex=+0.004 wyaw=+0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.003 lift=-0.042 elbow=-0.187 wflex=-0.233 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.008 elbow=-0.006 wflex=+0.005 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.038 lift=+0.141 elbow=-0.177 wflex=-0.424 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.002 elbow=+0.001 wflex=-0.007 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.048 lift=-0.023 elbow=-0.169 wflex=-0.229 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.007 elbow=-0.005 wflex=+0.002 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.007 lift=+0.026 elbow=-0.187 wflex=-0.311 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.004 elbow=-0.004 wflex=+0.003 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.008 lift=+0.098 elbow=-0.198 wflex=-0.408 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.001 wflex=-0.006 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.031 lift=-0.011 elbow=-0.188 wflex=-0.270 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.007 elbow=-0.005 wflex=+0.003 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.022 lift=+0.041 elbow=-0.207 wflex=-0.357 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.004 elbow=-0.003 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.008 lift=+0.082 elbow=-0.208 wflex=-0.407 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.002 elbow=-0.002 wflex=-0.004 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.013 lift=-0.018 elbow=-0.211 wflex=-0.297 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.008 elbow=-0.006 wflex=+0.005 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.024 lift=+0.116 elbow=-0.225 wflex=-0.473 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.001 elbow=-0.003 wflex=-0.009 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.638 lift=+0.548 elbow=+0.360 wflex=-0.104 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.053 lift=+0.039 elbow=+0.033 wflex=-0.027 wyaw=+0.002 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.031 lift=-0.230 elbow=-0.214 wflex=-0.062 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.018 elbow=-0.015 wflex=+0.015 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.077 lift=-0.052 elbow=-0.083 wflex=-0.066 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=-0.006 elbow=-0.005 wflex=+0.005 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.052 lift=+0.114 elbow=+0.035 wflex=-0.081 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=+0.007 elbow=+0.006 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.062 lift=-0.045 elbow=-0.089 wflex=-0.083 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.005 elbow=-0.004 wflex=+0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.083 lift=+0.024 elbow=-0.046 wflex=-0.097 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=-0.000 elbow=-0.000 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.020 lift=-0.170 elbow=-0.220 wflex=-0.135 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.016 elbow=-0.013 wflex=+0.012 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.195 lift=+0.875 elbow=+0.504 wflex=-0.271 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=+0.064 elbow=+0.050 wflex=-0.029 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.224 lift=+0.502 elbow=+0.411 wflex=+0.067 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=+0.041 elbow=+0.034 wflex=-0.023 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.055 lift=-0.082 elbow=-0.078 wflex=-0.032 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.005 elbow=-0.004 wflex=+0.005 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.183 lift=+0.264 elbow=+0.213 wflex=+0.041 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.016 lift=+0.022 elbow=+0.017 wflex=-0.011 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.111 lift=-0.050 elbow=-0.048 wflex=-0.021 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.003 elbow=-0.002 wflex=+0.002 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=-0.049 elbow=-0.048 wflex=-0.022 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.003 elbow=-0.003 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.120 lift=-0.051 elbow=-0.050 wflex=-0.024 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.004 elbow=-0.003 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.148 lift=-0.043 elbow=-0.046 wflex=-0.025 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.003 elbow=-0.003 wflex=+0.002 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.165 lift=+0.672 elbow=+0.552 wflex=+0.127 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.011 lift=+0.056 elbow=+0.042 wflex=-0.025 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.032 lift=-0.019 elbow=-0.018 wflex=-0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.001 elbow=+0.000 wflex=+0.001 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.050 lift=-0.016 elbow=-0.017 wflex=-0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.064 lift=-0.013 elbow=-0.014 wflex=-0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.070 lift=-0.009 elbow=-0.011 wflex=-0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.072 lift=-0.008 elbow=-0.010 wflex=-0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.073 lift=-0.007 elbow=-0.010 wflex=-0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.071 lift=-0.007 elbow=-0.010 wflex=-0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.073 lift=-0.004 elbow=-0.007 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.072 lift=-0.005 elbow=-0.008 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.070 lift=-0.003 elbow=-0.007 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.070 lift=-0.003 elbow=-0.006 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.069 lift=-0.002 elbow=-0.005 wflex=-0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.068 lift=-0.001 elbow=-0.004 wflex=-0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TP] step=3,200 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=0) rsr_old=0.0%(n=0) LSR=0.0% r_s=+0.657 r_a=-1.851 gz=0.042 gaxDown=82° headDown=82° wflex=51° mouthz=0.085 dcubeS=0.314 dcubeA=0.045 mxy=0.585 vis=0.69
+[REACH-DIAG] n=31 reached=False dcube=0.052 | horiz(xy)=0.043 vert(mouth-cube)=+0.024 | mouthz=0.085 cubez=0.061 gz(EE)=0.044 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=19 (horiz<0.06) wrist-cube pixel cx=0.441 cy=0.721  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=0.0% | covered 0/86 (0%) | full sweeps=0 cursor=32
+[TPDBG ph=1] CMD pan=-0.066 lift=-0.000 elbow=-0.004 wflex=-0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.068 lift=+0.001 elbow=-0.003 wflex=-0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.069 lift=+0.004 elbow=-0.001 wflex=-0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.002 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.067 lift=+0.007 elbow=+0.002 wflex=-0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.002 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.067 lift=+0.006 elbow=+0.001 wflex=-0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.002 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.064 lift=+0.009 elbow=+0.004 wflex=-0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.002 elbow=+0.002 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.065 lift=+0.011 elbow=+0.006 wflex=-0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.002 elbow=+0.002 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.064 lift=+0.012 elbow=+0.007 wflex=-0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.002 elbow=+0.002 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.064 lift=+0.015 elbow=+0.009 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.003 elbow=+0.002 wflex=-0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.061 lift=+0.017 elbow=+0.010 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.003 elbow=+0.002 wflex=-0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.060 lift=+0.020 elbow=+0.013 wflex=+0.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.003 elbow=+0.002 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.060 lift=+0.024 elbow=+0.017 wflex=+0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.004 elbow=+0.003 wflex=-0.002 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.058 lift=+0.028 elbow=+0.019 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.004 elbow=+0.003 wflex=-0.002 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.054 lift=+0.033 elbow=+0.023 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.004 elbow=+0.003 wflex=-0.003 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.053 lift=+0.037 elbow=+0.027 wflex=+0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.005 elbow=+0.004 wflex=-0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.048 lift=+0.042 elbow=+0.030 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.005 elbow=+0.004 wflex=-0.003 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.044 lift=+0.046 elbow=+0.034 wflex=+0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.006 elbow=+0.004 wflex=-0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.037 lift=+0.053 elbow=+0.040 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.006 elbow=+0.005 wflex=-0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.032 lift=+0.061 elbow=+0.045 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.007 elbow=+0.005 wflex=-0.004 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.028 lift=+0.068 elbow=+0.050 wflex=+0.015 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.008 elbow=+0.006 wflex=-0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.023 lift=+0.076 elbow=+0.057 wflex=+0.018 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.009 elbow=+0.006 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.017 lift=+0.086 elbow=+0.064 wflex=+0.021 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.009 elbow=+0.007 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.009 lift=+0.095 elbow=+0.071 wflex=+0.023 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.010 elbow=+0.007 wflex=-0.006 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.002 lift=+0.106 elbow=+0.079 wflex=+0.027 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.011 elbow=+0.008 wflex=-0.006 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.392 lift=+0.822 elbow=+0.617 wflex=+0.230 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.032 lift=+0.072 elbow=+0.047 wflex=-0.024 wyaw=-0.000 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.002 lift=+0.490 elbow=+0.500 wflex=+0.431 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.050 elbow=+0.033 wflex=-0.020 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.380 lift=+0.345 elbow=+0.530 wflex=+0.680 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.032 lift=+0.043 elbow=+0.027 wflex=-0.011 wyaw=-0.003 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.228 lift=+0.019 elbow=+0.338 wflex=+0.661 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.019 lift=+0.016 elbow=+0.011 wflex=-0.010 wyaw=+0.003 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.391 lift=-0.052 elbow=+0.281 wflex=+0.627 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.031 lift=+0.009 elbow=+0.007 wflex=-0.011 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.495 lift=+0.135 elbow=+0.385 wflex=+0.654 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.043 lift=+0.027 elbow=+0.014 wflex=+0.001 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.308 lift=-0.149 elbow=+0.217 wflex=+0.606 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.024 lift=+0.002 elbow=+0.003 wflex=-0.007 wyaw=+0.000 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.245 lift=+0.048 elbow=+0.339 wflex=+0.663 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.019 lift=+0.018 elbow=+0.012 wflex=-0.011 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.374 lift=+0.081 elbow=+0.350 wflex=+0.664 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.033 lift=+0.023 elbow=+0.011 wflex=+0.001 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.216 lift=-0.178 elbow=+0.193 wflex=+0.597 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=-0.000 elbow=+0.001 wflex=-0.005 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.341 lift=-0.047 elbow=+0.271 wflex=+0.636 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.028 lift=+0.010 elbow=+0.008 wflex=-0.010 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.135 lift=-0.128 elbow=+0.207 wflex=+0.582 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=+0.005 elbow=+0.002 wflex=+0.002 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.126 lift=+0.056 elbow=+0.331 wflex=+0.669 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=+0.020 elbow=+0.011 wflex=-0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.260 lift=+0.009 elbow=+0.303 wflex=+0.666 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.020 lift=+0.015 elbow=+0.011 wflex=-0.010 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.135 lift=+0.057 elbow=+0.326 wflex=+0.677 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.013 lift=+0.021 elbow=+0.011 wflex=-0.002 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.028 lift=-0.015 elbow=+0.283 wflex=+0.662 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.015 elbow=+0.008 wflex=-0.003 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.240 lift=+0.064 elbow=+0.331 wflex=+0.703 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.021 lift=+0.022 elbow=+0.010 wflex=+0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.194 lift=-0.076 elbow=+0.246 wflex=+0.657 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=+0.010 elbow=+0.004 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.697 lift=-0.004 elbow=+0.291 wflex=+0.697 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.032 lift=+0.018 elbow=+0.004 wflex=+0.011 wyaw=-0.008 wroll=+0.003
+[TPDBG ph=1] CMD pan=+0.244 lift=+0.072 elbow=+0.325 wflex=+0.726 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.020 lift=+0.021 elbow=+0.013 wflex=-0.008 wyaw=+0.009 wroll=-0.003
+[TPDBG ph=1] CMD pan=-0.595 lift=-0.026 elbow=+0.269 wflex=+0.695 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.034 lift=+0.016 elbow=+0.004 wflex=+0.010 wyaw=-0.008 wroll=+0.002
+[TPDBG ph=1] CMD pan=+0.051 lift=+0.080 elbow=+0.320 wflex=+0.738 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=+0.024 elbow=+0.010 wflex=+0.002 wyaw=+0.008 wroll=-0.002
+[TPDBG ph=1] CMD pan=+0.029 lift=+0.001 elbow=+0.271 wflex=+0.708 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.017 elbow=+0.008 wflex=-0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.036 lift=-0.006 elbow=+0.264 wflex=+0.710 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.016 elbow=+0.007 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.023 lift=-0.031 elbow=+0.246 wflex=+0.701 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.014 elbow=+0.007 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.092 lift=-0.005 elbow=+0.257 wflex=+0.719 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.016 elbow=+0.007 wflex=+0.001 wyaw=-0.001 wroll=+0.000
+[TP] step=4,800 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=0) rsr_old=0.0%(n=0) LSR=0.0% r_s=+0.339 r_a=-3.244 gz=0.042 gaxDown=80° headDown=80° wflex=52° mouthz=0.083 dcubeS=0.314 dcubeA=0.042 mxy=0.586 vis=0.66
+[REACH-DIAG] n=31 reached=False dcube=0.053 | horiz(xy)=0.045 vert(mouth-cube)=+0.022 | mouthz=0.083 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=15 (horiz<0.06) wrist-cube pixel cx=0.472 cy=0.780  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=0.0% | covered 0/86 (0%) | full sweeps=0 cursor=32
+[TPDBG ph=1] CMD pan=-0.087 lift=-0.052 elbow=+0.228 wflex=+0.698 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.012 elbow=+0.005 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=-0.047 elbow=+0.228 wflex=+0.704 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.013 elbow=+0.005 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=-0.033 elbow=+0.232 wflex=+0.715 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.014 elbow=+0.006 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.122 lift=-0.042 elbow=+0.224 wflex=+0.714 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.013 elbow=+0.006 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.141 lift=-0.057 elbow=+0.214 wflex=+0.710 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.012 elbow=+0.005 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.150 lift=-0.055 elbow=+0.212 wflex=+0.715 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.012 elbow=+0.005 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.117 lift=-0.019 elbow=+0.225 wflex=+0.739 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.015 elbow=+0.006 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.118 lift=-0.026 elbow=+0.217 wflex=+0.740 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.015 elbow=+0.006 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.145 lift=-0.037 elbow=+0.208 wflex=+0.739 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.014 elbow=+0.005 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.143 lift=-0.047 elbow=+0.198 wflex=+0.737 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.013 elbow=+0.004 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.128 lift=-0.073 elbow=+0.183 wflex=+0.725 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.011 elbow=+0.004 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.136 lift=-0.090 elbow=+0.173 wflex=+0.718 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.009 elbow=+0.003 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.142 lift=-0.097 elbow=+0.167 wflex=+0.716 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.009 elbow=+0.003 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.128 lift=-0.112 elbow=+0.158 wflex=+0.709 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.007 elbow=+0.002 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.119 lift=-0.114 elbow=+0.155 wflex=+0.709 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.007 elbow=+0.002 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.118 lift=-0.112 elbow=+0.153 wflex=+0.713 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.007 elbow=+0.002 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.083 lift=-0.116 elbow=+0.149 wflex=+0.712 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.007 elbow=+0.002 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.081 lift=-0.108 elbow=+0.150 wflex=+0.721 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.008 elbow=+0.003 wflex=+0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.081 lift=-0.109 elbow=+0.147 wflex=+0.723 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.008 elbow=+0.003 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=-0.116 elbow=+0.142 wflex=+0.721 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.007 elbow=+0.002 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.106 lift=-0.128 elbow=+0.135 wflex=+0.716 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.006 elbow=+0.002 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.102 lift=-0.133 elbow=+0.131 wflex=+0.714 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.005 elbow=+0.002 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.106 lift=-0.134 elbow=+0.129 wflex=+0.715 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.005 elbow=+0.002 wflex=+0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.113 lift=-0.137 elbow=+0.126 wflex=+0.715 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.005 elbow=+0.002 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.120 lift=-0.140 elbow=+0.124 wflex=+0.715 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.003 elbow=+0.000 wflex=+0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=-0.181 elbow=+0.109 wflex=+0.685 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=+0.000 elbow=-0.001 wflex=+0.002 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.148 lift=-0.179 elbow=+0.109 wflex=+0.685 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.001 elbow=-0.001 wflex=+0.004 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.218 lift=-0.187 elbow=+0.106 wflex=+0.679 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=+0.001 elbow=-0.001 wflex=+0.004 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.209 lift=-0.194 elbow=+0.103 wflex=+0.673 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=+0.000 elbow=-0.001 wflex=+0.003 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.195 lift=-0.206 elbow=+0.099 wflex=+0.661 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.000 elbow=-0.003 wflex=+0.005 wyaw=+0.008 wroll=-0.004
+[TPDBG ph=1] CMD pan=-0.232 lift=-0.196 elbow=+0.100 wflex=+0.665 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.000 elbow=-0.001 wflex=+0.002 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.082 lift=-0.279 elbow=+0.074 wflex=+0.600 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.007 elbow=-0.003 wflex=-0.001 wyaw=+0.002 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.023 lift=-0.265 elbow=+0.080 wflex=+0.608 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.006 elbow=-0.002 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.013 lift=-0.217 elbow=+0.096 wflex=+0.642 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.002 elbow=-0.001 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.003 lift=-0.202 elbow=+0.102 wflex=+0.653 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.078 lift=-0.223 elbow=+0.095 wflex=+0.638 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.002 elbow=-0.001 wflex=+0.001 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.012 lift=-0.251 elbow=+0.086 wflex=+0.615 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.005 elbow=-0.002 wflex=-0.002 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.018 lift=-0.198 elbow=+0.105 wflex=+0.653 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.000 elbow=+0.000 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.089 lift=-0.212 elbow=+0.100 wflex=+0.643 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.015 lift=-0.244 elbow=+0.090 wflex=+0.618 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.004 elbow=-0.001 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.027 lift=-0.214 elbow=+0.101 wflex=+0.640 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.002 elbow=-0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.005 lift=-0.222 elbow=+0.099 wflex=+0.633 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.002 elbow=-0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.016 lift=-0.205 elbow=+0.105 wflex=+0.645 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.003 lift=-0.207 elbow=+0.105 wflex=+0.643 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.017 lift=-0.201 elbow=+0.107 wflex=+0.647 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.003 lift=-0.206 elbow=+0.105 wflex=+0.643 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.018 lift=-0.198 elbow=+0.108 wflex=+0.649 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.017 lift=-0.205 elbow=+0.106 wflex=+0.644 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.001 elbow=-0.000 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.048 lift=-0.151 elbow=+0.125 wflex=+0.682 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.004 elbow=+0.002 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.156 lift=-0.142 elbow=+0.127 wflex=+0.691 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.009 lift=+0.005 elbow=+0.001 wflex=+0.004 wyaw=-0.002 wroll=+0.001
+[TP] step=6,400 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=0) rsr_old=0.0%(n=0) LSR=0.0% r_s=+0.426 r_a=-2.482 gz=0.042 gaxDown=80° headDown=80° wflex=53° mouthz=0.083 dcubeS=0.314 dcubeA=0.038 mxy=0.671 vis=0.62
+[REACH-DIAG] n=30 reached=False dcube=0.057 | horiz(xy)=0.050 vert(mouth-cube)=+0.022 | mouthz=0.083 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=16 (horiz<0.06) wrist-cube pixel cx=0.531 cy=0.795  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=0.0% | covered 0/86 (0%) | full sweeps=0 cursor=32
+[TPDBG ph=1] CMD pan=+0.040 lift=-0.235 elbow=+0.094 wflex=+0.622 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=-0.003 elbow=-0.001 wflex=-0.002 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.000 lift=-0.204 elbow=+0.105 wflex=+0.646 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.055 lift=-0.166 elbow=+0.119 wflex=+0.673 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.002 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.157 lift=-0.146 elbow=+0.125 wflex=+0.689 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=+0.004 elbow=+0.001 wflex=+0.004 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.011 lift=-0.250 elbow=+0.088 wflex=+0.612 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.005 elbow=-0.002 wflex=-0.001 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.012 lift=-0.224 elbow=+0.098 wflex=+0.630 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.003 elbow=-0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.004 lift=-0.212 elbow=+0.103 wflex=+0.639 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.025 lift=-0.213 elbow=+0.103 wflex=+0.637 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.002 elbow=-0.001 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.024 lift=-0.225 elbow=+0.099 wflex=+0.628 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.003 elbow=-0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.014 lift=-0.223 elbow=+0.100 wflex=+0.628 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.003 elbow=-0.001 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.010 lift=-0.204 elbow=+0.107 wflex=+0.642 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.028 lift=-0.198 elbow=+0.110 wflex=+0.646 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.000 elbow=+0.000 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.053 lift=-0.136 elbow=+0.132 wflex=+0.690 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.005 elbow=+0.002 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.163 lift=-0.135 elbow=+0.131 wflex=+0.695 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.011 lift=+0.005 elbow=+0.001 wflex=+0.004 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.022 lift=-0.246 elbow=+0.091 wflex=+0.612 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.004 elbow=-0.001 wflex=-0.001 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.005 lift=-0.218 elbow=+0.101 wflex=+0.632 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.002 elbow=-0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.017 lift=-0.212 elbow=+0.104 wflex=+0.636 wyaw=+0.000 wroll=+0.000 | MOVED pan=-1.266 lift=-1.246 elbow=-2.034 wflex=+1.606 wyaw=+0.001 wroll=-0.029
+[TPDBG ph=0] CMD pan=+0.713 lift=+0.000 elbow=+0.000 wflex=-0.841 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.057 lift=-0.020 elbow=+0.010 wflex=-0.221 wyaw=-0.005 wroll=+0.030
+[TP-EVAL] 🟢→🔵 APPROACH→SEARCH (lost: vis 0 / ncen 0.10) @step 6944
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.032 lift=-0.003 elbow=+0.003 wflex=-0.006 wyaw=+0.003 wroll=-0.002
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.141 lift=+0.001 elbow=+0.000 wflex=-0.102 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.162 lift=-0.003 elbow=+0.001 wflex=-0.142 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.166 lift=-0.002 elbow=+0.001 wflex=-0.154 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=-1.000 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.167 lift=-0.001 elbow=+0.002 wflex=-0.159 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=-0.023 lift=+0.000 elbow=+0.000 wflex=-0.868 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.088 lift=+0.000 elbow=+0.001 wflex=-0.153 wyaw=+0.000 wroll=+0.001
+[TPDBG ph=0] CMD pan=-0.928 lift=+0.000 elbow=+0.000 wflex=-0.971 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.091 lift=+0.000 elbow=+0.001 wflex=-0.152 wyaw=-0.000 wroll=-0.001
+[TPDBG ph=0] CMD pan=+0.768 lift=+0.000 elbow=+0.000 wflex=+0.078 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.001 elbow=-0.001 wflex=-0.095 wyaw=+0.001 wroll=+0.001
+[TPDBG ph=0] CMD pan=+0.297 lift=+0.000 elbow=+0.000 wflex=+0.585 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.068 lift=+0.001 elbow=+0.000 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=-0.009 lift=+0.000 elbow=+0.000 wflex=+0.908 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.028 lift=-0.000 elbow=+0.000 wflex=+0.078 wyaw=+0.000 wroll=+0.000
+[TP-EVAL] 🔵→🟢 SEARCH→APPROACH (centered held 1 steps) @step 7264
+[TPDBG ph=1] CMD pan=+0.326 lift=-0.791 elbow=+0.149 wflex=-0.883 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.027 lift=-0.069 elbow=+0.022 wflex=-0.037 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.045 lift=-0.824 elbow=-0.053 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=-0.098 elbow=+0.015 wflex=-0.043 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.085 lift=-0.820 elbow=-0.108 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.007 lift=-0.096 elbow=+0.008 wflex=-0.046 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.057 lift=-0.785 elbow=-0.144 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=-0.098 elbow=+0.006 wflex=-0.046 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.008 lift=-0.507 elbow=-0.050 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.081 elbow=+0.017 wflex=-0.047 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.018 lift=-0.193 elbow=+0.172 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.056 elbow=+0.036 wflex=-0.048 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.007 lift=+0.066 elbow=+0.399 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.035 elbow=+0.056 wflex=-0.049 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.035 lift=+0.058 elbow=+0.445 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.033 elbow=+0.058 wflex=-0.050 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.070 lift=+0.075 elbow=+0.498 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=-0.033 elbow=+0.063 wflex=-0.050 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.231 lift=+0.035 elbow=+0.274 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=-0.033 elbow=+0.043 wflex=-0.043 wyaw=-0.006 wroll=+0.003
+[TPDBG ph=1] CMD pan=+0.252 lift=-0.340 elbow=-0.419 wflex=+0.040 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.020 lift=-0.017 elbow=-0.037 wflex=+0.033 wyaw=+0.006 wroll=-0.002
+[TPDBG ph=1] CMD pan=+0.141 lift=-0.354 elbow=-0.432 wflex=+0.039 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.018 elbow=-0.038 wflex=+0.036 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.039 lift=-0.313 elbow=-0.380 wflex=+0.031 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.016 elbow=-0.034 wflex=+0.033 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.037 lift=-0.216 elbow=-0.260 wflex=+0.019 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.012 elbow=-0.025 wflex=+0.023 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.192 lift=-0.093 elbow=-0.111 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=-0.006 elbow=-0.013 wflex=+0.011 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.348 lift=+0.066 elbow=+0.079 wflex=-0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.023 lift=+0.002 elbow=+0.004 wflex=-0.000 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.242 lift=-0.065 elbow=-0.077 wflex=+0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.012 lift=-0.005 elbow=-0.010 wflex=+0.008 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.299 lift=-0.020 elbow=-0.023 wflex=+0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.018 lift=-0.003 elbow=-0.006 wflex=+0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.356 lift=+0.019 elbow=+0.023 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=-0.001 elbow=-0.002 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.367 lift=+0.025 elbow=+0.030 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.012 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.363 lift=+0.025 elbow=+0.030 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.001 elbow=-0.001 wflex=-0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.349 lift=+0.019 elbow=+0.023 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.000 elbow=-0.002 wflex=+0.000 wyaw=+0.004 wroll=-0.001
+[TP] step=8,000 | SEARCH envs=0 buf=0 a=1.000 | APPROACH envs=32 buf=0 a=1.000 | RSR=0.0% (n=32) rsr_old=0.0%(n=32) LSR=0.0% r_s=-0.322 r_a=-1.300 gz=0.042 gaxDown=79° headDown=79° wflex=51° mouthz=0.085 dcubeS=0.000 dcubeA=0.031 mxy=0.815 vis=0.28
+[REACH-DIAG] n=32 reached=False dcube=0.041 | horiz(xy)=0.030 vert(mouth-cube)=+0.024 | mouthz=0.085 cubez=0.061 gz(EE)=0.044 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=8 (horiz<0.06) wrist-cube pixel cx=0.404 cy=0.659  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n6) | 0.25-0.35:R0%(n6) | 0.35-0.45:R0%(n7) | 0.45-0.55:R0%(n2) | 0.55-0.65:R0%(n4) | 0.65-1.00:R0%(n7)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=96.9% | covered 32/86 (37%) | full sweeps=0 cursor=64
+[TPDBG ph=1] CMD pan=+0.360 lift=+0.054 elbow=+0.065 wflex=-0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=-0.001 elbow=+0.001 wflex=-0.009 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.321 lift=+0.016 elbow=+0.020 wflex=+0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.001 elbow=-0.002 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.295 lift=-0.005 elbow=-0.005 wflex=+0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.003 elbow=-0.004 wflex=+0.002 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.265 lift=-0.031 elbow=-0.037 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.003 elbow=-0.007 wflex=+0.006 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.273 lift=-0.027 elbow=-0.031 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.004 elbow=-0.006 wflex=+0.003 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.248 lift=-0.035 elbow=-0.041 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.004 elbow=-0.007 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.246 lift=-0.041 elbow=-0.048 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.004 elbow=-0.008 wflex=+0.007 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.253 lift=-0.040 elbow=-0.046 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.003 elbow=-0.008 wflex=+0.007 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.248 lift=-0.043 elbow=-0.050 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.004 elbow=-0.008 wflex=+0.006 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.227 lift=-0.054 elbow=-0.063 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.004 elbow=-0.009 wflex=+0.008 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.206 lift=-0.069 elbow=-0.080 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.005 elbow=-0.010 wflex=+0.009 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.189 lift=-0.081 elbow=-0.094 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.006 elbow=-0.012 wflex=+0.010 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.183 lift=-0.088 elbow=-0.102 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.006 elbow=-0.013 wflex=+0.011 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.188 lift=-0.096 elbow=-0.111 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.007 elbow=-0.013 wflex=+0.012 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.207 lift=-0.103 elbow=-0.118 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.007 elbow=-0.014 wflex=+0.012 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.228 lift=-0.113 elbow=-0.129 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.007 elbow=-0.015 wflex=+0.013 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.261 lift=-0.128 elbow=-0.146 wflex=+0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.008 elbow=-0.017 wflex=+0.014 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.345 lift=-0.146 elbow=-0.165 wflex=+0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.009 elbow=-0.019 wflex=+0.015 wyaw=+0.002 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.472 lift=-0.182 elbow=-0.203 wflex=+0.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=-0.011 elbow=-0.023 wflex=+0.012 wyaw=-0.003 wroll=+0.002
+[TPDBG ph=1] CMD pan=+0.519 lift=-0.184 elbow=-0.204 wflex=-0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.015 lift=-0.013 elbow=-0.024 wflex=+0.010 wyaw=+0.003 wroll=-0.002
+[TPDBG ph=1] CMD pan=+0.068 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.004 elbow=-0.004 wflex=+0.003 wyaw=-0.005 wroll=+0.001
+[TPDBG ph=1] CMD pan=+0.426 lift=-0.215 elbow=-0.237 wflex=-0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.011 elbow=-0.027 wflex=+0.022 wyaw=+0.005 wroll=-0.001
+[TPDBG ph=1] CMD pan=+0.606 lift=-0.183 elbow=-0.197 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=-0.011 elbow=-0.023 wflex=+0.009 wyaw=-0.002 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.412 lift=-0.245 elbow=-0.261 wflex=-0.016 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=-0.021 elbow=-0.029 wflex=+0.005 wyaw=-0.003 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.312 lift=-0.124 elbow=-0.132 wflex=-0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.009 lift=-0.008 elbow=-0.016 wflex=+0.015 wyaw=-0.005 wroll=+0.002
+[TPDBG ph=1] CMD pan=-0.288 lift=+0.077 elbow=+0.081 wflex=+0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.001 elbow=+0.003 wflex=-0.002 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.464 lift=-0.124 elbow=-0.131 wflex=-0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.007 elbow=-0.015 wflex=+0.014 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.140 lift=+0.066 elbow=+0.068 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.003 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.145 lift=+0.057 elbow=+0.059 wflex=+0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.001 wflex=-0.000 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.164 lift=+0.074 elbow=+0.077 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.002 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.170 lift=+0.078 elbow=+0.081 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.002 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.165 lift=+0.075 elbow=+0.078 wflex=+0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.002 wflex=-0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.184 lift=+0.081 elbow=+0.084 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.001 elbow=+0.003 wflex=-0.002 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.423 lift=-0.133 elbow=-0.141 wflex=-0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.008 elbow=-0.016 wflex=+0.014 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.571 lift=-0.056 elbow=-0.059 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.004 elbow=-0.009 wflex=+0.010 wyaw=-0.003 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.093 lift=-0.131 elbow=-0.137 wflex=-0.020 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.008 elbow=-0.017 wflex=+0.013 wyaw=+0.005 wroll=-0.002
+[TPDBG ph=1] CMD pan=-0.540 lift=+0.004 elbow=+0.004 wflex=+0.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.002 elbow=-0.003 wflex=+0.006 wyaw=-0.004 wroll=+0.002
+[TPDBG ph=1] CMD pan=-0.419 lift=-0.076 elbow=-0.079 wflex=-0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=-0.005 elbow=-0.011 wflex=+0.010 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.607 lift=+0.023 elbow=+0.023 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=-0.001 elbow=-0.002 wflex=+0.006 wyaw=-0.002 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.640 lift=+0.032 elbow=+0.032 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.000 elbow=-0.001 wflex=+0.006 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.582 lift=-0.005 elbow=-0.006 wflex=-0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.002 elbow=-0.004 wflex=+0.008 wyaw=+0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.455 lift=+0.012 elbow=+0.011 wflex=+0.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.001 elbow=-0.003 wflex=+0.005 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.306 lift=-0.026 elbow=-0.027 wflex=-0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.003 elbow=-0.007 wflex=+0.006 wyaw=+0.001 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.225 lift=-0.029 elbow=-0.030 wflex=-0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.003 elbow=-0.007 wflex=+0.006 wyaw=+0.003 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.096 lift=-0.012 elbow=-0.013 wflex=-0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.003 elbow=-0.006 wflex=+0.005 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.137 lift=+0.010 elbow=+0.010 wflex=+0.001 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.002 elbow=-0.004 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.194 lift=+0.023 elbow=+0.022 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.002 elbow=-0.003 wflex=+0.002 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.239 lift=+0.015 elbow=+0.014 wflex=+0.002 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.002 elbow=-0.004 wflex=+0.003 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.193 lift=+0.028 elbow=+0.027 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.001 elbow=-0.003 wflex=+0.002 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.272 lift=+0.027 elbow=+0.025 wflex=+0.004 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.001 elbow=-0.003 wflex=+0.002 wyaw=-0.001 wroll=+0.001
+[TP] step=9,600 | SEARCH envs=0 buf=0 a=1.000 | APPROACH envs=32 buf=0 a=1.000 | RSR=0.0% (n=32) rsr_old=0.0%(n=32) LSR=0.0% r_s=-0.494 r_a=-2.676 gz=0.042 gaxDown=81° headDown=81° wflex=56° mouthz=0.084 dcubeS=0.000 dcubeA=0.033 mxy=0.658 vis=0.34
+[REACH-DIAG] n=31 reached=False dcube=0.048 | horiz(xy)=0.040 vert(mouth-cube)=+0.023 | mouthz=0.084 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=9 (horiz<0.06) wrist-cube pixel cx=0.480 cy=0.703  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n6) | 0.25-0.35:R0%(n6) | 0.35-0.45:R0%(n7) | 0.45-0.55:R0%(n2) | 0.55-0.65:R0%(n4) | 0.65-1.00:R0%(n7)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=96.9% | covered 32/86 (37%) | full sweeps=0 cursor=64
+[TPDBG ph=1] CMD pan=-0.319 lift=+0.036 elbow=+0.035 wflex=+0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.001 elbow=-0.002 wflex=+0.002 wyaw=+0.000 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.272 lift=+0.024 elbow=+0.022 wflex=+0.003 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.001 elbow=-0.003 wflex=+0.003 wyaw=-0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.340 lift=+0.044 elbow=+0.042 wflex=+0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=-0.000 elbow=-0.001 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.285 lift=+0.037 elbow=+0.034 wflex=+0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.001 elbow=-0.002 wflex=+0.002 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.294 lift=+0.044 elbow=+0.042 wflex=+0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.264 lift=+0.036 elbow=+0.034 wflex=+0.006 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.001 elbow=-0.002 wflex=+0.002 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.277 lift=+0.048 elbow=+0.046 wflex=+0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.295 lift=+0.050 elbow=+0.048 wflex=+0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.278 lift=+0.047 elbow=+0.044 wflex=+0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.268 lift=+0.065 elbow=+0.061 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.001 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.263 lift=+0.061 elbow=+0.058 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.239 lift=+0.062 elbow=+0.058 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.115 lift=+0.038 elbow=+0.036 wflex=+0.007 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.001 elbow=-0.002 wflex=+0.001 wyaw=+0.000 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.150 lift=+0.056 elbow=+0.053 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.189 lift=+0.056 elbow=+0.053 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.204 lift=+0.046 elbow=+0.043 wflex=+0.008 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.192 lift=+0.049 elbow=+0.046 wflex=+0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.216 lift=+0.046 elbow=+0.044 wflex=+0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.160 lift=+0.053 elbow=+0.050 wflex=+0.010 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.001 wflex=+0.000 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.213 lift=+0.065 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.198 lift=+0.059 elbow=+0.055 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.193 lift=+0.051 elbow=+0.048 wflex=+0.010 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.204 lift=+0.055 elbow=+0.051 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.213 lift=+0.058 elbow=+0.054 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.194 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.200 lift=+0.054 elbow=+0.050 wflex=+0.010 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.001 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.186 lift=+0.060 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.206 lift=+0.051 elbow=+0.048 wflex=+0.010 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.201 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.001 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.185 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.193 lift=+0.060 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.183 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.186 lift=+0.054 elbow=+0.050 wflex=+0.010 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.001 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.193 lift=+0.060 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.186 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.198 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.187 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.165 lift=+0.056 elbow=+0.053 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.199 lift=+0.068 elbow=+0.064 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.001 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.154 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.160 lift=+0.074 elbow=+0.069 wflex=+0.015 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.001 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.158 lift=+0.077 elbow=+0.073 wflex=+0.015 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.142 lift=+0.072 elbow=+0.068 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.127 lift=+0.077 elbow=+0.073 wflex=+0.015 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.122 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.116 lift=+0.063 elbow=+0.060 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.068 elbow=+0.064 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.101 lift=+0.065 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.092 lift=+0.065 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.085 lift=+0.060 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TP] step=11,200 | SEARCH envs=0 buf=0 a=1.000 | APPROACH envs=32 buf=0 a=1.000 | RSR=0.0% (n=32) rsr_old=0.0%(n=32) LSR=0.0% r_s=-0.658 r_a=-3.013 gz=0.042 gaxDown=81° headDown=81° wflex=59° mouthz=0.073 dcubeS=0.000 dcubeA=0.033 mxy=0.784 vis=0.34
+[REACH-DIAG] n=30 reached=False dcube=0.054 | horiz(xy)=0.046 vert(mouth-cube)=+0.023 | mouthz=0.084 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=8 (horiz<0.06) wrist-cube pixel cx=0.509 cy=0.727  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n6) | 0.25-0.35:R0%(n6) | 0.35-0.45:R0%(n7) | 0.45-0.55:R0%(n2) | 0.55-0.65:R0%(n4) | 0.65-1.00:R0%(n7)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=96.9% | covered 32/86 (37%) | full sweeps=0 cursor=64
+[TPDBG ph=1] CMD pan=-0.082 lift=+0.057 elbow=+0.054 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.001 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.079 lift=+0.054 elbow=+0.051 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.001 wflex=+0.001 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.090 lift=+0.059 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.100 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.105 lift=+0.065 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.112 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.118 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.125 lift=+0.069 elbow=+0.065 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.119 lift=+0.064 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.114 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.102 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.096 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.092 lift=+0.058 elbow=+0.055 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.064 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.066 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.116 lift=+0.068 elbow=+0.064 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.108 lift=+0.063 elbow=+0.060 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.102 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.097 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.098 lift=+0.059 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.105 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.095 lift=+0.061 elbow=+0.057 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=+0.065 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.100 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.106 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.067 elbow=+0.064 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.095 lift=+0.060 elbow=+0.057 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=+0.065 elbow=+0.061 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.111 lift=+0.067 elbow=+0.064 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.097 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.097 lift=+0.058 elbow=+0.055 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.105 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.111 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.101 lift=+0.060 elbow=+0.057 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.105 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.113 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.063 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.114 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.100 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.098 lift=+0.061 elbow=+0.057 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TP] step=12,800 | SEARCH envs=0 buf=0 a=1.000 | APPROACH envs=32 buf=0 a=1.000 | RSR=0.0% (n=32) rsr_old=0.0%(n=32) LSR=0.0% r_s=-1.108 r_a=-3.472 gz=0.042 gaxDown=80° headDown=80° wflex=61° mouthz=0.072 dcubeS=0.000 dcubeA=0.037 mxy=0.687 vis=0.19
+[REACH-DIAG] n=30 reached=False dcube=0.056 | horiz(xy)=0.048 vert(mouth-cube)=+0.023 | mouthz=0.084 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=3 (horiz<0.06) wrist-cube pixel cx=0.336 cy=0.832  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n6) | 0.25-0.35:R0%(n6) | 0.35-0.45:R0%(n7) | 0.45-0.55:R0%(n2) | 0.55-0.65:R0%(n4) | 0.65-1.00:R0%(n7)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=96.9% | covered 32/86 (37%) | full sweeps=0 cursor=64
+[TPDBG ph=1] CMD pan=-0.105 lift=+0.065 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.102 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.111 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.063 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.114 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.111 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.117 lift=+0.068 elbow=+0.064 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=+0.062 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.098 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.097 lift=+0.060 elbow=+0.056 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.104 lift=+0.065 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.111 lift=+0.066 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.063 elbow=+0.059 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.115 lift=+0.067 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.107 lift=+0.063 elbow=+0.060 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=+0.000 elbow=-0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.101 lift=+0.062 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.100 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.106 lift=+0.066 elbow=+0.062 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=+0.000 elbow=+0.000 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.103 lift=+0.061 elbow=+0.058 wflex=+0.012 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.000 elbow=-0.000 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.109 lift=+0.066 elbow=+0.063 wflex=+0.013 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.578 lift=+0.956 elbow=+0.259 wflex=+1.077 wyaw=+0.003 wroll=-0.030
+[TPDBG ph=0] CMD pan=+0.080 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.007 lift=-0.020 elbow=+0.011 wflex=-0.221 wyaw=-0.005 wroll=+0.030
+[TP-EVAL] 🟢→🔵 APPROACH→SEARCH (lost: vis 0 / ncen 0.10) @step 13728
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.282 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.088 lift=-0.002 elbow=+0.003 wflex=-0.000 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.848 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.152 lift=+0.002 elbow=+0.001 wflex=-0.029 wyaw=+0.002 wroll=-0.001
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.119 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.164 lift=-0.002 elbow=-0.000 wflex=-0.069 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=+1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.167 lift=-0.002 elbow=-0.000 wflex=+0.027 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=+0.968 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.167 lift=+0.003 elbow=+0.000 wflex=+0.067 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.769 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.167 lift=+0.000 elbow=-0.001 wflex=+0.001 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.684 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.141 lift=+0.001 elbow=+0.001 wflex=-0.019 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=0] CMD pan=+0.990 lift=+0.000 elbow=+0.000 wflex=-1.000 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.144 lift=-0.000 elbow=+0.000 wflex=-0.116 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.726 lift=+0.000 elbow=+0.000 wflex=-0.856 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.140 lift=-0.002 elbow=+0.001 wflex=-0.136 wyaw=-0.000 wroll=-0.000
+[TP-EVAL] 🔵→🟢 SEARCH→APPROACH (centered held 1 steps) @step 14016
+[TPDBG ph=1] CMD pan=+0.873 lift=-0.514 elbow=-0.172 wflex=-0.348 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.074 lift=-0.055 elbow=-0.005 wflex=-0.014 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.502 lift=-0.369 elbow=+0.180 wflex=-0.926 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.043 lift=-0.053 elbow=+0.029 wflex=-0.050 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.317 lift=+0.065 elbow=+0.027 wflex=+0.038 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.027 lift=-0.026 elbow=+0.018 wflex=+0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.348 lift=+0.221 elbow=+0.373 wflex=-0.701 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.029 lift=-0.004 elbow=+0.046 wflex=-0.037 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.217 lift=+0.417 elbow=+0.460 wflex=-0.560 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.019 lift=+0.008 elbow=+0.055 wflex=-0.031 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.080 lift=+0.483 elbow=+0.463 wflex=-0.507 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.007 lift=+0.015 elbow=+0.055 wflex=-0.027 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.002 lift=+0.505 elbow=+0.475 wflex=-0.515 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.018 elbow=+0.056 wflex=-0.028 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.014 lift=+0.528 elbow=+0.514 wflex=-0.552 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.020 elbow=+0.060 wflex=-0.030 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.015 lift=+0.557 elbow=+0.561 wflex=-0.588 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.023 elbow=+0.064 wflex=-0.033 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.012 lift=+0.581 elbow=+0.595 wflex=-0.615 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.026 elbow=+0.067 wflex=-0.035 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.115 lift=+0.642 elbow=+0.666 wflex=-0.635 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.009 lift=+0.032 elbow=+0.073 wflex=-0.036 wyaw=+0.000 wroll=+0.000
+[TP] step=14,400 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=64) rsr_old=0.0%(n=64) LSR=0.0% r_s=+0.771 r_a=-1.402 gz=0.046 gaxDown=81° headDown=81° wflex=69° mouthz=0.144 dcubeS=0.666 dcubeA=0.193 mxy=0.181 vis=0.41
+[REACH-DIAG] n=31 reached=False dcube=0.160 | horiz(xy)=0.113 vert(mouth-cube)=+0.083 | mouthz=0.144 cubez=0.061 gz(EE)=0.103 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=5 (horiz<0.06) wrist-cube pixel cx=0.491 cy=0.692  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n10) | 0.25-0.35:R0%(n9) | 0.35-0.45:R0%(n14) | 0.45-0.55:R0%(n11) | 0.55-0.65:R0%(n7) | 0.65-1.00:R0%(n13)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=98.4% | covered 64/86 (74%) | full sweeps=1 cursor=96
+[TPDBG ph=1] CMD pan=-0.084 lift=+0.671 elbow=+0.744 wflex=-0.704 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=+0.036 elbow=+0.080 wflex=-0.041 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.057 lift=+0.674 elbow=+0.787 wflex=-0.761 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=+0.037 elbow=+0.083 wflex=-0.044 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.026 lift=+0.654 elbow=+0.819 wflex=-0.824 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.037 elbow=+0.086 wflex=-0.048 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.041 lift=+0.611 elbow=+0.820 wflex=-0.875 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.034 elbow=+0.086 wflex=-0.051 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.093 lift=+0.576 elbow=+0.805 wflex=-0.892 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=+0.032 elbow=+0.085 wflex=-0.052 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.094 lift=+0.490 elbow=+0.748 wflex=-0.912 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=+0.026 elbow=+0.080 wflex=-0.053 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.123 lift=+0.377 elbow=+0.663 wflex=-0.932 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=+0.018 elbow=+0.072 wflex=-0.054 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.190 lift=+0.381 elbow=+0.554 wflex=-0.812 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.015 lift=+0.018 elbow=+0.063 wflex=-0.046 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.065 lift=+0.006 elbow=+0.223 wflex=-0.897 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.012 elbow=+0.035 wflex=-0.049 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.177 lift=+0.904 elbow=+0.597 wflex=-0.370 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.015 lift=+0.059 elbow=+0.067 wflex=-0.023 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.756 lift=-0.375 elbow=-0.425 wflex=-0.677 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.063 lift=-0.041 elbow=-0.019 wflex=-0.030 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.053 lift=+0.374 elbow=+0.289 wflex=+0.097 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=+0.016 elbow=+0.038 wflex=+0.004 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.166 lift=+0.600 elbow=+0.468 wflex=+0.153 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=+0.046 elbow=+0.040 wflex=-0.012 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.124 lift=+0.045 elbow=+0.033 wflex=+0.011 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=+0.003 elbow=+0.005 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.049 lift=+0.057 elbow=+0.042 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.004 elbow=+0.004 wflex=-0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.090 lift=+0.125 elbow=+0.094 wflex=+0.033 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.010 elbow=+0.008 wflex=-0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.000 lift=+0.285 elbow=+0.213 wflex=+0.079 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.022 elbow=+0.018 wflex=-0.014 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.072 lift=+0.459 elbow=+0.339 wflex=+0.134 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=+0.037 elbow=+0.027 wflex=-0.019 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.047 lift=+0.470 elbow=+0.338 wflex=+0.146 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=+0.039 elbow=+0.028 wflex=-0.016 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.040 lift=+0.505 elbow=+0.352 wflex=+0.166 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=+0.043 elbow=+0.029 wflex=-0.014 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.137 lift=+0.142 elbow=+0.095 wflex=+0.049 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=+0.012 elbow=+0.011 wflex=-0.012 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.011 lift=+0.566 elbow=+0.380 wflex=+0.202 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.048 elbow=+0.031 wflex=-0.012 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.086 lift=+0.443 elbow=+0.286 wflex=+0.169 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.039 elbow=+0.025 wflex=-0.010 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.073 lift=+0.454 elbow=+0.283 wflex=+0.181 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.041 elbow=+0.025 wflex=-0.009 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.051 lift=+0.329 elbow=+0.255 wflex=+0.282 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.032 elbow=+0.020 wflex=-0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.591 lift=+0.033 elbow=+0.127 wflex=+0.293 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.044 lift=+0.008 elbow=+0.009 wflex=-0.007 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.203 lift=+0.242 elbow=+0.337 wflex=+0.615 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=+0.030 elbow=+0.017 wflex=-0.003 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.190 lift=+0.143 elbow=+0.270 wflex=+0.568 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=+0.022 elbow=+0.012 wflex=-0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.165 lift=-0.176 elbow=+0.082 wflex=+0.408 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.014 lift=-0.005 elbow=-0.001 wflex=-0.006 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.141 lift=-0.243 elbow=+0.030 wflex=+0.340 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.012 elbow=-0.004 wflex=-0.008 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.192 lift=-0.254 elbow=+0.010 wflex=+0.301 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=-0.014 elbow=-0.005 wflex=-0.009 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.212 lift=-0.117 elbow=+0.072 wflex=+0.322 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=-0.004 elbow=+0.001 wflex=-0.009 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.220 lift=-0.152 elbow=+0.462 wflex=-0.108 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.018 lift=-0.002 elbow=+0.025 wflex=-0.057 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.421 lift=-0.201 elbow=+0.406 wflex=-0.023 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.035 lift=+0.003 elbow=+0.014 wflex=-0.025 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.150 lift=+0.034 elbow=+0.214 wflex=+0.527 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.013 elbow=+0.008 wflex=-0.007 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.206 lift=+0.414 elbow=+0.459 wflex=+0.741 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=+0.044 elbow=+0.027 wflex=-0.009 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.276 lift=+0.052 elbow=+0.236 wflex=+0.599 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.026 lift=+0.014 elbow=+0.012 wflex=-0.005 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.176 lift=-0.062 elbow=+0.158 wflex=+0.514 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=+0.002 elbow=+0.009 wflex=-0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.050 lift=-0.350 elbow=-0.002 wflex=+0.397 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=-0.031 elbow=+0.015 wflex=+0.033 wyaw=+0.003 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.551 lift=+0.364 elbow=+0.374 wflex=+0.504 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.046 lift=+0.028 elbow=+0.047 wflex=+0.038 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.558 lift=+0.079 elbow=+0.130 wflex=+0.204 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.046 lift=+0.007 elbow=+0.026 wflex=+0.017 wyaw=-0.002 wroll=-0.001
+[TPDBG ph=1] CMD pan=-0.646 lift=+0.268 elbow=+0.173 wflex=+0.105 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.046 lift=+0.028 elbow=+0.017 wflex=-0.003 wyaw=+0.001 wroll=+0.001
+[TPDBG ph=1] CMD pan=-0.005 lift=-0.136 elbow=-0.028 wflex=+0.065 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.002 elbow=-0.006 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.044 lift=+0.088 elbow=+0.056 wflex=+0.036 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.013 elbow=+0.007 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.114 lift=-0.361 elbow=+0.006 wflex=+0.332 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.009 lift=-0.019 elbow=-0.010 wflex=+0.003 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.227 lift=+0.080 elbow=+0.051 wflex=+0.032 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.019 lift=+0.012 elbow=+0.006 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.261 lift=-0.084 elbow=-0.025 wflex=+0.022 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.021 lift=-0.001 elbow=+0.000 wflex=-0.005 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.322 lift=-0.070 elbow=+0.116 wflex=+0.302 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.027 lift=+0.004 elbow=+0.001 wflex=+0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.276 lift=-0.098 elbow=-0.014 wflex=+0.057 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=-0.002 elbow=-0.000 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[UNPROJ] GATED err_xy med=0.003 p90=0.018 max=0.025 <5cm=100% | kept 100% of seen (rz>0.0) n_keep=31
+[DET-DIST fwd] 0.00-0.15(n9):F1.00/W0.67/cf0.26 | 0.45-0.60(n16):F0.94/W0.25/cf0.78 | 0.60-0.90(n6):F1.00/W0.00/cf0.79  (F=front detection rate W=wrist detection rate cf=front mean conf)
+[FRACDBG] dist[0.15,0.25) frac_med=0.1167 n=7
+[FRACDBG] dist[0.40,0.70) frac_med=0.4365 n=4
+[UNPROJ-W] WRIST err_xy med=1.308 p90=2.456 max=3.284 <5cm=0% n_seen=11 n_keep=11
+[UNPROJ-W-STEEP] n=4 err(raw)=0.621 err(flipXY)=1.093 err(flipY)=1.211 err(flipX)=0.692  <- smallest = fix
+[CAMDBG] WRIST pos=[24.179689407348633, -17.149999618530273, 0.24970071017742157] quat_ros=[-0.3819970190525055, 0.5950449109077454, 0.5950474739074707, -0.3819926381111145] K[fx,fy,cx,cy]=[322.5,322.5,128.0,128.0] HW=256x256
+[CAMDBG] FRONT pos=[24.350000381469727, -15.949999809265137, 0.5799999833106995] quat_ros=[-3.677432802717817e-09, 1.0396866700901342e-09, 0.8618978261947632, -0.5070819854736328] K[fx,fy,cx,cy]=[322.5,322.5,128.0,128.0] HW=256x256
+[TPDBG ph=1] CMD pan=-0.156 lift=-0.191 elbow=+0.094 wflex=+0.366 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.013 lift=-0.005 elbow=-0.003 wflex=+0.004 wyaw=-0.000 wroll=+0.000
+[TP] step=16,000 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=64) rsr_old=0.0%(n=64) LSR=0.0% r_s=-0.587 r_a=-3.925 gz=0.043 gaxDown=80° headDown=80° wflex=63° mouthz=0.084 dcubeS=0.664 dcubeA=0.077 mxy=0.392 vis=0.38
+[REACH-DIAG] n=31 reached=False dcube=0.117 | horiz(xy)=0.112 vert(mouth-cube)=+0.023 | mouthz=0.084 cubez=0.061 gz(EE)=0.044 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=7 (horiz<0.06) wrist-cube pixel cx=0.325 cy=0.642  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n10) | 0.25-0.35:R0%(n9) | 0.35-0.45:R0%(n14) | 0.45-0.55:R0%(n11) | 0.55-0.65:R0%(n7) | 0.65-1.00:R0%(n13)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=98.4% | covered 64/86 (74%) | full sweeps=1 cursor=96
+[TPDBG ph=1] CMD pan=+0.219 lift=-0.036 elbow=-0.000 wflex=+0.032 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.018 lift=+0.002 elbow=+0.002 wflex=-0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.301 lift=-0.070 elbow=+0.143 wflex=+0.357 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.025 lift=+0.005 elbow=+0.002 wflex=+0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.264 lift=-0.153 elbow=-0.020 wflex=+0.093 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.022 lift=-0.006 elbow=-0.002 wflex=-0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.162 lift=-0.052 elbow=+0.145 wflex=+0.346 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.006 elbow=+0.003 wflex=+0.001 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.159 lift=-0.210 elbow=+0.021 wflex=+0.230 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=-0.008 elbow=-0.004 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.118 lift=+0.046 elbow=+0.148 wflex=+0.264 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=+0.013 elbow=+0.006 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.126 lift=-0.316 elbow=+0.030 wflex=+0.343 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=-0.015 elbow=-0.008 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.110 lift=+0.104 elbow=+0.132 wflex=+0.177 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.009 lift=+0.016 elbow=+0.008 wflex=-0.002 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.097 lift=-0.331 elbow=+0.037 wflex=+0.371 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.016 elbow=-0.008 wflex=+0.002 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.051 lift=+0.115 elbow=+0.139 wflex=+0.183 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.017 elbow=+0.009 wflex=-0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.031 lift=-0.407 elbow=+0.031 wflex=+0.426 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.021 elbow=-0.011 wflex=+0.005 wyaw=+0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.042 lift=+0.108 elbow=+0.069 wflex=+0.044 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=+0.014 elbow=+0.008 wflex=-0.004 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.133 lift=-0.300 elbow=+0.124 wflex=+0.524 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.011 lift=-0.011 elbow=-0.006 wflex=+0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.275 lift=+0.033 elbow=+0.021 wflex=+0.014 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=+0.007 elbow=+0.005 wflex=-0.006 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.362 lift=-0.026 elbow=+0.192 wflex=+0.421 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.031 lift=+0.010 elbow=+0.004 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.219 lift=-0.244 elbow=+0.001 wflex=+0.218 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.018 lift=-0.011 elbow=-0.005 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.051 lift=-0.132 elbow=+0.135 wflex=+0.397 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.000 elbow=+0.000 wflex=+0.000 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.134 lift=-0.144 elbow=+0.119 wflex=+0.374 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=-0.001 elbow=-0.000 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.269 lift=-0.235 elbow=+0.089 wflex=+0.395 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.023 lift=-0.007 elbow=-0.005 wflex=+0.007 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.281 lift=+0.020 elbow=+0.013 wflex=+0.009 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=+0.006 elbow=+0.004 wflex=-0.007 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.296 lift=-0.204 elbow=+0.112 wflex=+0.414 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.025 lift=-0.005 elbow=-0.003 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.280 lift=+0.010 elbow=+0.007 wflex=+0.005 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=+0.005 elbow=+0.004 wflex=-0.007 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.196 lift=-0.273 elbow=+0.104 wflex=+0.460 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=-0.010 elbow=-0.006 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.279 lift=+0.091 elbow=+0.058 wflex=+0.037 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=+0.012 elbow=+0.008 wflex=-0.008 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.335 lift=-0.194 elbow=+0.144 wflex=+0.473 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.028 lift=-0.003 elbow=-0.003 wflex=+0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.264 lift=-0.083 elbow=+0.024 wflex=+0.124 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.021 lift=-0.000 elbow=+0.001 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.166 lift=-0.340 elbow=+0.093 wflex=+0.497 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=-0.015 elbow=-0.008 wflex=+0.007 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.260 lift=+0.053 elbow=+0.034 wflex=+0.022 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.021 lift=+0.009 elbow=+0.006 wflex=-0.007 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.416 lift=-0.017 elbow=+0.189 wflex=+0.403 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.035 lift=+0.011 elbow=+0.004 wflex=+0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.284 lift=-0.054 elbow=+0.057 wflex=+0.167 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.023 lift=+0.003 elbow=+0.003 wflex=-0.006 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.003 lift=-0.310 elbow=+0.113 wflex=+0.514 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.012 elbow=-0.006 wflex=+0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.076 lift=-0.089 elbow=+0.145 wflex=+0.378 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=+0.003 elbow=+0.002 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.162 lift=-0.349 elbow=+0.082 wflex=+0.484 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=-0.015 elbow=-0.009 wflex=+0.007 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.263 lift=+0.080 elbow=+0.052 wflex=+0.033 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.021 lift=+0.011 elbow=+0.007 wflex=-0.008 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.367 lift=+0.013 elbow=+0.223 wflex=+0.449 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.031 lift=+0.014 elbow=+0.006 wflex=+0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.205 lift=-0.158 elbow=+0.055 wflex=+0.255 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=-0.004 elbow=-0.001 wflex=-0.003 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.038 lift=-0.315 elbow=+0.093 wflex=+0.476 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.013 elbow=-0.007 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.023 lift=+0.008 elbow=+0.144 wflex=+0.290 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=+0.010 elbow=+0.005 wflex=-0.003 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.042 lift=-0.288 elbow=+0.135 wflex=+0.540 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.010 elbow=-0.005 wflex=+0.003 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.131 lift=+0.032 elbow=+0.141 wflex=+0.261 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=+0.011 elbow=+0.006 wflex=-0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.194 lift=-0.178 elbow=+0.191 wflex=+0.557 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=-0.000 elbow=-0.001 wflex=+0.004 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.192 lift=-0.221 elbow=+0.063 wflex=+0.330 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.015 lift=-0.008 elbow=-0.004 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.212 lift=-0.060 elbow=+0.192 wflex=+0.449 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.018 lift=+0.007 elbow=+0.003 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.216 lift=-0.167 elbow=+0.058 wflex=+0.271 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=-0.004 elbow=-0.002 wflex=-0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.190 lift=-0.188 elbow=+0.168 wflex=+0.517 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.016 lift=-0.002 elbow=-0.002 wflex=+0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.254 lift=-0.059 elbow=+0.060 wflex=+0.177 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.021 lift=+0.003 elbow=+0.002 wflex=-0.005 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.316 lift=-0.108 elbow=+0.194 wflex=+0.497 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.027 lift=+0.004 elbow=+0.001 wflex=+0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.276 lift=-0.054 elbow=+0.087 wflex=+0.228 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.022 lift=+0.004 elbow=+0.003 wflex=-0.006 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.117 lift=-0.218 elbow=+0.180 wflex=+0.570 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=-0.004 elbow=-0.002 wflex=+0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.135 lift=-0.262 elbow=+0.090 wflex=+0.423 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.010 elbow=-0.005 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TP] step=17,600 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=64) rsr_old=0.0%(n=64) LSR=0.0% r_s=-0.650 r_a=-4.052 gz=0.043 gaxDown=79° headDown=79° wflex=66° mouthz=0.084 dcubeS=0.664 dcubeA=0.072 mxy=0.780 vis=0.38
+[REACH-DIAG] n=31 reached=False dcube=0.117 | horiz(xy)=0.112 vert(mouth-cube)=+0.023 | mouthz=0.084 cubez=0.061 gz(EE)=0.043 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=6 (horiz<0.06) wrist-cube pixel cx=0.268 cy=0.605  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n10) | 0.25-0.35:R0%(n9) | 0.35-0.45:R0%(n14) | 0.45-0.55:R0%(n11) | 0.55-0.65:R0%(n7) | 0.65-1.00:R0%(n13)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=98.4% | covered 64/86 (74%) | full sweeps=1 cursor=96
+[TPDBG ph=1] CMD pan=-0.163 lift=+0.028 elbow=+0.201 wflex=+0.387 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.013 elbow=+0.007 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.166 lift=-0.240 elbow=+0.083 wflex=+0.388 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=-0.008 elbow=-0.004 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.136 lift=-0.150 elbow=+0.194 wflex=+0.535 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.012 lift=+0.001 elbow=+0.000 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.229 lift=-0.143 elbow=+0.098 wflex=+0.331 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.018 lift=-0.002 elbow=-0.000 wflex=-0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.290 lift=+0.014 elbow=+0.250 wflex=+0.502 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.025 lift=+0.014 elbow=+0.007 wflex=+0.002 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.165 lift=-0.210 elbow=+0.080 wflex=+0.354 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=-0.006 elbow=-0.003 wflex=-0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.030 lift=-0.230 elbow=+0.163 wflex=+0.545 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.006 elbow=-0.003 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.002 lift=-0.204 elbow=+0.173 wflex=+0.542 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.003 elbow=-0.002 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.042 lift=-0.047 elbow=+0.190 wflex=+0.433 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=+0.008 elbow=+0.004 wflex=-0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.095 lift=-0.256 elbow=+0.159 wflex=+0.560 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=-0.007 elbow=-0.004 wflex=+0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.213 lift=-0.074 elbow=+0.155 wflex=+0.386 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=+0.004 elbow=+0.003 wflex=-0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.246 lift=+0.012 elbow=+0.268 wflex=+0.544 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.021 lift=+0.015 elbow=+0.007 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.100 lift=-0.296 elbow=+0.080 wflex=+0.433 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.012 elbow=-0.006 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.049 lift=-0.224 elbow=+0.161 wflex=+0.536 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=-0.005 elbow=-0.003 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.062 lift=-0.170 elbow=+0.181 wflex=+0.527 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.185 lift=-0.105 elbow=+0.173 wflex=+0.451 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.014 lift=+0.003 elbow=+0.002 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.249 lift=-0.020 elbow=+0.251 wflex=+0.537 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.022 lift=+0.012 elbow=+0.005 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.126 lift=-0.277 elbow=+0.074 wflex=+0.403 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.010 lift=-0.011 elbow=-0.006 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.058 lift=-0.198 elbow=+0.182 wflex=+0.556 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=-0.003 elbow=-0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.116 lift=-0.164 elbow=+0.192 wflex=+0.543 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.010 lift=+0.000 elbow=-0.000 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.237 lift=-0.049 elbow=+0.173 wflex=+0.400 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.019 lift=+0.007 elbow=+0.004 wflex=-0.006 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.236 lift=-0.020 elbow=+0.257 wflex=+0.552 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.020 lift=+0.012 elbow=+0.006 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.074 lift=-0.279 elbow=+0.107 wflex=+0.475 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=-0.010 elbow=-0.005 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.019 lift=-0.248 elbow=+0.148 wflex=+0.531 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.007 elbow=-0.004 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.072 lift=-0.188 elbow=+0.183 wflex=+0.547 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=-0.002 elbow=-0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.130 lift=-0.127 elbow=+0.203 wflex=+0.533 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.011 lift=+0.003 elbow=+0.001 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.205 lift=-0.086 elbow=+0.164 wflex=+0.416 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=+0.004 elbow=+0.003 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.200 lift=-0.073 elbow=+0.245 wflex=+0.574 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=+0.008 elbow=+0.004 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.109 lift=-0.274 elbow=+0.099 wflex=+0.451 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.009 lift=-0.010 elbow=-0.005 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.001 lift=-0.205 elbow=+0.187 wflex=+0.571 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.000 lift=-0.003 elbow=-0.002 wflex=+0.001 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.049 lift=-0.157 elbow=+0.202 wflex=+0.557 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=+0.001 elbow=+0.000 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.100 lift=-0.198 elbow=+0.194 wflex=+0.579 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.009 lift=-0.002 elbow=-0.002 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.213 lift=-0.077 elbow=+0.168 wflex=+0.415 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=+0.005 elbow=+0.003 wflex=-0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.229 lift=+0.016 elbow=+0.276 wflex=+0.557 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.020 lift=+0.015 elbow=+0.007 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.081 lift=-0.285 elbow=+0.101 wflex=+0.468 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.007 lift=-0.011 elbow=-0.006 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.023 lift=-0.233 elbow=+0.159 wflex=+0.541 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.006 elbow=-0.003 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.041 lift=-0.203 elbow=+0.181 wflex=+0.557 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.003 elbow=-0.002 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.088 lift=-0.154 elbow=+0.179 wflex=+0.507 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.008 lift=+0.000 elbow=-0.000 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.192 lift=-0.100 elbow=+0.156 wflex=+0.411 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.015 lift=+0.003 elbow=+0.002 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.236 lift=-0.035 elbow=+0.253 wflex=+0.555 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.020 lift=+0.011 elbow=+0.005 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.130 lift=-0.267 elbow=+0.078 wflex=+0.402 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.010 elbow=-0.005 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.040 lift=-0.200 elbow=+0.184 wflex=+0.562 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.003 elbow=-0.001 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.083 lift=-0.169 elbow=+0.183 wflex=+0.528 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.007 lift=-0.001 elbow=-0.001 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.196 lift=-0.099 elbow=+0.162 wflex=+0.423 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.015 lift=+0.003 elbow=+0.002 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.245 lift=-0.032 elbow=+0.247 wflex=+0.540 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.021 lift=+0.011 elbow=+0.005 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.133 lift=-0.275 elbow=+0.075 wflex=+0.402 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.011 lift=-0.011 elbow=-0.005 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.016 lift=-0.224 elbow=+0.172 wflex=+0.557 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.001 lift=-0.005 elbow=-0.003 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.020 lift=-0.063 elbow=+0.185 wflex=+0.438 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.006 elbow=+0.003 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.032 lift=-0.255 elbow=+0.142 wflex=+0.524 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.008 elbow=-0.004 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.028 lift=-0.021 elbow=+0.187 wflex=+0.403 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.009 elbow=+0.005 wflex=-0.002 wyaw=-0.001 wroll=+0.000
+[TP] step=19,200 | SEARCH envs=1 buf=0 a=1.000 | APPROACH envs=31 buf=0 a=1.000 | RSR=0.0% (n=64) rsr_old=0.0%(n=64) LSR=0.0% r_s=-0.690 r_a=-3.830 gz=0.043 gaxDown=80° headDown=80° wflex=66° mouthz=0.074 dcubeS=0.665 dcubeA=0.081 mxy=0.750 vis=0.38
+[REACH-DIAG] n=31 reached=False dcube=0.130 | horiz(xy)=0.123 vert(mouth-cube)=+0.013 | mouthz=0.074 cubez=0.061 gz(EE)=0.033 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=6 (horiz<0.06) wrist-cube pixel cx=0.371 cy=0.606  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n10) | 0.25-0.35:R0%(n9) | 0.35-0.45:R0%(n14) | 0.45-0.55:R0%(n11) | 0.55-0.65:R0%(n7) | 0.65-1.00:R0%(n13)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=98.4% | covered 64/86 (74%) | full sweeps=1 cursor=96
+[TPDBG ph=1] CMD pan=+0.047 lift=-0.247 elbow=+0.146 wflex=+0.524 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.007 elbow=-0.004 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.047 lift=-0.105 elbow=+0.190 wflex=+0.486 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.004 elbow=+0.002 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.109 lift=-0.184 elbow=+0.164 wflex=+0.504 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.002 elbow=-0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.184 lift=-0.167 elbow=+0.198 wflex=+0.559 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.016 lift=+0.000 elbow=-0.001 wflex=+0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.244 lift=-0.103 elbow=+0.086 wflex=+0.269 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.020 lift=+0.000 elbow=+0.001 wflex=-0.004 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.274 lift=-0.081 elbow=+0.219 wflex=+0.525 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.023 lift=+0.007 elbow=+0.003 wflex=+0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.193 lift=-0.158 elbow=+0.081 wflex=+0.311 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.015 lift=-0.003 elbow=-0.001 wflex=-0.003 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.040 lift=-0.184 elbow=+0.203 wflex=+0.586 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.112 lift=-0.174 elbow=+0.175 wflex=+0.519 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.001 elbow=-0.000 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.156 lift=-0.152 elbow=+0.213 wflex=+0.578 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.002 elbow=+0.000 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.214 lift=-0.085 elbow=+0.166 wflex=+0.418 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.017 lift=+0.004 elbow=+0.003 wflex=-0.005 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.161 lift=-0.037 elbow=+0.273 wflex=+0.601 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.014 lift=+0.011 elbow=+0.006 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.029 lift=-0.229 elbow=+0.155 wflex=+0.530 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.005 elbow=-0.003 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.010 lift=-0.244 elbow=+0.152 wflex=+0.536 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.000 lift=-0.007 elbow=-0.004 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.064 lift=-0.210 elbow=+0.167 wflex=+0.534 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.005 lift=-0.004 elbow=-0.002 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.067 lift=-0.205 elbow=+0.191 wflex=+0.580 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.003 elbow=-0.002 wflex=+0.002 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.205 lift=-0.095 elbow=+0.190 wflex=+0.478 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.016 lift=+0.004 elbow=+0.003 wflex=-0.004 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.238 lift=-0.005 elbow=+0.261 wflex=+0.545 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.021 lift=+0.013 elbow=+0.006 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.098 lift=-0.275 elbow=+0.105 wflex=+0.465 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.008 lift=-0.010 elbow=-0.005 wflex=+0.001 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.031 lift=-0.182 elbow=+0.198 wflex=+0.574 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.001 elbow=-0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.023 lift=-0.181 elbow=+0.205 wflex=+0.587 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=-0.001 elbow=-0.000 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.053 lift=-0.191 elbow=+0.185 wflex=+0.554 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=-0.002 elbow=-0.001 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.054 lift=-0.179 elbow=+0.207 wflex=+0.590 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.155 lift=-0.131 elbow=+0.200 wflex=+0.530 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.012 lift=+0.002 elbow=+0.002 wflex=-0.003 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.190 lift=-0.068 elbow=+0.249 wflex=+0.578 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.017 lift=+0.008 elbow=+0.004 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.117 lift=-0.236 elbow=+0.125 wflex=+0.473 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.009 lift=-0.007 elbow=-0.003 wflex=-0.000 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.024 lift=-0.126 elbow=+0.240 wflex=+0.612 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.003 lift=+0.004 elbow=+0.002 wflex=-0.000 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.057 lift=-0.153 elbow=+0.214 wflex=+0.583 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.004 lift=+0.001 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.063 lift=-0.190 elbow=+0.200 wflex=+0.587 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.006 lift=-0.001 elbow=-0.001 wflex=+0.002 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.081 lift=-0.181 elbow=+0.186 wflex=+0.551 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=-0.001 elbow=-0.001 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.050 lift=-0.159 elbow=+0.220 wflex=+0.600 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=+0.001 elbow=+0.000 wflex=+0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.051 lift=-0.204 elbow=+0.177 wflex=+0.551 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.003 lift=-0.003 elbow=-0.002 wflex=+0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.005 lift=-0.141 elbow=+0.229 wflex=+0.603 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.001 lift=+0.003 elbow=+0.001 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.035 lift=-0.150 elbow=+0.220 wflex=+0.593 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=+0.002 elbow=+0.001 wflex=-0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.056 lift=-0.184 elbow=+0.203 wflex=+0.589 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.005 lift=-0.001 elbow=-0.001 wflex=+0.001 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=+0.088 lift=-0.173 elbow=+0.191 wflex=+0.552 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.006 lift=-0.001 elbow=-0.000 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=-0.042 lift=-0.130 elbow=+0.238 wflex=+0.612 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.004 lift=+0.004 elbow=+0.002 wflex=-0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.038 lift=-0.179 elbow=+0.200 wflex=+0.578 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.002 lift=-0.001 elbow=-0.000 wflex=-0.000 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=1] CMD pan=-0.017 lift=-0.157 elbow=+0.219 wflex=+0.599 wyaw=+0.000 wroll=+0.000 | MOVED pan=-0.002 lift=+0.001 elbow=+0.001 wflex=+0.000 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=1] CMD pan=+0.029 lift=-0.173 elbow=+0.204 wflex=+0.583 wyaw=+0.000 wroll=+0.000 | MOVED pan=-1.333 lift=-0.762 elbow=-1.796 wflex=+1.509 wyaw=+0.002 wroll=-0.029
+[TPDBG ph=0] CMD pan=+0.153 lift=+0.000 elbow=+0.000 wflex=-0.790 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.013 lift=-0.020 elbow=+0.010 wflex=-0.220 wyaw=-0.001 wroll=+0.029
+[TP-EVAL] 🟢→🔵 APPROACH→SEARCH (lost: vis 0 / ncen 0.10) @step 20480
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.449 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.093 lift=-0.003 elbow=+0.003 wflex=-0.001 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.354 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.153 lift=+0.001 elbow=+0.001 wflex=-0.003 wyaw=-0.001 wroll=+0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=+0.271 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.165 lift=-0.000 elbow=+0.000 wflex=-0.001 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=-0.774 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.166 lift=+0.001 elbow=+0.000 wflex=-0.029 wyaw=+0.001 wroll=-0.000
+[TPDBG ph=0] CMD pan=+1.000 lift=+0.000 elbow=+0.000 wflex=+0.632 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.167 lift=-0.003 elbow=-0.001 wflex=-0.021 wyaw=+0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+0.792 lift=+0.000 elbow=+0.000 wflex=-0.817 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.150 lift=+0.002 elbow=+0.001 wflex=-0.028 wyaw=-0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.929 lift=+0.000 elbow=+0.000 wflex=-0.722 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.147 lift=-0.000 elbow=+0.000 wflex=-0.087 wyaw=+0.000 wroll=+0.000
+[TPDBG ph=0] CMD pan=+0.919 lift=+0.000 elbow=+0.000 wflex=-0.143 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.153 lift=-0.002 elbow=+0.000 wflex=-0.072 wyaw=-0.000 wroll=-0.000
+[TPDBG ph=0] CMD pan=+0.917 lift=+0.000 elbow=+0.000 wflex=-0.055 wyaw=+0.000 wroll=+0.000 | MOVED pan=+0.154 lift=-0.000 elbow=+0.000 wflex=-0.037 wyaw=+0.000 wroll=-0.000
+[TP-EVAL] 🔵→🟢 SEARCH→APPROACH (centered held 1 steps) @step 20768
+[TP] step=20,800 | SEARCH envs=16 buf=0 a=1.000 | APPROACH envs=16 buf=0 a=1.000 | RSR=0.0% (n=96) rsr_old=0.0%(n=96) LSR=0.0% r_s=+2.072 r_a=-1.525 gz=0.318 gaxDown=82° headDown=82° wflex=84° mouthz=0.253 dcubeS=0.354 dcubeA=0.210 mxy=0.170 vis=0.78
+[REACH-DIAG] n=16 reached=False dcube=0.205 | horiz(xy)=0.068 vert(mouth-cube)=+0.192 | mouthz=0.253 cubez=0.061 gz(EE)=0.212 (RSR uses gz<0.1, NOT mouthz)
+[AIM-CALIB] n=6 (horiz<0.06) wrist-cube pixel cx=0.415 cy=0.625  <- set CX_TGT/CY_TGT to these (now CX_TGT=0.5 CY_TGT=0.6)
+[RSR-DIST] 0.00-0.25:R0%(n17) | 0.25-0.35:R0%(n12) | 0.35-0.45:R0%(n17) | 0.45-0.55:R0%(n15) | 0.55-0.65:R0%(n14) | 0.65-1.00:R0%(n21)
+[EVAL-SET] RSR=0.0% rsr_old=0.0% SEARCH=97.7% | covered 86/86 (100%) | full sweeps=1 cursor=128
+[EVAL-SET] FULL COVERAGE 86/86 -> FINAL RSR=0.0% rsr_old=0.0% SEARCH=97.7% (FROZEN — UI live)
+[EVAL-HOOK] wrote ~/rebot_sim2real_reeval_20261102/staged_e2e/trainer_summary.json

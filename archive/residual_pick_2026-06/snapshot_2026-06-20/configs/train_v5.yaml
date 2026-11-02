@@ -1,0 +1,105 @@
+# v5: PROJECT (b) KEYPOINT obs. The privileged cube_pos3/quat4/(cube-tcp)3 are DROPPED; the cube enters
+# ONLY as the normalized TOP (u,v) token (rendered + HSV-detected per env, = the deploy CubeDetectorIO
+# domain) plus the WRIST (u,v). obs = 39:
+#   [ qpos8 | qvel8 | target7 | dist_rest6 | tcp3 | grasped1 | top_uv3 | wrist_uv3 ]
+# Single SAC/RLPD. This is the WARM-START asset for the online real-robot fine-tune (path C / phase D).
+# View curves: tensorboard --logdir runs   (or MLflow on the Ray cluster)
+
+exp_name: pick_kp_v5
+total_env_steps: 2000000
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 20000
+eval_episodes: 16
+eval_seed: 12345
+eval_holdout: {dr_mass_min: 0.35, dr_mass_max: 0.50}
+ckpt_every: 50000
+latest_every: 500
+
+env:
+  num_envs: 24                 # v5: TWO cams/env now (wrist + top) -> fewer envs than v4's 32 (render cost)
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  cube_mass: 0.02
+  dr_mass_min: 0.02
+  dr_mass_max: 0.05
+  decimation: 8                # 15 Hz policy
+  arm_step: 0.05
+  action_ema: 0.4              # ANTI-BOB (kept from v4)
+  grip_step: 0.0143
+  grip_open_qpos: 0.035
+  grip_friction: 2.0
+  arm_limit_lo: [-0.85, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]
+  arm_limit_hi: [ 0.85,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]
+  table_center: [0.35, -0.187]
+  tilt_gate_deg: 42.0
+  rest_rand: 0.3
+  episode_len: 150
+  success_lift_height: 0.07
+  grasp_radius: 0.05
+  pos_rand_xy: 0.0             # curriculum START at center
+  pos_rand_max: 0.10           # auto-widen to the reachable workspace
+  pos_rand_step: 0.02
+  spawn_succ_thresh: 0.40      # widen at TRAIN success 0.40: heavy DR (occlusion+false-det+dropout) caps stochastic train-success ~0.42 even when deterministic EVAL is 0.94, so 0.85 (train) never triggers. 0.40 ≈ "level mastered" given the DR floor; widen center->±0.10 progressively.
+  spawn_cooldown: 600
+  yaw_rand: 0.0
+  # ---- sim2real DR ----
+  dr_obs_pos_noise: 0.01       # cube/tcp OBS pos noise (cube_pos no longer in obs, but tcp still is)
+  dr_obs_qpos_noise: 0.01
+  dr_obs_qvel_noise: 0.15
+  dr_action_latency_max: 2
+  dr_action_noise: 0.02
+  dr_gain_scale: 0.35
+  dr_tcp_offset_xy: 0.03       # tcp OBS calib residual (tcp is still in the (b) obs)
+  dr_tcp_offset_z: 0.03
+  # ---- project (b): TOP (u,v) token (rendered overhead cam, HSV-detected, = deploy CNN domain) ----
+  obs_top_uv: true
+  obs_analytic_uv: true        # SPEED: top+wrist (u,v) from ANALYTIC projection (no render) -> ~10x fps so v5 can reach the ~10M steps the keypoint task needs (cf. rlpd10). deploy still uses CNN (analytic≈render≈CNN).
+  top_occlusion_radius: 0.05   # analytic CORRELATED occlusion: top (u,v)->0 when gripper over+above cube (matches render/deploy). Fixes the clean-overfit transfer gap (cross-eval: analytic 0.75 vs rendered 0.17).
+  top_cam_res: [320, 180]      # matches the CNN input res; native render
+  top_cam_height: 0.57         # = SceneConfig (real-aligned)
+  top_cam_y: 0.56              # cam ABSOLUTE y = SceneConfig/deploy (was top_cam_back_dist 0.86 off the cube-spawn table_center -> +0.113 drift)
+  top_cam_aim_y: -0.10
+  dr_top_uv_noise: 0.04        # detector jitter; ALSO covers the ~0.02-0.08 sim-render vs CNN residual (coarse token)
+  dr_top_uv_dropout: 0.30      # 30% steps the top detection drops -> policy must not over-trust it (arm occludes the top view)
+  # ---- WRIST (u,v) token (rendered eye-in-hand, kept from v4) ----
+  obs_wrist: true
+  wrist_cam_res: [320, 180]
+  dr_wrist_uv_noise: 0.06
+  dr_wrist_dropout: 0.25
+  dr_wrist_distractor: 0.4
+  dr_wrist_distractor_n: 2
+  dr_render_light: 0.3
+  obs_torque: false
+
+reward:
+  w_reach: 1.0
+  w_xy_align: 0.5
+  w_grasp: 0.5
+  w_lift: 25.0
+  w_vertical: 3.0
+  w_wrist_center: 1.0          # wrist-driven servo shaping (continuous center, pre-grasp). Modest so it doesn't dwarf grasp/lift -> watch MLflow reward/r_wrist vs success
+  success_bonus: 80.0
+  w_action: 0.03
+  w_time: 0.001
+  fall_penalty: 5.0
+  w_hold_still: 1.0
+
+sac:
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  replay_size: 1000000
+  warmup_steps: 2000
+  updates_per_step: 1
+  target_entropy_scale: 1.0
+  layernorm: true
+  init_alpha: 0.2
+  demo_path: demos/pick_demos_kp39.pt   # 39-dim (b) demos, collected with this config (obs_top_uv on)
+  demo_frac: 0.5

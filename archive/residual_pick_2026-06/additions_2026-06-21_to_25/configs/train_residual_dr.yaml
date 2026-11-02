@@ -1,0 +1,98 @@
+# Phase 1c: RESIDUAL-on-IK, privileged-STATE actor (validate the residual concept beats the open-loop
+# base: 95% center -> 43% full reach box). The action is a bounded residual on a scripted vertical IK
+# grasp (data/grasp_pose_table.pt); base auto-grips. No demos (the base bootstraps). Curriculum widens
+# the reach-box spawn fraction (pos_rand reinterpreted as 0..1). Phase 2 swaps the actor to (u,v) tokens.
+exp_name: pick_residual_v5
+total_env_steps: 1500000
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 20000
+eval_episodes: 16
+eval_seed: 12345
+eval_holdout: {dr_mass_min: 0.35, dr_mass_max: 0.50}
+ckpt_every: 50000
+latest_every: 500
+
+env:
+  num_envs: 64                 # pure state (no cameras) -> more envs
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  cube_mass: 0.02
+  dr_mass_min: 0.02
+  dr_mass_max: 0.05
+  decimation: 8
+  arm_step: 0.05
+  action_ema: 0.4
+  grip_step: 0.0143
+  grip_open_qpos: 0.035
+  grip_friction: 2.0
+  arm_limit_lo: [-0.85, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]
+  arm_limit_hi: [ 0.85,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]
+  table_center: [0.35, -0.187]
+  tilt_gate_deg: 42.0
+  rest_rand: 0.3
+  episode_len: 150
+  success_lift_height: 0.07
+  grasp_radius: 0.05
+  # ---- RESIDUAL-on-IK base + reach-box curriculum (pos_rand = 0..1 fraction of the reachable box) ----
+  residual_ik: true
+  grasp_table_path: "data/grasp_pose_table.pt"
+  residual_scale: 0.06         # TARGET scale (ramped up to this)
+  residual_scale_min: 0.06     # v5 WARM-STARTS from v4 (already trained at full scale 0.06) -> no re-ramp
+  residual_scale_warmup: 40000 # policy-steps to ramp 0.01 -> 0.06
+  residual_descend_steps: 28
+  residual_lift_steps: 45
+  residual_grip_auto: true
+  pos_rand_xy: 0.0             # curriculum START fraction = reach-box center (smoke: 95%)
+  pos_rand_max: 1.0           # widen to the FULL reachable box (smoke base: 43%)
+  pos_rand_step: 0.2
+  spawn_succ_thresh: 0.70     # widen when the residual policy holds 70% at the current fraction
+  spawn_cooldown: 600
+  yaw_rand: 0.0
+  # ---- v5: DR ON. The residual now learns to CLOSED-LOOP COMPENSATE the execution DR that destroys the
+  # open-loop base (95%->26% at center). Warm-started from v4 (DR-off, full-box validated) = sim2real value. ----
+  dr_enable: true
+  dr_obs_pos_noise: 0.01
+  dr_obs_qpos_noise: 0.01
+  dr_obs_qvel_noise: 0.15
+  dr_action_latency_max: 2
+  dr_action_noise: 0.02
+  dr_gain_scale: 0.35
+  dr_tcp_offset_xy: 0.03
+  dr_tcp_offset_z: 0.03
+  obs_wrist: false             # Phase 1c: pure privileged STATE (project-(a), cube_pos in obs)
+  obs_top_uv: false
+  obs_torque: false
+
+reward:
+  # OUTCOME-dominated (synthesis: IK base replaces dense approach shaping; residual learns from grasp+lift+success).
+  # v1 kept the from-scratch dense shaping -> rewarded hover/freeze near the cube -> residual didn't commit.
+  w_reach: 1.0                 # RESTORED (v2's removal killed the gradient -> worse than base). shaping guides the residual.
+  w_xy_align: 0.5
+  w_grasp: 0.5
+  w_lift: 25.0
+  w_vertical: 0.0              # base IK handles verticality
+  success_bonus: 80.0
+  w_action: 0.03
+  w_time: 0.001
+  fall_penalty: 5.0
+  w_hold_still: 1.0            # RESTORED
+
+sac:
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  replay_size: 1000000
+  warmup_steps: 2000
+  updates_per_step: 1
+  target_entropy_scale: 1.0
+  layernorm: true
+  init_alpha: 0.2
+  demo_path: ""                # no demos: the scripted IK base bootstraps (residual=0 already 43-95%)
+  demo_frac: 0.0

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rebot-cube-grasping"
+version = "0.1.0"
+description = "reBot Cube Grasping: Staged RL in Simulation and Perception–IK Control on Hardware"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Jeong Hwan Lee" }]
+dependencies = ["numpy", "pyyaml"]
+
+[project.urls]
+Repository = "https://github.com/physical-ai-robot-learning/rebot-cube-grasping"
+
+[project.optional-dependencies]
+deploy = ["torch"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

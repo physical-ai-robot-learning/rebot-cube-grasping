@@ -1,0 +1,115 @@
+# WRIST-FORCE: make the wrist token NECESSARY so the policy stops ignoring it.
+# Diagnosis (ablation, 2026-06): with a near-accurate base + over-noisy wrist DR, the policy rode the
+# base and discounted the wrist (zeroed==cnn, and a perfect wrist HURT = OOD). Three changes force use:
+#   (1) NECESSARY  : residual_base_pos_noise 0.025 -> 0.05  (base often wrong beyond blind/proprio recovery)
+#   (2) REACHABLE  : residual_scale 0.10 -> 0.18            (residual CAN move far enough to correct a 5cm base error)
+#   (3) TRUSTWORTHY: wrist DR dialed down (distractor 0.4->0.12, dropout 0.25->0.10, noise 0.06->0.05) +
+#                    w_wrist_center 0 -> 1.5 (IBVS shaping: aim the wrist at the cube while approaching).
+# top stays occluded during descent (top_occlusion_radius) so in the fine phase the wrist is the ONLY cube cue.
+# FRESH train (no warm-start: don't inherit the ignore-wrist habit). VERIFY via eval_wrist_ablation.py:
+#   success only if C(cnn) > B(zeroed) [wrist now used] and D(gt) > C [CNN improvement now pays].
+exp_name: pick_residual_wristforce
+total_env_steps: 1500000
+seed: 0
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 20000
+eval_episodes: 16
+eval_seed: 12345
+eval_holdout: {dr_mass_min: 0.35, dr_mass_max: 0.50}
+ckpt_every: 50000
+latest_every: 500
+
+env:
+  num_envs: 64
+  env_spacing: 2.0
+  device: "cuda:0"
+  robot_usd: "assets/rebot_b601_dm.usd"
+  cube_mass: 0.02
+  dr_mass_min: 0.02
+  dr_mass_max: 0.05
+  decimation: 8
+  arm_step: 0.05
+  action_ema: 0.4
+  grip_step: 0.0143
+  grip_open_qpos: 0.035
+  grip_friction: 2.0
+  arm_limit_lo: [-0.85, -3.1416, -3.1416, -1.5708, -1.5708, -3.1416]
+  arm_limit_hi: [ 0.85,  0.0,     0.0,     1.5708,  1.5708,  3.1416]
+  rest_arm: [0.0, -1.65, -1.15, 0.60, 0.0, 0.0]
+  table_center: [0.35, -0.187]
+  tilt_gate_deg: 42.0
+  rest_rand: 0.3
+  episode_len: 150
+  success_lift_height: 0.07
+  grasp_radius: 0.05
+  # ---- RESIDUAL-on-IK base + reach-box curriculum ----
+  residual_ik: true
+  grasp_table_path: "data/grasp_pose_table.pt"
+  residual_scale: 0.18         # (2) REACHABLE: bigger so the residual can correct a 5cm base error (was 0.10)
+  residual_scale_min: 0.02
+  residual_scale_warmup: 50000 # bigger residual -> a more careful ramp (was 40000)
+  residual_descend_steps: 28
+  residual_lift_steps: 45
+  residual_grip_auto: true
+  residual_grip_schedule: true
+  residual_base_pos_noise: 0.05   # (1) NECESSARY: base wrong by up to 5cm -> proprio/base alone can't recover -> wrist must be used (was 0.025)
+  pos_rand_xy: 0.0
+  pos_rand_max: 1.0
+  pos_rand_step: 0.2
+  spawn_succ_thresh: 0.50     # harder task (base 5cm off) -> slightly looser widen threshold so curriculum still reaches the full box
+  spawn_cooldown: 600
+  yaw_rand: 0.0
+  # ---- full DR ON ----
+  dr_enable: true
+  dr_obs_pos_noise: 0.01
+  dr_obs_qpos_noise: 0.01
+  dr_obs_qvel_noise: 0.15
+  dr_action_latency_max: 2
+  dr_action_noise: 0.02
+  dr_gain_scale: 0.35
+  dr_tcp_offset_xy: 0.03
+  dr_tcp_offset_z: 0.03
+  # ---- VISION tokens (deployable). top=coarse, wrist=fine ----
+  obs_wrist: true
+  obs_top_uv: true
+  obs_analytic_uv: true
+  obs_torque: false
+  # ---- PERCEPTION DR: top unchanged; WRIST dialed DOWN so trusting it pays (was the ignore-driver) ----
+  top_occlusion_radius: 0.05   # top->0 during descent -> wrist is the ONLY cube cue in the fine phase
+  dr_top_uv_noise: 0.04
+  dr_top_uv_dropout: 0.30
+  dr_wrist_uv_noise: 0.05      # (3) TRUSTWORTHY: ~16px, still realistic but less crippling (was 0.06)
+  dr_wrist_dropout: 0.10       # was 0.25
+  dr_wrist_distractor: 0.12    # was 0.4 (40% fake-red was teaching the policy to ignore the wrist)
+  dr_wrist_distractor_n: 2
+  dr_render_light: 0.3
+
+reward:
+  w_reach: 1.0
+  w_xy_align: 0.5
+  w_grasp: 0.5
+  w_lift: 25.0
+  w_vertical: 0.0
+  success_bonus: 80.0
+  w_action: 0.03
+  w_time: 0.001
+  fall_penalty: 5.0
+  w_hold_still: 1.0
+  w_wrist_center: 1.5          # (3) IBVS shaping: aim the wrist cam at the cube while approaching (was 0.0 = OFF). gated visible+prox+pre-grasp.
+
+sac:
+  hidden: [256, 256]
+  gamma: 0.95
+  tau: 0.01
+  lr: 0.0003
+  batch_size: 1024
+  replay_size: 1000000
+  warmup_steps: 2000
+  updates_per_step: 1
+  target_entropy_scale: 1.0
+  layernorm: true
+  init_alpha: 0.2
+  demo_path: ""                # FRESH (no warm-start, no demos) — learn wrist-use from scratch under the new incentives
+  demo_frac: 0.0

@@ -1,0 +1,18 @@
+# Tiny smoke config: exercises env build + step + SAC update + TB logging end-to-end fast.
+exp_name: _smoke
+total_env_steps: 200
+log_dir: runs
+ckpt_dir: ckpt
+log_every: 1
+eval_every: 0
+ckpt_every: 0
+
+env:
+  num_envs: 8
+  device: "cuda:0"
+  episode_len: 30
+
+sac:
+  batch_size: 64
+  warmup_steps: 50
+  updates_per_step: 1

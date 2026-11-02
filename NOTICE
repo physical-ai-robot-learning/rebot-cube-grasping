@@ -1,0 +1,20 @@
+rebot-cube-grasping
+Copyright (c) 2026 Jeong Hwan Lee
+
+The code in this repository is licensed under the PolyForm Noncommercial License 1.0.0 (LICENSE).
+Details on third-party material: docs/third_party.md.
+
+Credits
+  Squint (https://github.com/aalmuzairee/squint) - MIT License, Copyright (c) 2026 Abdulaziz Almuzairee
+  (LICENSES/MIT-Squint.txt). The C51-SAC teacher, the visual students and the Project 2 trainer follow Squint's
+  distributional-C51 SAC design (network shapes, hyper-parameters, reward). They were written for this project and
+  share only generic lines with Squint; the MIT notice is included as a courtesy.
+  LeIsaac (https://github.com/LightwheelAI/leisaac, Apache-2.0) and NVIDIA Isaac Lab are used as installed libraries;
+  no LeIsaac file is copied into this repository.
+
+The Project 2 trainer (src/det_xattn/) uses Ultralytics YOLO (AGPL-3.0) as an installed library when a detector is
+given (--detector); Ultralytics and the detector weights are not included. The OFFICIAL robot model is Seeed
+Studio's reBot-Isaacsim USD (MIT), referenced by path, not included.
+
+Not included and not redistributed: Isaac Sim / Isaac Lab (NVIDIA licences), LeIsaac itself, the reBot B601-DM
+URDF / meshes / USD assets (Seeed Studio), COCO images used as background photos.

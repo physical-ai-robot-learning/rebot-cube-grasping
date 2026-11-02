@@ -1,0 +1,60 @@
+{
+ "run_dir": "render",
+ "episodes": 4,
+ "cases": 4,
+ "seeds": [
+  0
+ ],
+ "search": {
+  "successes": 4,
+  "rate": 1.0,
+  "wilson95": [
+   0.5101,
+   1.0
+  ]
+ },
+ "rsr_old": {
+  "successes": 4,
+  "rate": 1.0,
+  "wilson95": [
+   0.5101,
+   1.0
+  ]
+ },
+ "rsr": {
+  "successes": 0,
+  "rate": 0.0,
+  "wilson95": [
+   0.0,
+   0.4899
+  ]
+ },
+ "lift": {
+  "successes": 0,
+  "rate": 0.0,
+  "wilson95": [
+   0.0,
+   0.4899
+  ]
+ },
+ "trainer_summary": {
+  "rsr_pct": 0.0,
+  "rsr_old_pct": 100.0,
+  "search_pct": 100.0,
+  "covered": 4,
+  "M": 4,
+  "env": {
+   "EVAL_SET": "<repo>/results/project2/eval_grids/render_cases_4_from_86cells.npy",
+   "EVAL_SEED": "0",
+   "TP_EVAL_DIR": "<repo>/checkpoints/project2",
+   "RSR_DCUBE": "0.07",
+   "RSR_HOLD": "1",
+   "EVAL_SUCC_BY_OLD": "1",
+   "GRASP_ON": "0",
+   "APP_CEN": "0.15",
+   "APP_MZ": "0.07",
+   "FRAC_GRASP": "0.23",
+   "ROBOT_OFFICIAL": null
+  }
+ }
+}

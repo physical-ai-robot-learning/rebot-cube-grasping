@@ -1,0 +1,4 @@
+# Portable inference for reBot LiftCube — NO Isaac Sim / Isaac Lab needed.
+torch>=2.0
+numpy>=1.23
+# + whatever your real-robot driver / perception needs (Damiao motor SDK, camera, AprilTag, etc.)
