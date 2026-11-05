@@ -1,0 +1,531 @@
+{
+ "deploy::c51_smooth_v1_final": [
+  "[t=0] grip_t=0.032 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=1] grip_t=0.044 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=2] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=3] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=4] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=5] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=6] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=7] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=8] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=9] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=10] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=11] grip_t=0.045 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]"
+ ],
+ "deploy::c51_v5g_final": [
+  "[t=0] grip_t=0.016 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=1] grip_t=0.012 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=2] grip_t=0.008 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=3] grip_t=0.005 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=4] grip_t=0.001 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=5] grip_t=0.000 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=6] grip_t=0.000 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=7] grip_t=0.000 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=8] grip_t=0.000 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=9] grip_t=0.000 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=10] grip_t=0.002 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]",
+  "[t=11] grip_t=0.006 grasped=False cube=[ 0.3  -0.3   0.06] tcp=[ 0.164 -0.35   0.353]"
+ ],
+ "deploy::dagger_dual128_v3_final": [
+  "[t=0] grip_t=0.006 arm_t=[ 0.02 -1.2  -1.03  0.5  -0.02 -0.03]",
+  "[t=1] grip_t=0.000 arm_t=[ 0.05 -1.25 -1.06  0.46 -0.03 -0.06]",
+  "[t=2] grip_t=0.000 arm_t=[ 0.07 -1.3  -1.09  0.41 -0.05 -0.1 ]",
+  "[t=3] grip_t=0.000 arm_t=[ 0.08 -1.34 -1.13  0.38 -0.04 -0.1 ]",
+  "[t=4] grip_t=0.003 arm_t=[ 0.03 -1.32 -1.15  0.42  0.   -0.14]",
+  "[t=5] grip_t=0.000 arm_t=[ 0.07 -1.35 -1.18  0.38 -0.02 -0.13]",
+  "[t=6] grip_t=0.010 arm_t=[ 0.04 -1.37 -1.18  0.4   0.02 -0.13]",
+  "[t=7] grip_t=0.000 arm_t=[-0.   -1.41 -1.2   0.35  0.03 -0.17]",
+  "[t=8] grip_t=0.000 arm_t=[-0.01 -1.46 -1.24  0.32  0.06 -0.18]",
+  "[t=9] grip_t=0.000 arm_t=[-0.04 -1.49 -1.24  0.31  0.08 -0.19]",
+  "[t=10] grip_t=0.000 arm_t=[-0.   -1.53 -1.29  0.27  0.09 -0.21]",
+  "[t=11] grip_t=0.000 arm_t=[-0.05 -1.55 -1.31  0.25  0.13 -0.22]"
+ ],
+ "deploy_helpers": {
+  "ds_sha": "55f7aeb50cfca868ca4dba7f9833820c11faccc05858d0e16d58e524643d77a5",
+  "obs": [
+   0.0,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6,
+   0.7,
+   -0.0,
+   -0.01,
+   -0.02,
+   -0.03,
+   -0.04,
+   -0.05,
+   -0.06,
+   -0.07,
+   0.0,
+   0.02,
+   0.04,
+   0.06,
+   0.08,
+   0.1,
+   0.12,
+   0.0,
+   1.25,
+   1.2,
+   -0.25,
+   0.4,
+   0.5,
+   0.4,
+   -0.5,
+   0.02,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.18486,
+   -0.2567,
+   0.13252,
+   0.21514,
+   -0.2433,
+   -0.11252,
+   1.0
+  ],
+  "pick_device": "cpu",
+  "quat_rotate": [
+   -1.6,
+   1.2,
+   3.1
+  ],
+  "state": [
+   0.0,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6,
+   0.7,
+   0.0,
+   0.05,
+   0.1,
+   0.15,
+   0.2,
+   0.25,
+   0.3,
+   0.0,
+   1.25,
+   1.2,
+   -0.25,
+   0.4,
+   0.5
+  ],
+  "steps": [
+   [
+    [
+     0.05,
+     -1.2,
+     -0.975,
+     0.56,
+     0.0,
+     -0.015
+    ],
+    0.0343
+   ],
+   [
+    [
+     0.1,
+     -1.25,
+     -0.95,
+     0.57,
+     0.0,
+     -0.03
+    ],
+    0.045
+   ],
+   [
+    [
+     0.15,
+     -1.3,
+     -0.925,
+     0.58,
+     0.0,
+     -0.045
+    ],
+    0.045
+   ]
+  ],
+  "target7": [
+   0.15,
+   -1.3,
+   -0.925,
+   0.58,
+   0.0,
+   -0.045,
+   0.045
+  ],
+  "tcp": [
+   0.18486,
+   -0.2567,
+   0.13252
+  ]
+ },
+ "june_visual_nets": {
+  "actor_keys": [
+   "proj.wrist_proj.0.weight",
+   "proj.wrist_proj.0.bias",
+   "proj.wrist_proj.1.weight",
+   "proj.wrist_proj.1.bias",
+   "proj.front_proj.0.weight",
+   "proj.front_proj.0.bias",
+   "proj.front_proj.1.weight",
+   "proj.front_proj.1.bias",
+   "proj.state_proj.0.weight",
+   "proj.state_proj.0.bias",
+   "proj.state_proj.1.weight",
+   "proj.state_proj.1.bias",
+   "fc.0.weight",
+   "fc.0.bias",
+   "fc.1.weight",
+   "fc.1.bias",
+   "fc.3.weight",
+   "fc.3.bias",
+   "fc.4.weight",
+   "fc.4.bias",
+   "fc.6.weight",
+   "fc.6.bias",
+   "fc.7.weight",
+   "fc.7.bias",
+   "mean.weight",
+   "mean.bias",
+   "logstd.weight",
+   "logstd.bias"
+  ],
+  "enc_shape": [
+   2,
+   1024
+  ],
+  "enc_sum": 117.746
+ },
+ "project2_nets": {
+  "approach_last": {
+   "act": [
+    [
+     0.1538,
+     -0.16221,
+     -0.29163,
+     0.09891
+    ],
+    [
+     -0.45336,
+     0.41649,
+     -0.02178,
+     -0.14341
+    ],
+    [
+     -0.84235,
+     0.38406,
+     0.23351,
+     0.13385
+    ],
+    [
+     -0.68724,
+     0.19278,
+     0.14049,
+     -0.11283
+    ],
+    [
+     -0.84585,
+     -0.30732,
+     0.07947,
+     -0.34797
+    ]
+   ],
+   "proj_first": [
+    [
+     0.77361,
+     0.03546,
+     0.03879,
+     0.05769,
+     0.07987,
+     0.01417,
+     0.00038,
+     3e-05
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.23809,
+     0.7619,
+     0.0,
+     0.0
+    ],
+    [
+     0.23053,
+     0.24391,
+     0.15358,
+     0.07533,
+     0.0167,
+     0.00681,
+     0.07028,
+     0.1496
+    ],
+    [
+     0.33301,
+     0.54138,
+     0.00057,
+     0.00084,
+     0.01153,
+     0.05543,
+     0.04907,
+     0.00793
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.52381,
+     0.47619,
+     0.0
+    ]
+   ],
+   "proj_sum": [
+    [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   "q": [
+    [
+     -16.96361,
+     -19.82092,
+     -9.60478,
+     -17.39662,
+     -6.30183
+    ],
+    [
+     -19.75964,
+     -16.25762,
+     -19.99131,
+     -19.93266,
+     -2.01287
+    ]
+   ]
+  },
+  "search_last": {
+   "act": [
+    [
+     -0.6698,
+     0.93219
+    ],
+    [
+     -0.94839,
+     -0.80227
+    ],
+    [
+     -0.16956,
+     0.87407
+    ],
+    [
+     0.99491,
+     0.9791
+    ],
+    [
+     0.85869,
+     0.91275
+    ]
+   ],
+   "proj_first": [
+    [
+     0.01444,
+     0.00308,
+     0.00583,
+     0.01516,
+     0.03319,
+     0.11429,
+     0.33262,
+     0.2923
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.23809,
+     0.76191,
+     0.0,
+     0.0
+    ],
+    [
+     0.01005,
+     0.0219,
+     0.04075,
+     0.07652,
+     0.12705,
+     0.22126,
+     0.16598,
+     0.06398
+    ],
+    [
+     0.00168,
+     0.00555,
+     0.01031,
+     0.02282,
+     0.05144,
+     0.14032,
+     0.17075,
+     0.08638
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.52381,
+     0.47619,
+     0.0
+    ]
+   ],
+   "proj_sum": [
+    [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   ],
+   "q": [
+    [
+     9.87349,
+     -10.80325,
+     6.29705,
+     15.1346,
+     -1.32817
+    ],
+    [
+     -13.82356,
+     -8.53365,
+     10.42259,
+     21.67809,
+     1.83858
+    ]
+   ]
+  }
+ },
+ "robot_profile": {
+  "official": [
+   "'official'",
+   "('joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6')",
+   "{'PAN': 0, 'WFLEX': 3, 'ELBOW': 2, 'WROLL': 5}",
+   "{'joint1': (-2.7999, 2.7999), 'joint2': (-3.14, 0.0), 'joint3': (-3.14, 0.0), 'joint4': (-1.7901, 1.69), 'joint5': (-1.57, 1.57), 'joint6': (-3.14, 3.14)}",
+   "(0.0, 0.05)",
+   "('gripper_end',)",
+   "'gripper_left'",
+   "'gripper_right'",
+   "-1",
+   "'{ENV_REGEX_NS}/Robot'",
+   "'REBOT_OFFICIAL_CFG'",
+   "(0.0, -1.5708, -0.01745, 0.0, 0.0, 0.0)",
+   "{'joint1': 1.6, 'joint2': -0.084, 'joint3': -2.912, 'joint4': 1.244, 'joint5': 0.0, 'joint6': 0.0}",
+   "1.69",
+   "(-0.0419, 0.0, 0.0)",
+   "'Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end'",
+   "'Geometry/base_link'",
+   "(0.11, 0.0, 0.0)",
+   "(-0.955, 0.0, -0.3)"
+  ],
+  "ours": [
+   "'ours'",
+   "('shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_yaw', 'wrist_roll')",
+   "{'PAN': 0, 'WFLEX': 3, 'ELBOW': 2, 'WROLL': 5}",
+   "{'shoulder_pan': (-4.187, 1.043), 'shoulder_lift': (-3.513, 0.037), 'elbow_flex': (-3.878, 0.052), 'wrist_flex': (-0.764, 3.126), 'wrist_yaw': (-1.777, 1.553), 'wrist_roll': (-5.619, 2.001)}",
+   "(0.0, 0.045)",
+   "('gripper_link', 'wrist_roll_link', 'wrist_link')",
+   "'gripper_left'",
+   "'gripper_right'",
+   "-1",
+   "'{ENV_REGEX_NS}/Robot'",
+   "'SO101_FOLLOWER_CFG'",
+   "(-1.5708, -1.3, -1.1, 0.75, 0.0, -0.1)",
+   "{'shoulder_pan': -1.5708, 'shoulder_lift': -1.6684, 'elbow_flex': -1.2626, 'wrist_flex': 1.55, 'wrist_yaw': 0.0012, 'wrist_roll': -0.0326}",
+   "1.55",
+   "(-0.0419, 0.0, 0.0)",
+   "'gripper_link'",
+   "'base_link'",
+   "None",
+   "None"
+  ],
+  "select_official": true,
+  "select_ours": true
+ },
+ "runtime": {
+  "n_fields": 23,
+  "values": [
+   "{'pcx': None, 'pcy': None, 'pv': None}",
+   "[None]",
+   "None",
+   "[None]",
+   "[0]",
+   "None",
+   "[None]",
+   "[-1]",
+   "[1.0]",
+   "[False]",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None",
+   "None"
+  ]
+ },
+ "ui_render": {
+  "card": "<div style='background:#181818;border-radius:10px;padding:10px 18px;margin:5px;display:inline-block;min-width:96px;text-align:center;border:1px solid #262626'><div style='color:#888;font-size:11px;letter-spacing:1px'>RSR</div><div style='color:#4fc3f7;font-size:28px;font-weight:700'>12.5</div><div style='color:#666;font-size:10px'>x</div></div>",
+  "draw_arrow_long": "980f04c722d58bda4dff04268e69e3aa19e7e3d41a621243f598c1609b80d073",
+  "draw_arrow_ring": "5282eea2af3280fe78abcd010e9fd3239781d142a6f0babe04f570c59c7e6b5d",
+  "draw_det": "e72cc6e6790e7a396e6ec612dac056ef93ec920e5b611fe44eedf8bd3dcbaf9e",
+  "png_len": true,
+  "quat_rpy": [
+   4.28915,
+   -35.45054,
+   22.0679,
+   -0.5,
+   -0.3,
+   0.8
+  ],
+  "spark": "<svg width='260' height='64' style='background:#0b0b0b;border-radius:6px'><polyline points='3.0,61.0 87.7,35.0 172.3,48.0 257.0,9.0' fill='none' stroke='#ff0000' stroke-width='2'/><text x='6' y='14' fill='#777' font-size='10' font-family=monospace>0.9</text><text x='6' y='60' fill='#777' font-size='10' font-family=monospace>0.1</text><text x='256' y='14' fill='#ff0000' font-size='12' font-family=monospace text-anchor='end'>0.9</text></svg>",
+  "spark_short": "<svg width='100' height='20' style='background:#0b0b0b;border-radius:6px'></svg>",
+  "trimmean": [
+   9.5,
+   1.0,
+   0.0
+  ]
+ }
+}
