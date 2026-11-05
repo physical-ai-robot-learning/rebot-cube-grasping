@@ -1,5 +1,11 @@
 """Squint-matched distributional-C51 SAC (state-only) for the reBot LiftCube task on Isaac Lab.
 
+Stage: June teacher (single policy; scripts/teacher/train_teacher.sh).
+Was src/rebot_sim2real/teacher/train_c51.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.teacher.train_c51
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Faithful port of _sources/squint/train_squint.py MINUS the RGB CNN (we train on the state vector):
   - Actor : state -> Projection(Linear256+LayerNorm+ReLU) -> 3x[Linear256+LN+ReLU] -> mean+logstd
             tanh-squashed Gaussian, logstd in [-5,2], orthogonal init. action_scale=1 (env clamps).

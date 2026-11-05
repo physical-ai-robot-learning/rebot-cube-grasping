@@ -1,5 +1,11 @@
 """Headless, seeded evaluation of the shipped teacher / student checkpoints in the reBot LiftCube env.
 
+Stage: June evaluation.
+Was scripts/eval/eval_policies.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.evaluate --mode single --ckpts results/checkpoints/teacher/c51_v5g_final.pt ...
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Written for this repository (it did not exist in the original project). It builds the environment exactly the way
 the training scripts do (configure_env + the same finger contact sensors + apply_motor_limits; for the student also
 configure_visual without domain randomisation) and runs the policy deterministically (tanh of the actor mean). It does

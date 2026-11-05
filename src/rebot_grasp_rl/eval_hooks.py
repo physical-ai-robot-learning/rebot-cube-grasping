@@ -1,4 +1,8 @@
-"""Opt-in per-episode output for the fixed eval-set benchmark of train_sac_det_xattn.py (added 2026-11-01).
+"""Opt-in per-episode output for the fixed eval-set benchmark of train.py (added 2026-11-01).
+
+Stage: Project 2 re-evaluation (scripts/eval/project2_eval.sh).
+Was src/det_xattn/eval_hooks.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
 
 Everything here is a no-op unless EVAL_OUT_DIR is set, so training and the original benchmark behave exactly as
 before. With EVAL_OUT_DIR set (and TP_EVAL=1 + EVAL_SET=...):

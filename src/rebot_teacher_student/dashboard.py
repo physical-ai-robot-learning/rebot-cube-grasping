@@ -1,5 +1,9 @@
 """Custom reBot SAC training dashboard.
 
+Stage: June training dashboard (web UI of the teacher / student trainers).
+Was src/rebot_sim2real/tools/rebot_dashboard.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
+
 Live: 3 camera views (front / iso / wrist) + reward progress CURRENT (per-step) and
 CUMULATIVE (running) + success count.
 Replay: the LAST SUCCESSFUL episode played back in the same 3 views (looping).

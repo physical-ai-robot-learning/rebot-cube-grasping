@@ -1,5 +1,11 @@
 """DAgger teacher->student distillation: state-only privileged TEACHER -> VISUAL student (reBot LiftCube).
 
+Stage: June student (main DAgger student; scripts/student/train_student.sh).
+Was src/rebot_sim2real/student/train_dagger_visual.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.student.train_dagger_visual
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 TEACHER  : the trained state-only C51 actor (rl_c51_smooth/c51_final.pt), input = full 43D privileged
            obs (incl. obj_pos/tcp/grasp). Solves the task ~52%. Frozen; provides the LABEL action.
 STUDENT  : visual policy -- CNN encoders (wrist 16x16 + front 64x64) + Projection + Actor; input =

@@ -1,4 +1,10 @@
 """JOINT 3-stage hierarchical C51 teacher (state-only): THREE actor-critics trained SIMULTANEOUSLY.
+
+Stage: June teacher (jointly trained stages; scripts/teacher/train_joint_teacher.sh).
+Was src/rebot_sim2real/teacher/train_c51_joint.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.teacher.train_c51_joint
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
 Each env has a stage pointer (0 approach -> 1 grasp -> 2 place); the ACTIVE stage's actor acts, the env
 advances on that stage's done-condition (approach=align-hold latch, grasp=_is_grasped, place=is_fold_
 success), and each stage's transitions go into ITS OWN replay buffer (full env reward + a bonus when that

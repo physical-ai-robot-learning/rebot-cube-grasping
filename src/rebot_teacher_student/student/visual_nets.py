@@ -1,5 +1,9 @@
 """Shared network modules for the reBot visual policy (SQUINT-exact), pure torch (no Isaac import).
 
+Stage: June student networks (torch only).
+Was src/rebot_sim2real/student/visual_nets.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
+
 Used by:
   - train_dagger_visual.py : teacher(StateOnlyActor) -> student(CNNEncoder x2 + Projection + Actor)
   - (optionally) a visual-RL trainer that also needs CriticC51 + project_target.

@@ -1,5 +1,9 @@
-"""Squint-exact reward for SO101 LiftCube."""
+"""Squint-exact reward for SO101 LiftCube.
 
+Stage: Project 2 environment.
+Was src/det_xattn/packages/sim/env_setup/maniskill_rewards.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+"""
 import os
 import torch
 import numpy as np

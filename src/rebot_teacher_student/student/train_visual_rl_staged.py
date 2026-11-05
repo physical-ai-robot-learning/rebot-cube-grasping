@@ -1,4 +1,10 @@
 """STAGED visual RL fine-tune: warm-start the DISTILLED staged visual student, then improve it with a
+
+Stage: June student (staged visual C51 fine-tuning).
+Was src/rebot_sim2real/student/train_visual_rl_staged.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.student.train_visual_rl_staged
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
 4-stage C51-SAC on the env reward (the visual analogue of train_c51_joint -- 4 actor-critics co-trained
 through a SHARED CNN encoder, each env routed by its STATE stage pointer reaching->align->grasp->lift).
 

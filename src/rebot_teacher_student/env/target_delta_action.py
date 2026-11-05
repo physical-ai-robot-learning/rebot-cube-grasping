@@ -1,4 +1,9 @@
-"""Custom action: delta accumulated on previous target (ManiSkill use_target=True)."""
+"""Custom action: delta accumulated on previous target (ManiSkill use_target=True).
+
+Stage: June environment.
+Was src/rebot_sim2real/env/target_delta_action.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+"""
 import torch
 from isaaclab.envs.mdp.actions.joint_actions import JointAction
 from isaaclab.envs.mdp.actions.actions_cfg import JointActionCfg

@@ -1,6 +1,10 @@
-"""tp_config: argparse for the DETECTION cross-attention SAC (C51) two-phase trainer.
+"""Command-line options (argparse) of the DETECTION cross-attention SAC (C51) two-phase trainer.
 
-Extracted verbatim from train_sac_det_xattn.py (the entry file). Only the DEAD
+Stage: Project 2 training / evaluation (command-line options of rebot_grasp_rl.train).
+Was src/det_xattn/tp_config.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
+
+Extracted verbatim from train.py (the entry file). Only the DEAD
 Squint privileged-reaching curriculum args (--reach-w/--reach-gate-sr/--reach-anneal)
 were pruned; they were never referenced by the live TWO_PHASE path.
 

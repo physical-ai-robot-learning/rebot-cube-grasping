@@ -1,5 +1,11 @@
 """STAGED visual student via DAgger from the 4-stage teacher (reaching -> align -> grasp -> lift).
 
+Stage: June student (staged DAgger).
+Was src/rebot_sim2real/student/train_dagger_staged.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.student.train_dagger_staged
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 TEACHER  : 4 state-only C51 actors (rl_c51_joint4/s{0..3}_final.pt). A per-env STATE-based stage pointer
            (same done-conditions as train_c51_joint) picks the active stage; that stage's teacher actor
            gives the expert action + the stage LABEL.

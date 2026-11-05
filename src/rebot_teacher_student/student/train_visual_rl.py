@@ -1,4 +1,10 @@
 """VISUAL RL fine-tune: warm-start the DISTILLED visual student, then improve it with C51-SAC on the
+
+Stage: June student (visual C51 fine-tuning).
+Was src/rebot_sim2real/student/train_visual_rl.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.student.train_visual_rl
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
 TRUE env reward (breaks the imitation ceiling -- distillation caps where the student can't reproduce the
 teacher's privileged-info actions; RL on the env reward lets the student find its OWN vision-feasible policy).
 

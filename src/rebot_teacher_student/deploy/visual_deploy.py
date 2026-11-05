@@ -1,5 +1,10 @@
 """reBot LiftCube — portable VISUAL real-world inference (Isaac-free).
 
+Stage: June deploy, camera-based student; torch + numpy only.
+Was src/rebot_sim2real/deploy/rebot_deploy_visual.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.deploy.visual_deploy --checkpoint results/checkpoints/student/dagger_dual128_v3_final.pt --mock --device cpu
+
+
 Runs the VISUAL student policy (trained by train_dagger_visual.py: DAgger distillation of the
 state-only C51 teacher) on the REAL reBot B601-DM. Only needs `torch` + `numpy`.
 

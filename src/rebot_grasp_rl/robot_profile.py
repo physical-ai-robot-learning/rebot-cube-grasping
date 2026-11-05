@@ -1,4 +1,8 @@
 """Robot abstraction so the SAME trainer runs on our reBot/SO101 asset (OURS) or the
+
+Stage: Project 2 robot models OURS / OFFICIAL (pure Python).
+Was src/det_xattn/robot_profile.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
 official Seeed reBot-Isaacsim USD (OFFICIAL).
 
 Selection: ROBOT_OFFICIAL=1 -> OFFICIAL, else OURS (read once in the entry file).

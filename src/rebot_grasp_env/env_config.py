@@ -1,5 +1,11 @@
 """Environment configuration — Squint-exact for SO101 LiftCube.
 
+Stage: Project 2 environment.
+Was src/det_xattn/packages/sim/env_setup/env_config.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m (imported by rebot_grasp_rl.train)
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Matches Squint (https://github.com/aalmuzairee/squint) exactly:
   - Delta joint position control: arm 0.1 rad, gripper 0.2 rad
   - Observations: qpos, qvel, target_qpos, dist_to_rest, obj_pose, tcp_pos, tcp_to_obj, is_grasped

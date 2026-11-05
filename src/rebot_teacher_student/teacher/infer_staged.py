@@ -1,4 +1,10 @@
 """STAGED inference / eval for the 3-stage teacher: classify the current stage from STATE each step,
+
+Stage: June teacher (staged inference).
+Was src/rebot_sim2real/teacher/infer_staged.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.teacher.infer_staged
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
 run the MATCHING stage actor, advance on that stage's done-condition (approach=align-hold latch,
 grasp=_is_grasped, place=is_fold_success). Reports per-env stage progression + end-to-end success.
 

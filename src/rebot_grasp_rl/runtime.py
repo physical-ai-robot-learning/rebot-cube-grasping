@@ -1,12 +1,16 @@
 """Shared mutable runtime state for the modularized DET-xattn SAC trainer.
 
-`RT` is a single namespace object populated by the entry file (train_sac_det_xattn.py)
+Stage: Project 2 trainer state (pure Python).
+Was src/det_xattn/runtime.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
+
+`RT` is a single namespace object populated by the entry file (train.py)
 AFTER the sim boots: live handles (env / robot / arm_term / ik), derived joint/body
 indices, the selected RobotProfile and its profile-derived tensors, plus the
 one-element list-wrapped mutables that carry per-step state ACROSS the module-level
 `get_obs` (obs.py) and the in-loop closures (actions.py / reward assembly / anneal).
 
-Helpers do `from runtime import RT` and read `RT.env`, `RT.r`, `RT.joint_ids`,
+Helpers do `from rebot_grasp_rl.runtime import RT` and read `RT.env`, `RT.r`, `RT.joint_ids`,
 `RT.PH_CUR`, etc. This GENERALIZES the already-working list-global pattern (formerly the
 _PH_CUR / _ACQ / _PRIV_W / ... module globals in the monolith, L316-327) rather than
 threading a state object through every hot-loop signature — the lowest-risk relocation
@@ -27,7 +31,7 @@ class _RT:
     ik = None           # DifferentialIKController (pose)
     N = None            # num_envs
     DEVICE = None       # cuda:<ISAAC_GPU>
-    args = None         # tp_config.args (target_cube, dr, save_dir, ...)
+    args = None         # config.args (target_cube, dr, save_dir, ...)
 
     # ---- robot topology (derived from the live articulation + profile) ----
     profile = None          # selected RobotProfile (robot_profile.OURS / OFFICIAL)

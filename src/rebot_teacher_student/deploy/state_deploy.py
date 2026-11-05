@@ -1,5 +1,10 @@
 """reBot LiftCube — portable real-world inference (Isaac-free).
 
+Stage: June deploy, state-only teacher; torch + numpy only.
+Was src/rebot_sim2real/deploy/rebot_deploy.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.deploy.state_deploy --checkpoint results/checkpoints/teacher/c51_v5g_final.pt --mock
+
+
 Runs a policy trained by train_c51.py (distributional-C51 SAC) on the REAL reBot B601-DM.
 Only needs `torch` + `numpy` (no Isaac Sim / Isaac Lab). Copy this folder to the robot PC.
 

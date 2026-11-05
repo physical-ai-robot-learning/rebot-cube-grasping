@@ -1,4 +1,10 @@
 """3-STAGE hierarchical C51 teacher (state-only) — train one actor-critic per stage, SEQUENTIALLY:
+
+Stage: June teacher (sequential stages, superseded by train_c51_joint).
+Was src/rebot_sim2real/teacher/train_c51_staged.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.teacher.train_c51_staged
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
   stage 0 APPROACH : bring the OPEN gripper aligned over the cube. done = align-hold latch.
   stage 1 GRASP    : from aligned, close + grasp.                  done = _is_grasped.
   stage 2 PLACE    : from grasped, lift + return arm to REST.      done = is_fold_success.

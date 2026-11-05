@@ -1,4 +1,10 @@
 """Run ON THE TRAINING PC (needs Isaac) to dump the EXACT joint order + obs/action layout, so you
+
+Stage: June deploy (writes the sim joint order and observation layout).
+Was src/rebot_sim2real/deploy/dump_sim_spec.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.deploy.dump_sim_spec
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
 can verify rebot_deploy.py's constants (JOINT_ORDER, OBS_LAYOUT) match the trained sim 1:1.
 
   PYTHONPATH=src .venv/bin/python -m rebot_teacher_student.deploy.dump_sim_spec

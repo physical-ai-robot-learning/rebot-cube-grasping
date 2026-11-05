@@ -1,5 +1,10 @@
 """Visual (eye-in-hand wrist + fixed front) observation setup for the reBot LiftCube env.
 
+Stage: June environment.
+Was src/rebot_sim2real/env/visual_obs.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Converts the state-only env into a SQUINT-style VISUAL env:
   - policy `state` = proprioception ONLY (qpos 8 + target_qpos 7 + dist_to_rest 6 = 21).
     All PRIVILEGED terms (qvel, obj_pos, obj_quat, tcp_pos, tcp_to_obj, is_grasped) are removed --

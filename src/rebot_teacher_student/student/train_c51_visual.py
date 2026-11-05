@@ -1,5 +1,11 @@
 """SQUINT-style VISUAL distributional-C51 SAC for reBot LiftCube (wrist eye-in-hand + fixed front).
 
+Stage: June student (visual RL from scratch, exploratory).
+Was src/rebot_sim2real/student/train_c51_visual.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_teacher_student.student.train_c51_visual
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Faithful visual port of _sources/squint/train_squint.py:
   - obs   : rgb_wrist(16x16) + rgb_front(64x64) + proprio state(21) -- NO privileged obj/grasp.
   - encode: two CNN encoders (SQUINT conv; 16 and 64 variants, each -> 1024 features).

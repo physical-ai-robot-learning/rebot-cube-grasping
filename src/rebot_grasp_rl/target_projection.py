@@ -1,4 +1,4 @@
-"""C51 distributional Bellman target, projected onto the critic's fixed value support (was tp_net.py).
+"""C51 distributional Bellman target, projected onto the critic's fixed value support (was src/det_xattn/tp_net.py).
 
 Pure function of its arguments: the target critic is passed in, so there is no module state. Used by the two-phase
 agent update of rebot_grasp_rl.train. Input: target critic `tc` (logits(), support, v_min, v_max, num_atoms), next

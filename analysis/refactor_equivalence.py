@@ -115,6 +115,8 @@ class _Normaliser(ast.NodeTransformer):
 
     def visit_Module(self, node):
         self._strip(node)
+        if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):   # a docstring-only module is an empty one
+            node.body = []
         return self.generic_visit(node)
 
     def visit_FunctionDef(self, node):

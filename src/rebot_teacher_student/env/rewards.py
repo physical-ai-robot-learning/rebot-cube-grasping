@@ -1,5 +1,9 @@
-"""Squint-exact reward for SO101 LiftCube."""
+"""Squint-exact reward for SO101 LiftCube.
 
+Stage: June environment.
+Was src/rebot_sim2real/env/maniskill_rewards.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+"""
 import torch
 import numpy as np
 from isaaclab.managers import SceneEntityCfg

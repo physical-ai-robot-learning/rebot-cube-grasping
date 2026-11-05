@@ -1,4 +1,4 @@
-"""HTML and image helpers of the trainer's live web dashboard (was ui_render.py, split out of the trainer on 2026-07-27).
+"""HTML and image helpers of the trainer's live web dashboard (was src/det_xattn/ui_render.py, split out of the trainer on 2026-07-27).
 
 Pure functions, no trainer state: PNG encoding, SVG sparklines, stat cards, a trimmed mean for the dashboard numbers,
 and the overlays drawn on the env-0 camera images (detection box / crosshair, gripper-axis arrow). The overlays are

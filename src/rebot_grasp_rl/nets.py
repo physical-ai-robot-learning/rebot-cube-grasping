@@ -1,4 +1,8 @@
 """Project 2 networks: front+wrist DETECTION + cube ORIENTATION cross-attention, with FFN (MLP) mixing.
+
+Stage: Project 2 networks (torch only).
+Was src/det_xattn/det_xattn_nets.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+
 No CNN / no pixels in the policy. Inputs (all real-measurable, normalized):
   - per camera detection: cx, cy, area_frac, visible  (HSV red centroid)
   - cube orientation: sin(yaw), cos(yaw)  (table top-down grasp; swap to 4D quat for 6-DOF)

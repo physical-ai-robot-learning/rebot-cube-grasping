@@ -1,11 +1,18 @@
 """Project 2: DETECTION cross-attention SAC (C51) + IK approach + parameterized rule grasp/lift.
 
+Stage: Project 2 training, benches and seeded re-evaluation (one script, modes chosen by environment variables;
+see configs/project2_*.env).
+Was src/det_xattn/train_sac_det_xattn.py (moved and renamed to the OA style on 2026-11-05; docs/refactor_2026-11.md).
+Run: python -m rebot_grasp_rl.train --num-envs 256 ... (README §Pipeline; scripts/eval/project2_eval.sh)
+Needs Isaac Sim 5.1 / Isaac Lab 2.3 + the LeIsaac reBot fork; not executable in CI (compile-checked only).
+
+
 Design (user spec):
   - RL (SAC) learns:  APPROACH (IK Cartesian delta toward cube) + grasp/lift PARAMETERS.
   - Rule executes:    grasp + lift, using the RL-output params (descend_depth, grip_target, lift_height).
   - Obs (all real-measurable, normalized): front/wrist HSV-red detection (cx,cy,area_frac,visible)
     + cube orientation (sin yaw, cos yaw) + proprio(21). NO raw pixels in the policy.
-  - Fusion: cross-attention over {front, wrist, orientation} tokens (det_xattn_nets).
+  - Fusion: cross-attention over {front, wrist, orientation} tokens (nets.py).
   - Action 7D: [dx, dy, dz, dyaw, descend_depth, grip_target, lift_height]  (all tanh [-1,1]).
 
 C51-SAC machinery mirrors train_c51_visual; IK mirrors the validated ikval DifferentialIKController.
@@ -18,7 +25,7 @@ from rebot_grasp_common.paths import LEISAAC_ASSETS, YOLO_EXPORT_DIR
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
 os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
-from rebot_grasp_rl.config import p, args   # argparse extracted to tp_config.py (parsed at import; must run before AppLauncher)
+from rebot_grasp_rl.config import p, args   # argparse extracted to config.py (parsed at import; must run before AppLauncher)
 _IGPU = int(os.environ.get("ISAAC_GPU", "0")); DEVICE = f"cuda:{_IGPU}"   # user 2026-07-14: pin Isaac(physics+render)+tensors to a physical GPU so train+eval CO-LOCATE. NOT CUDA_VISIBLE_DEVICES (Vulkan renderer ignores it -> OOM on GPU0).
 if int(os.environ.get("TF32", "1")):   # user 2026-07-28: TF32 matmul/conv on Ada(4090) -> ~1.3-1.5x faster SAC update (dominant at high UTD), negligible RL accuracy impact. TF32=0 to disable.
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -54,7 +61,7 @@ from rebot_grasp_env.visual_obs import (compositeBg, recolorSegRegion, imageDr,
                                                viewpointWarp, tagGripper, IMG_RENDER)
 
 from rebot_grasp_rl.nets import DetActor, DetCriticC51, D_DET, D_ORI
-from rebot_grasp_rl.target_projection import projectTarget   # C51 target projection extracted to tp_net.py (pure fn; used by the TWO_PHASE _upd)
+from rebot_grasp_rl.target_projection import projectTarget   # C51 target projection extracted to target_projection.py (pure fn; used by the TWO_PHASE _upd)
 from rebot_grasp_rl import robot_profile                 # OURS (reBot/SO101) vs OFFICIAL (Seeed reBot-Isaacsim) robot abstraction
 from rebot_grasp_rl.runtime import RT               # shared mutable runtime state (populated after the sim boots)
 profile = robot_profile.selectProfile()   # ROBOT_OFFICIAL=1 -> OFFICIAL else OURS; read once here
@@ -876,7 +883,7 @@ CEN_REF    = float(os.environ.get("CEN_REF", "0.0"))      # user 2026-07-09: TWO
 # The single-agent actor/critic/optimizers + legacy replay buffer (store/sample/update/zc)
 # were DELETED: they were used only by the legacy single-agent main loop (removed). The live
 # TWO_PHASE block builds its own per-phase agents (_mk_agent/_TPBuf/_upd) and reuses only
-# DetActor/DetCriticC51 (det_xattn_nets) + project_target (tp_net). --init-from resume applied
+# DetActor/DetCriticC51 (nets.py) + project_target (tp_net). --init-from resume applied
 # only to the legacy agents and is likewise unused by TWO_PHASE (which uses TP_RESUME/TP_EVAL).
 cap = args.buffer_size   # kept solely for the [DET] start banner below
 
@@ -887,7 +894,7 @@ cap = args.buffer_size   # kept solely for the [DET] start banner below
 # own UI (_TPUI/_TPHND/_tpg). The remaining helpers (pngBytes/sparkSvg/statCard/_draw_det) are shared.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import imageio
-from rebot_grasp_rl.dashboard_render import pngBytes, sparkSvg, trimmedMean, statCard, drawDetection, quatRpy, drawArrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
+from rebot_grasp_rl.dashboard_render import pngBytes, sparkSvg, trimmedMean, statCard, drawDetection, quatRpy, drawArrow   # REFACTOR 2026-07-27: pure UI helpers -> dashboard_render.py
 
 # update_ui() and the MLflow logging block were DELETED: both were driven only by the removed
 # single-agent loop (update_ui wrote the dead _UI dict; MLflow's _MLF was logged only there).
