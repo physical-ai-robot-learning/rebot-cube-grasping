@@ -86,11 +86,11 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 from rebot_teacher_student.env.visual_obs import (
-    configure_visual, downsample, student_state, composite_bg, add_proprio_noise, wrist_aug, image_dr,
-    recolor_seg_region, tag_gripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM)
-from rebot_teacher_student.student.visual_nets import CNNEncoder, Actor, CriticC51, project_target
+    configureVisual, downsample, studentState, compositeBg, addProprioNoise, wristAug, imageDr,
+    recolorSegRegion, tagGripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM)
+from rebot_teacher_student.student.visual_nets import CNNEncoder, Actor, CriticC51, projectTarget
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
 
@@ -99,7 +99,7 @@ BUF_DEV = torch.device(args.buffer_device)
 
 # ── Env (cameras for the student; privileged obs kept but unused by the visual policy) ──
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=args.num_envs)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
 _obj = getattr(env_cfg.scene, args.target_cube); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -107,11 +107,11 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
-env_cfg = configure_visual(env_cfg, target_cube=args.target_cube, keep_privileged=True, dr=args.dr,
+env_cfg = configureVisual(env_cfg, target_cube=args.target_cube, keep_privileged=True, dr=args.dr,
                            front_only=args.front_only)
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 N_ENVS = args.num_envs
 act_dim = env.action_manager.total_action_dim
 FRONT_ONLY = args.front_only
@@ -165,11 +165,11 @@ def WF(w):
     return None if FRONT_ONLY else enc_w(w)
 
 
-def WF_t(w):
+def wfT(w):
     return None if FRONT_ONLY else enc_w_t(w)
 
 
-dash.start(args.http_port, target_cube=args.target_cube)
+dash.start(args.http_port, targetCube=args.target_cube)
 os.makedirs(args.save_dir, exist_ok=True)
 
 
@@ -179,39 +179,39 @@ class Buffer:
     def __init__(self, cap, dev, store_wrist=True):
         self.cap, self.dev, self.ptr, self.full = cap, dev, 0, False
         self.store_wrist = store_wrist
-        z_img = lambda: torch.zeros(cap, WRIST_SIZE, WRIST_SIZE, 3, dtype=torch.uint8, device=dev)
-        zf_img = lambda: torch.zeros(cap, FRONT_SIZE, FRONT_SIZE, 3, dtype=torch.uint8, device=dev)
-        self.w = z_img() if store_wrist else None
-        self.nw = z_img() if store_wrist else None
-        self.f = zf_img(); self.nf = zf_img()
+        tZImg = lambda: torch.zeros(cap, WRIST_SIZE, WRIST_SIZE, 3, dtype=torch.uint8, device=dev)
+        tZfImg = lambda: torch.zeros(cap, FRONT_SIZE, FRONT_SIZE, 3, dtype=torch.uint8, device=dev)
+        self.w = tZImg() if store_wrist else None
+        self.nw = tZImg() if store_wrist else None
+        self.f = tZfImg(); self.nf = tZfImg()
         self.s = torch.zeros(cap, STATE_DIM, dtype=torch.float32, device=dev)
         self.ns = torch.zeros(cap, STATE_DIM, dtype=torch.float32, device=dev)
         self.a = torch.zeros(cap, act_dim, dtype=torch.float32, device=dev)
         self.r = torch.zeros(cap, dtype=torch.float32, device=dev)
 
     def add(self, w, f, s, a, r, nw, nf, ns):
-        B = f.shape[0]
-        idx = (torch.arange(B, device=self.dev) + self.ptr) % self.cap
+        tB = f.shape[0]
+        tIdx = (torch.arange(tB, device=self.dev) + self.ptr) % self.cap
         if self.store_wrist:
-            self.w[idx] = w.to(self.dev); self.nw[idx] = nw.to(self.dev)
-        self.f[idx] = f.to(self.dev); self.nf[idx] = nf.to(self.dev)
-        self.s[idx] = s.to(self.dev); self.ns[idx] = ns.to(self.dev)
-        self.a[idx] = a.to(self.dev); self.r[idx] = r.to(self.dev)
-        newptr = self.ptr + B
-        if newptr >= self.cap:
+            self.w[tIdx] = w.to(self.dev); self.nw[tIdx] = nw.to(self.dev)
+        self.f[tIdx] = f.to(self.dev); self.nf[tIdx] = nf.to(self.dev)
+        self.s[tIdx] = s.to(self.dev); self.ns[tIdx] = ns.to(self.dev)
+        self.a[tIdx] = a.to(self.dev); self.r[tIdx] = r.to(self.dev)
+        tNewptr = self.ptr + tB
+        if tNewptr >= self.cap:
             self.full = True
-        self.ptr = newptr % self.cap
+        self.ptr = tNewptr % self.cap
 
     def ready(self, bs):
         return self.full or self.ptr >= bs
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr
-        idx = torch.randint(0, hi, (bs,), device=self.dev)
-        g = lambda t: t[idx].to(DEVICE, non_blocking=True)
-        w = g(self.w) if self.store_wrist else None
-        nw = g(self.nw) if self.store_wrist else None
-        return w, g(self.f), g(self.s), g(self.a), g(self.r), nw, g(self.nf), g(self.ns)
+        tHi = self.cap if self.full else self.ptr
+        tIdx = torch.randint(0, tHi, (bs,), device=self.dev)
+        tG = lambda t: t[tIdx].to(DEVICE, non_blocking=True)
+        tW = tG(self.w) if self.store_wrist else None
+        tNw = tG(self.nw) if self.store_wrist else None
+        return tW, tG(self.f), tG(self.s), tG(self.a), tG(self.r), tNw, tG(self.nf), tG(self.ns)
 
 
 buf = Buffer(args.buffer_size, BUF_DEV, store_wrist=not FRONT_ONLY)
@@ -222,134 +222,134 @@ print(f"[VRL] buffer={args.buffer_size}@{BUF_DEV} batch={args.batch_size} UTD={a
 # ── DR pipeline (IDENTICAL to train_dagger_visual: the student must see the same domain it was distilled on) ──
 _BG_BANK = None
 _TABLE_TEX = None
-def _load_bg_bank():
+def _loadBgBank():
     global _BG_BANK, _TABLE_TEX
     import glob
     from PIL import Image
-    R = IMG_RENDER
+    tR = IMG_RENDER
     def _load(dir_, mx, gray):
         if not dir_ or not os.path.isdir(dir_):
             return None
-        fs = sorted(glob.glob(os.path.join(dir_, "*.jpg")) + glob.glob(os.path.join(dir_, "*.jpeg")) +
+        tFs = sorted(glob.glob(os.path.join(dir_, "*.jpg")) + glob.glob(os.path.join(dir_, "*.jpeg")) +
                     glob.glob(os.path.join(dir_, "*.png")))[:mx]
-        out = []
-        for f in fs:
+        tOut = []
+        for tF in tFs:
             try:
-                im = Image.open(f).convert("L" if gray else "RGB").resize((R, R))
-                out.append(torch.from_numpy(np.asarray(im, dtype=np.uint8)))
+                tIm = Image.open(tF).convert("L" if gray else "RGB").resize((tR, tR))
+                tOut.append(torch.from_numpy(np.asarray(tIm, dtype=np.uint8)))
             except Exception:
                 pass
-        return torch.stack(out) if out else None
-    bb = _load(args.bg_dir, args.bg_max, False)
-    if bb is not None:
-        _BG_BANK = bb.to(DEVICE)
+        return torch.stack(tOut) if tOut else None
+    tBb = _load(args.bg_dir, args.bg_max, False)
+    if tBb is not None:
+        _BG_BANK = tBb.to(DEVICE)
         print(f"[VRL] bg-bank: {_BG_BANK.shape[0]} photo backgrounds from {args.bg_dir}", flush=True)
     else:
         print(f"[VRL] bg-bank: no photos ({args.bg_dir}) -> synthetic world only", flush=True)
-    tt = _load(args.table_tex_dir, 64, True)
-    if tt is not None:
-        _TABLE_TEX = (tt.float() / 255.0).clamp(0.40, 1.0).unsqueeze(-1).to(DEVICE)
+    tTt = _load(args.table_tex_dir, 64, True)
+    if tTt is not None:
+        _TABLE_TEX = (tTt.float() / 255.0).clamp(0.40, 1.0).unsqueeze(-1).to(DEVICE)
 
 
-def _rand_bg(n):
-    R = IMG_RENDER
-    g = torch.randint(3, 9, (1,)).item()
-    blobs = torch.rand(n, g, g, 3, device=DEVICE)
-    blobs = torch.nn.functional.interpolate(blobs.permute(0, 3, 1, 2), size=(R, R), mode="bilinear",
+def _randBg(n):
+    tR = IMG_RENDER
+    tG = torch.randint(3, 9, (1,)).item()
+    tBlobs = torch.rand(n, tG, tG, 3, device=DEVICE)
+    tBlobs = torch.nn.functional.interpolate(tBlobs.permute(0, 3, 1, 2), size=(tR, tR), mode="bilinear",
                                             align_corners=False).permute(0, 2, 3, 1)
-    blobs = (blobs * 255.0 + torch.randn(n, R, R, 3, device=DEVICE) * 18.0).clamp(0, 255)
-    solid = (torch.rand(n, 1, 1, 3, device=DEVICE) * 255.0).expand(n, R, R, 3)
-    wmode = torch.rand(n, 1, 1, 1, device=DEVICE)
+    tBlobs = (tBlobs * 255.0 + torch.randn(n, tR, tR, 3, device=DEVICE) * 18.0).clamp(0, 255)
+    tSolid = (torch.rand(n, 1, 1, 3, device=DEVICE) * 255.0).expand(n, tR, tR, 3)
+    tWmode = torch.rand(n, 1, 1, 1, device=DEVICE)
     if _BG_BANK is not None:                                   # REAL frames ONLY (no synthetic blobs/solids)
-        photo = _BG_BANK[torch.randint(0, _BG_BANK.shape[0], (n,), device=DEVICE)].float()
-        return torch.where(torch.rand(n, 1, 1, 1, device=DEVICE) < 0.5, photo.flip(2), photo)
-    return torch.where(wmode < 0.6, blobs, solid)
+        tPhoto = _BG_BANK[torch.randint(0, _BG_BANK.shape[0], (n,), device=DEVICE)].float()
+        return torch.where(torch.rand(n, 1, 1, 1, device=DEVICE) < 0.5, tPhoto.flip(2), tPhoto)
+    return torch.where(tWmode < 0.6, tBlobs, tSolid)
 
 
-def _cam_ds(cam, size, is_front=True):
+def _camDs(cam, size, isFront=True):
     if args.dr:
-        full = composite_bg(cam.data.output["rgb"], cam.data.output["semantic_segmentation"],
-                            cam.data.info["semantic_segmentation"], _rand_bg(N_ENVS), keep_lower=0.10)
-        _seg = cam.data.output["semantic_segmentation"]; _info = cam.data.info["semantic_segmentation"]
-        full = recolor_seg_region(full, _seg, _info, ("table",), 0.95, 1.08, 0.0, grain=False, base=0.68)
-        full = recolor_seg_region(full, _seg, _info, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)
-        full = image_dr(full, scale=is_front)
-        return downsample(full, size)
+        tFull = compositeBg(cam.data.output["rgb"], cam.data.output["semantic_segmentation"],
+                            cam.data.info["semantic_segmentation"], _randBg(N_ENVS), keep_lower=0.10)
+        tSeg = cam.data.output["semantic_segmentation"]; tInfo = cam.data.info["semantic_segmentation"]
+        tFull = recolorSegRegion(tFull, tSeg, tInfo, ("table",), 0.95, 1.08, 0.0, grain=False, base=0.68)
+        tFull = recolorSegRegion(tFull, tSeg, tInfo, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)
+        tFull = imageDr(tFull, scale=isFront)
+        return downsample(tFull, size)
     return downsample(cam.data.output["rgb"], size)
 
 
 WRIST_ROLL_MAX, WRIST_TRANS_MAX = 0.35, 0.12
-def _draw_wrist_aug(mask=None):
+def _drawWristAug(mask=None):
     if mask is None:
         _wa["roll"].uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
         _wa["tx"].uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
         _wa["ty"].uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
     else:
-        k = int(mask.sum())
-        if k:
-            _wa["roll"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
-            _wa["tx"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
-            _wa["ty"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
+        tK = int(mask.sum())
+        if tK:
+            _wa["roll"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
+            _wa["tx"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
+            _wa["ty"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
 
 
 _wa = {"roll": torch.zeros(N_ENVS, device=DEVICE), "tx": torch.zeros(N_ENVS, device=DEVICE),
        "ty": torch.zeros(N_ENVS, device=DEVICE)}
 if args.dr:
-    _load_bg_bank()
-    tag_gripper(env)
+    _loadBgBank()
+    tagGripper(env)
 if args.dr and not FRONT_ONLY:
-    _draw_wrist_aug()
+    _drawWristAug()
 
 
-def read_imgs():
-    f = _cam_ds(env.scene["front"], FRONT_SIZE, is_front=True)
+def readImgs():
+    tF = _camDs(env.scene["front"], FRONT_SIZE, isFront=True)
     if FRONT_ONLY:
-        return None, f
-    w = _cam_ds(env.scene["wrist"], WRIST_SIZE, is_front=False)
+        return None, tF
+    tW = _camDs(env.scene["wrist"], WRIST_SIZE, isFront=False)
     if args.dr:
-        w = wrist_aug(w, _wa["roll"], _wa["tx"], _wa["ty"])
-    return w, f
+        tW = wristAug(tW, _wa["roll"], _wa["tx"], _wa["ty"])
+    return tW, tF
 
 
 def sanitize(t):
     return torch.nan_to_num(t, nan=0.0, posinf=100.0, neginf=-100.0)
 
 
-def _save_ckpt(path):
-    d = {"enc_f": enc_f.state_dict(), "actor": actor.state_dict(), "critic": critic.state_dict(),
+def _saveCkpt(path):
+    tD = {"enc_f": enc_f.state_dict(), "actor": actor.state_dict(), "critic": critic.state_dict(),
          "log_alpha": log_alpha.detach(), "step": global_step, "front_only": FRONT_ONLY}
     if enc_w is not None:
-        d["enc_w"] = enc_w.state_dict()
-    torch.save(d, path)
+        tD["enc_w"] = enc_w.state_dict()
+    torch.save(tD, path)
 
 
 # ── C51-SAC update (visual). Encoder learns from the CRITIC loss; actor sees DETACHED features. ──
-def update(do_actor):
-    w, f, s, a, r, nw, nf, ns = buf.sample(args.batch_size)
+def update(doActor):
+    tW, tF, tS, tA, tR2, tNw, tNf, tNs = buf.sample(args.batch_size)
     # critic
     with torch.no_grad():
-        nwf = WF_t(nw); nff = enc_f_t(nf)
-        na, nlogp = actor.get_action(nwf, nff, ns)
-        boot = torch.ones_like(r)                                  # continuing (done=0), mirrors joint teacher
-        r_ent = r - boot * args.gamma * (alpha.squeeze() * nlogp.squeeze(-1))
-        tgt = project_target(target_critic, nwf, nff, ns, na, r_ent, boot, args.gamma)
-    wf = WF(w); ff = enc_f(f)
-    logp = F.log_softmax(critic.logits(wf, ff, s, a), dim=-1)
-    closs = (-(tgt * logp).sum(-1).mean(-1)).sum()
-    c_opt.zero_grad(set_to_none=True); closs.backward(); c_opt.step()
+        tNwf = wfT(tNw); tNff = enc_f_t(tNf)
+        tNa, tNlogp = actor.getAction(tNwf, tNff, tNs)
+        tBoot = torch.ones_like(tR2)                                  # continuing (done=0), mirrors joint teacher
+        tREnt = tR2 - tBoot * args.gamma * (alpha.squeeze() * tNlogp.squeeze(-1))
+        tTgt = projectTarget(target_critic, tNwf, tNff, tNs, tNa, tREnt, tBoot, args.gamma)
+    tWf = WF(tW); tFf = enc_f(tF)
+    tLogp = F.log_softmax(critic.logits(tWf, tFf, tS, tA), dim=-1)
+    tCloss = (-(tTgt * tLogp).sum(-1).mean(-1)).sum()
+    c_opt.zero_grad(set_to_none=True); tCloss.backward(); c_opt.step()
     # actor (encoder features DETACHED -> only the actor is updated)
-    if do_actor:
-        wf_d = wf.detach() if wf is not None else None
-        ff_d = ff.detach()
-        api, alogp = actor.get_action(wf_d, ff_d, s)
-        qv = critic.q_values(wf_d, ff_d, s, api).mean(0)
-        aloss = (alpha.squeeze() * alogp.squeeze(-1) - qv).mean()
-        a_opt.zero_grad(set_to_none=True); aloss.backward(); a_opt.step()
+    if doActor:
+        tWfD = tWf.detach() if tWf is not None else None
+        tFfD = tFf.detach()
+        tApi, tAlogp = actor.getAction(tWfD, tFfD, tS)
+        tQv = critic.qValues(tWfD, tFfD, tS, tApi).mean(0)
+        tAloss = (alpha.squeeze() * tAlogp.squeeze(-1) - tQv).mean()
+        a_opt.zero_grad(set_to_none=True); tAloss.backward(); a_opt.step()
         with torch.no_grad():
-            _, lp2 = actor.get_action(wf_d, ff_d, s)
-        alloss = -(log_alpha.exp() * (lp2 + target_entropy)).mean()
-        al_opt.zero_grad(set_to_none=True); alloss.backward(); al_opt.step()
-    return float(closs.detach())
+            _, tLp2 = actor.getAction(tWfD, tFfD, tS)
+        tAlloss = -(log_alpha.exp() * (tLp2 + target_entropy)).mean()
+        al_opt.zero_grad(set_to_none=True); tAlloss.backward(); al_opt.step()
+    return float(tCloss.detach())
 
 
 # ── RL loop ──
@@ -359,22 +359,22 @@ obs_dict, _ = env.reset()
 for _ in range(3):  # warmup camera buffers
     obs_dict, *_ = env.step(torch.zeros((N_ENVS, act_dim), device=DEVICE))
 full_obs = sanitize(obs_dict["policy"])
-w_img, f_img = read_imgs()
+w_img, f_img = readImgs()
 
 global_step, n_iter = 0, 0
 closs_ema = None
 
 while global_step < args.total_timesteps:
-    s21 = add_proprio_noise(student_state(full_obs)) if args.dr else student_state(full_obs)
+    s21 = addProprioNoise(studentState(full_obs)) if args.dr else studentState(full_obs)
     with torch.no_grad():
-        act, _ = actor.get_action(WF(w_img), enc_f(f_img), s21)    # stochastic (exploration)
+        act, _ = actor.getAction(WF(w_img), enc_f(f_img), s21)    # stochastic (exploration)
 
     next_dict, rew, terminated, truncated, infos = env.step(act.detach())
     if args.dr and not FRONT_ONLY:
-        _draw_wrist_aug(mask=(terminated | truncated))
+        _drawWristAug(mask=(terminated | truncated))
     next_obs = sanitize(next_dict["policy"])
-    ns21 = add_proprio_noise(student_state(next_obs)) if args.dr else student_state(next_obs)
-    nw_img, nf_img = read_imgs()
+    ns21 = addProprioNoise(studentState(next_obs)) if args.dr else studentState(next_obs)
+    nw_img, nf_img = readImgs()
     rew_t = torch.nan_to_num(rew, nan=0.0, posinf=0.0, neginf=0.0).float()
 
     buf.add(w_img, f_img, s21, act.detach(), rew_t, nw_img, nf_img, ns21)
@@ -406,14 +406,14 @@ while global_step < args.total_timesteps:
         why = f"{succ} successes (target {args.success_target})" if _hit_succ else \
               f"sr={_sr_now:.3f} >= {args.success_rate_target} over {len(_rec)} eps"
         print(f"[DONE] visual-RL stop: {why} at t={global_step}; saving.", flush=True)
-        _save_ckpt(os.path.join(args.save_dir, "visual_rl_final.pt"))
+        _saveCkpt(os.path.join(args.save_dir, "visual_rl_final.pt"))
         break
 
     # ── dashboard ──
     if n_iter % 5 == 0:
         sr = _sr_now
         warm = "critic-warmup" if global_step < args.critic_warmup else "fine-tune"
-        dash.push_stats(
+        dash.pushStats(
             step=global_step, episode=MR._ep_total[0],
             current_reward=float(rew_t.mean()), episode_reward=float(rew_t.mean()),
             cumulative_reward=0.0, best_reward=0.0,
@@ -422,9 +422,9 @@ while global_step < args.total_timesteps:
                           "phase": warm, "mean_rew": round(float(rew_t.mean()), 4)},
             cumulative_terms={}, dopamine={})
         try:
-            dash.set_camera_image("front", f_img[0].detach().cpu().numpy())
+            dash.setCameraImage("front", f_img[0].detach().cpu().numpy())
             if w_img is not None:
-                dash.set_camera_image("wrist", w_img[0].detach().cpu().numpy())
+                dash.setCameraImage("wrist", w_img[0].detach().cpu().numpy())
         except Exception:
             pass
 
@@ -435,7 +435,7 @@ while global_step < args.total_timesteps:
 
     if n_iter % 200 == 0:
         try:
-            _save_ckpt(os.path.join(args.save_dir, f"visual_rl_ckpt_{global_step}.pt"))
+            _saveCkpt(os.path.join(args.save_dir, f"visual_rl_ckpt_{global_step}.pt"))
         except Exception:
             pass
 

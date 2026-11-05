@@ -65,9 +65,9 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 from rebot_teacher_student.env.visual_obs import (
-    configure_visual, downsample, STATE_DIM, WRIST_SIZE, FRONT_SIZE)
+    configureVisual, downsample, STATE_DIM, WRIST_SIZE, FRONT_SIZE)
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
 
@@ -76,7 +76,7 @@ BUF_DEV = torch.device(args.buffer_device)
 
 # ── Env ──
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=args.num_envs)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
 _obj = getattr(env_cfg.scene, args.target_cube); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -84,15 +84,15 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
-env_cfg = configure_visual(env_cfg, target_cube=args.target_cube)
+env_cfg = configureVisual(env_cfg, target_cube=args.target_cube)
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 N_ENVS = args.num_envs
 act_dim = env.action_manager.total_action_dim
 print(f"[VC51] num_envs={N_ENVS} act_dim={act_dim} state={STATE_DIM} wrist={WRIST_SIZE} front={FRONT_SIZE}", flush=True)
 
-dash.start(args.http_port, target_cube=args.target_cube)
+dash.start(args.http_port, targetCube=args.target_cube)
 _cam_map = {}
 for nm in ("front", "wrist"):
     try:
@@ -106,7 +106,7 @@ os.makedirs(args.save_dir, exist_ok=True)
 # ────────────────────────────────────────────────────────────────────────────────
 #  Networks (SQUINT-exact)
 # ────────────────────────────────────────────────────────────────────────────────
-def orthogonal_init(m):
+def orthogonalInit(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight)
         if m.bias is not None:
@@ -139,11 +139,11 @@ class CNNEncoder(nn.Module):
                 nn.Conv2d(64, 64, 3, stride=1), nn.ReLU(), nn.Flatten())
         else:
             raise ValueError(f"unsupported image size {image_size}")
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def forward(self, img_uint8):
-        x = img_uint8.permute(0, 3, 1, 2).float() / 255.0 - 0.5
-        return self.conv(x)
+        tX = img_uint8.permute(0, 3, 1, 2).float() / 255.0 - 0.5
+        return self.conv(tX)
 
 
 class Projection(nn.Module):
@@ -172,28 +172,28 @@ class Actor(nn.Module):
             nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU())
         self.mean = nn.Linear(hidden, n_act)
         self.logstd = nn.Linear(hidden, n_act)
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
-    def _mean_logstd(self, wf, ff, s):
-        x = self.fc(self.proj(wf, ff, s))
-        mean = self.mean(x)
-        logstd = torch.tanh(self.logstd(x))
-        logstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (logstd + 1)
-        return mean, logstd
+    def _meanLogstd(self, wf, ff, s):
+        tX = self.fc(self.proj(wf, ff, s))
+        tMean = self.mean(tX)
+        tLogstd = torch.tanh(self.logstd(tX))
+        tLogstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLogstd + 1)
+        return tMean, tLogstd
 
-    def get_action(self, wf, ff, s):
-        mean, logstd = self._mean_logstd(wf, ff, s)
-        std = logstd.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x = normal.rsample()
-        y = torch.tanh(x)
-        logp = (normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+    def getAction(self, wf, ff, s):
+        tMean, tLogstd = self._meanLogstd(wf, ff, s)
+        tStd = tLogstd.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd)
+        tX = tNormal.rsample()
+        tY = torch.tanh(tX)
+        tLogp = (tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
     @torch.no_grad()
-    def act_deterministic(self, wf, ff, s):
-        mean, _ = self._mean_logstd(wf, ff, s)
-        return torch.tanh(mean)
+    def actDeterministic(self, wf, ff, s):
+        tMean, _ = self._meanLogstd(wf, ff, s)
+        return torch.tanh(tMean)
 
 
 class CriticC51(nn.Module):
@@ -210,37 +210,37 @@ class CriticC51(nn.Module):
                 nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU(),
                 nn.Linear(hidden, num_atoms))
         self.qs = nn.ModuleList([qnet() for _ in range(num_q)])
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def logits(self, wf, ff, s, a):
-        x = torch.cat([self.proj(wf, ff, s), a], dim=-1)
-        return torch.stack([q(x) for q in self.qs], dim=0)         # (Q,N,A)
+        tX = torch.cat([self.proj(wf, ff, s), a], dim=-1)
+        return torch.stack([tQ2(tX) for tQ2 in self.qs], dim=0)         # (Q,N,A)
 
-    def q_values(self, wf, ff, s, a):
-        probs = F.softmax(self.logits(wf, ff, s, a), dim=-1)
-        return (probs * self.support).sum(-1)                      # (Q,N)
+    def qValues(self, wf, ff, s, a):
+        tProbs = F.softmax(self.logits(wf, ff, s, a), dim=-1)
+        return (tProbs * self.support).sum(-1)                      # (Q,N)
 
 
 @torch.no_grad()
-def project_target(target_critic, nwf, nff, ns, na, rewards, bootstrap, gamma):
-    logits = target_critic.logits(nwf, nff, ns, na)
-    probs = F.softmax(logits, dim=-1)
-    support = target_critic.support
-    v_min, v_max, A = target_critic.v_min, target_critic.v_max, target_critic.num_atoms
-    Q, Nn, _ = probs.shape
-    dz = (v_max - v_min) / (A - 1)
-    tz = rewards.view(1, Nn, 1) + bootstrap.view(1, Nn, 1) * gamma * support.view(1, 1, A)
-    tz = tz.clamp(v_min, v_max).expand(Q, Nn, A)
-    b = (tz - v_min) / dz
-    l = b.floor().long(); u = b.ceil().long()
-    is_int = (u == l)
-    l = torch.where((l > 0) & is_int, l - 1, l)
-    u = torch.where((l == 0) & is_int, u + 1, u)
-    l = l.clamp(0, A - 1); u = u.clamp(0, A - 1)
-    m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b))
-    m.scatter_add_(2, u, probs * (b - l.float()))
-    return m
+def projectTarget(targetCritic, nwf, nff, ns, na, rewards, bootstrap, gamma):
+    tLogits = targetCritic.logits(nwf, nff, ns, na)
+    tProbs = F.softmax(tLogits, dim=-1)
+    tSupport = targetCritic.support
+    tVMin, tVMax, tA = targetCritic.v_min, targetCritic.v_max, targetCritic.num_atoms
+    tQ, tNn, _ = tProbs.shape
+    tDz = (tVMax - tVMin) / (tA - 1)
+    tTz = rewards.view(1, tNn, 1) + bootstrap.view(1, tNn, 1) * gamma * tSupport.view(1, 1, tA)
+    tTz = tTz.clamp(tVMin, tVMax).expand(tQ, tNn, tA)
+    tB = (tTz - tVMin) / tDz
+    tL = tB.floor().long(); tU = tB.ceil().long()
+    tIsInt = (tU == tL)
+    tL = torch.where((tL > 0) & tIsInt, tL - 1, tL)
+    tU = torch.where((tL == 0) & tIsInt, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1); tU = tU.clamp(0, tA - 1)
+    tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB))
+    tM.scatter_add_(2, tU, tProbs * (tB - tL.float()))
+    return tM
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -249,34 +249,34 @@ def project_target(target_critic, nwf, nff, ns, na, rewards, bootstrap, gamma):
 class Buffer:
     def __init__(self, cap, dev):
         self.cap, self.dev, self.ptr, self.full = cap, dev, 0, False
-        z = lambda *s, dt: torch.zeros(*s, dtype=dt, device=dev)
-        self.s = z(cap, STATE_DIM, dt=torch.float32)
-        self.w = z(cap, WRIST_SIZE, WRIST_SIZE, 3, dt=torch.uint8)
-        self.f = z(cap, FRONT_SIZE, FRONT_SIZE, 3, dt=torch.uint8)
-        self.a = z(cap, act_dim, dt=torch.float32)
-        self.r = z(cap, dt=torch.float32)
-        self.ns = z(cap, STATE_DIM, dt=torch.float32)
-        self.nw = z(cap, WRIST_SIZE, WRIST_SIZE, 3, dt=torch.uint8)
-        self.nf = z(cap, FRONT_SIZE, FRONT_SIZE, 3, dt=torch.uint8)
-        self.d = z(cap, dt=torch.float32)
+        tZ = lambda *s, dt: torch.zeros(*s, dtype=dt, device=dev)
+        self.s = tZ(cap, STATE_DIM, dt=torch.float32)
+        self.w = tZ(cap, WRIST_SIZE, WRIST_SIZE, 3, dt=torch.uint8)
+        self.f = tZ(cap, FRONT_SIZE, FRONT_SIZE, 3, dt=torch.uint8)
+        self.a = tZ(cap, act_dim, dt=torch.float32)
+        self.r = tZ(cap, dt=torch.float32)
+        self.ns = tZ(cap, STATE_DIM, dt=torch.float32)
+        self.nw = tZ(cap, WRIST_SIZE, WRIST_SIZE, 3, dt=torch.uint8)
+        self.nf = tZ(cap, FRONT_SIZE, FRONT_SIZE, 3, dt=torch.uint8)
+        self.d = tZ(cap, dt=torch.float32)
 
     def add(self, s, w, f, a, r, ns, nw, nf, d):
-        B = s.shape[0]
-        idx = (torch.arange(B, device=self.dev) + self.ptr) % self.cap
-        self.s[idx] = s.to(self.dev); self.w[idx] = w.to(self.dev); self.f[idx] = f.to(self.dev)
-        self.a[idx] = a.to(self.dev); self.r[idx] = r.to(self.dev)
-        self.ns[idx] = ns.to(self.dev); self.nw[idx] = nw.to(self.dev); self.nf[idx] = nf.to(self.dev)
-        self.d[idx] = d.to(self.dev)
-        newptr = self.ptr + B
-        if newptr >= self.cap:
+        tB2 = s.shape[0]
+        tIdx = (torch.arange(tB2, device=self.dev) + self.ptr) % self.cap
+        self.s[tIdx] = s.to(self.dev); self.w[tIdx] = w.to(self.dev); self.f[tIdx] = f.to(self.dev)
+        self.a[tIdx] = a.to(self.dev); self.r[tIdx] = r.to(self.dev)
+        self.ns[tIdx] = ns.to(self.dev); self.nw[tIdx] = nw.to(self.dev); self.nf[tIdx] = nf.to(self.dev)
+        self.d[tIdx] = d.to(self.dev)
+        tNewptr = self.ptr + tB2
+        if tNewptr >= self.cap:
             self.full = True
-        self.ptr = newptr % self.cap
+        self.ptr = tNewptr % self.cap
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr
-        idx = torch.randint(0, hi, (bs,), device=self.dev)
-        g = lambda t: t[idx].to(DEVICE, non_blocking=True)
-        return g(self.s), g(self.w), g(self.f), g(self.a), g(self.r), g(self.ns), g(self.nw), g(self.nf), g(self.d)
+        tHi = self.cap if self.full else self.ptr
+        tIdx = torch.randint(0, tHi, (bs,), device=self.dev)
+        tG = lambda t: t[tIdx].to(DEVICE, non_blocking=True)
+        return tG(self.s), tG(self.w), tG(self.f), tG(self.a), tG(self.r), tG(self.ns), tG(self.nw), tG(self.nf), tG(self.d)
 
 
 # ── instantiate ──
@@ -304,39 +304,39 @@ print(f"[VC51] nets ready. UTD={args.num_updates} batch={args.batch_size} buffer
       f"gamma={args.gamma} atoms={args.num_atoms}", flush=True)
 
 
-def update_critic(s, w, f, a, r, ns, nw, nf, d):
-    wf_o = enc_w(w); ff_o = enc_f(f)                              # WITH grad (critic trains encoders)
+def updateCritic(s, w, f, a, r, ns, nw, nf, d):
+    tWfO = enc_w(w); tFfO = enc_f(f)                              # WITH grad (critic trains encoders)
     with torch.no_grad():
-        wf_n = enc_w(nw); ff_n = enc_f(nf)
-        na, nlogp = actor.get_action(wf_n, ff_n, ns)
-        bootstrap = (1.0 - d)
-        r_ent = r - bootstrap * args.gamma * (alpha.squeeze() * nlogp.squeeze(-1))
-        target_dist = project_target(critic_target, wf_n, ff_n, ns, na, r_ent, bootstrap, args.gamma)
-    logits = critic.logits(wf_o, ff_o, s, a)
-    logp = F.log_softmax(logits, dim=-1)
-    critic_loss = (-(target_dist * logp).sum(-1).mean(-1)).sum()
+        tWfN = enc_w(nw); tFfN = enc_f(nf)
+        tNa, tNlogp = actor.getAction(tWfN, tFfN, ns)
+        tBootstrap = (1.0 - d)
+        tREnt = r - tBootstrap * args.gamma * (alpha.squeeze() * tNlogp.squeeze(-1))
+        tTargetDist = projectTarget(critic_target, tWfN, tFfN, ns, tNa, tREnt, tBootstrap, args.gamma)
+    tLogits = critic.logits(tWfO, tFfO, s, a)
+    tLogp = F.log_softmax(tLogits, dim=-1)
+    tCriticLoss = (-(tTargetDist * tLogp).sum(-1).mean(-1)).sum()
     critic_opt.zero_grad(set_to_none=True)
-    critic_loss.backward()
+    tCriticLoss.backward()
     critic_opt.step()
-    return wf_o.detach(), ff_o.detach(), critic_loss.detach()
+    return tWfO.detach(), tFfO.detach(), tCriticLoss.detach()
 
 
-def update_actor(s, wf_det, ff_det):
-    a_pi, logp = actor.get_action(wf_det, ff_det, s)              # detached features -> no encoder grad
-    qv = critic.q_values(wf_det, ff_det, s, a_pi).mean(0)         # grads to critic are wasted (not stepped)
-    actor_loss = (alpha.squeeze() * logp.squeeze(-1) - qv).mean()
+def updateActor(s, wfDet, ffDet):
+    tAPi, tLogp = actor.getAction(wfDet, ffDet, s)              # detached features -> no encoder grad
+    tQv = critic.qValues(wfDet, ffDet, s, tAPi).mean(0)         # grads to critic are wasted (not stepped)
+    tActorLoss = (alpha.squeeze() * tLogp.squeeze(-1) - tQv).mean()
     actor_opt.zero_grad(set_to_none=True)
-    actor_loss.backward()
+    tActorLoss.backward()
     actor_opt.step()
     with torch.no_grad():
-        _, logp2 = actor.get_action(wf_det, ff_det, s)
-    alpha_loss = -(log_alpha.exp() * (logp2 + target_entropy)).mean()
+        _, tLogp2 = actor.getAction(wfDet, ffDet, s)
+    tAlphaLoss = -(log_alpha.exp() * (tLogp2 + target_entropy)).mean()
     alpha_opt.zero_grad(set_to_none=True)
-    alpha_loss.backward()
+    tAlphaLoss.backward()
     alpha_opt.step()
 
 
-def soft_update():
+def softUpdate():
     with torch.no_grad():
         torch._foreach_lerp_(targ_params, crit_params, args.tau)
 
@@ -344,14 +344,14 @@ def soft_update():
 # ────────────────────────────────────────────────────────────────────────────────
 #  Rollout helpers: read state + cameras, downsample
 # ────────────────────────────────────────────────────────────────────────────────
-def read_imgs():
+def readImgs():
     """current wrist(16) + front(64) downsampled uint8, on DEVICE."""
-    w = downsample(env.scene["wrist"].data.output["rgb"], WRIST_SIZE)
-    f = downsample(env.scene["front"].data.output["rgb"], FRONT_SIZE)
-    return w, f
+    tW = downsample(env.scene["wrist"].data.output["rgb"], WRIST_SIZE)
+    tF = downsample(env.scene["front"].data.output["rgb"], FRONT_SIZE)
+    return tW, tF
 
 
-def sanitize_state(t):
+def sanitizeState(t):
     return torch.nan_to_num(t, nan=0.0, posinf=100.0, neginf=-100.0)
 
 
@@ -360,8 +360,8 @@ print(f"[VC51] start. target={args.total_timesteps} success_target={args.success
 obs_dict, _ = env.reset()
 for _ in range(3):  # warmup so camera buffers are populated
     obs_dict, *_ = env.step(torch.zeros((N_ENVS, act_dim), device=DEVICE))
-state = sanitize_state(obs_dict["policy"])
-w_img, f_img = read_imgs()
+state = sanitizeState(obs_dict["policy"])
+w_img, f_img = readImgs()
 
 global_step, n_iter = 0, 0
 ep_rew = np.zeros(N_ENVS, dtype=np.float64)
@@ -375,12 +375,12 @@ while global_step < args.total_timesteps:
     else:
         with torch.no_grad():
             wf = enc_w(w_img); ff = enc_f(f_img)
-            action, _ = actor.get_action(wf, ff, state)
+            action, _ = actor.getAction(wf, ff, state)
 
     obs_dict, rew, terminated, truncated, infos = env.step(action.detach())
     done = (terminated | truncated)
-    next_state = sanitize_state(obs_dict["policy"])
-    nw_img, nf_img = read_imgs()
+    next_state = sanitizeState(obs_dict["policy"])
+    nw_img, nf_img = readImgs()
     rew_t = torch.nan_to_num(rew.float(), nan=0.0, posinf=0.0, neginf=0.0)
 
     # bootstrap_at_done='always': all dones are time_outs -> store done=0, bootstrap on next obs
@@ -405,10 +405,10 @@ while global_step < args.total_timesteps:
     if global_step >= args.learning_starts:
         for j in range(args.num_updates):
             batch = buf.sample(args.batch_size)
-            wf_det, ff_det, _ = update_critic(*batch)
+            wf_det, ff_det, _ = updateCritic(*batch)
             if j % args.policy_frequency == 0:
-                update_actor(batch[0], wf_det, ff_det)
-            soft_update()
+                updateActor(batch[0], wf_det, ff_det)
+            softUpdate()
         alpha = log_alpha.exp().detach()
 
     succ = MR._succ_total[0]
@@ -436,14 +436,14 @@ while global_step < args.total_timesteps:
             pass
         recent = MR._succ_recent
         sr = (sum(recent) / len(recent)) if recent else 0.0
-        dash.push_stats(
+        dash.pushStats(
             step=global_step, episode=MR._ep_total[0],
             current_reward=float(rew_np.mean()), episode_reward=float(np.mean(ep_hist[-20:])) if ep_hist else 0.0,
             cumulative_reward=cum_reward, best_reward=best_reward if best_reward != float("-inf") else 0.0,
             success_count=succ, success_rate=sr, reward_terms=rt, cumulative_terms=dict(cum_terms), dopamine={})
         if _cam_map:
             try:
-                dash.update_cameras(_cam_map)
+                dash.updateCameras(_cam_map)
             except Exception:
                 pass
 

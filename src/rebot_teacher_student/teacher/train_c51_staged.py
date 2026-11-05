@@ -66,7 +66,7 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
 
@@ -82,7 +82,7 @@ STAGE_KEEP = {
 }[TRAIN_STAGE]
 
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N_ENVS)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
 _obj = getattr(env_cfg.scene, TARGET); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -95,7 +95,7 @@ if args.cameras:
     # dashboard view of the staged training. (state-only obs is unaffected — these feed only the monitor.)
     import isaaclab.sim as _sc
     from isaaclab.sensors import TiledCameraCfg as _TC
-    from rebot_teacher_student.env.visual_obs import _lookat_quat_opengl as _laq, FRONT_EYE, FRONT_TARGET
+    from rebot_teacher_student.env.visual_obs import _lookatQuatOpengl as _laq, FRONT_EYE, FRONT_TARGET
     env_cfg.scene.front = _TC(prim_path="{ENV_REGEX_NS}/front_camera",
         offset=_TC.OffsetCfg(pos=FRONT_EYE, rot=_laq(FRONT_EYE, FRONT_TARGET), convention="opengl"),
         data_types=["rgb"], spawn=_sc.PinholeCameraCfg(focal_length=18.0, clipping_range=(0.01, 50.0), lock_camera=True),
@@ -126,11 +126,11 @@ except Exception:
     pass
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 sb3_env = Sb3VecEnvWrapper(env)
 obs_dim = int(np.prod(sb3_env.observation_space.shape)); act_dim = int(np.prod(sb3_env.action_space.shape))
 print(f"[STAGED s{TRAIN_STAGE}={STAGE_NAME}] obs={obs_dim} act={act_dim} envs={N_ENVS} keep={sorted(STAGE_KEEP)}", flush=True)
-dash.start(args.http_port, target_cube=TARGET)
+dash.start(args.http_port, targetCube=TARGET)
 os.makedirs(args.save_dir, exist_ok=True)
 _cam_map = {}
 if args.cameras:
@@ -142,7 +142,7 @@ if args.cameras:
     print(f"[STAGED] live dashboard cameras: {list(_cam_map.keys())}", flush=True)
 
 # ── nets (inline copy of train_c51's; train_c51 is a script so it can't be imported) ──
-def orthogonal_init(m):
+def orthogonalInit(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight)
         if m.bias is not None:
@@ -160,23 +160,23 @@ class Actor(nn.Module):
             nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU(),
             nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU())
         self.mean = nn.Linear(hidden, n_act); self.logstd = nn.Linear(hidden, n_act)
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
-    def _mean_logstd(self, s):
-        x = self.fc(self.proj(s)); mean = self.mean(x)
-        logstd = torch.tanh(self.logstd(x))
-        logstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (logstd + 1)
-        return mean, logstd
+    def _meanLogstd(self, s):
+        tX = self.fc(self.proj(s)); tMean = self.mean(tX)
+        tLogstd = torch.tanh(self.logstd(tX))
+        tLogstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLogstd + 1)
+        return tMean, tLogstd
 
-    def get_action(self, s):
-        mean, logstd = self._mean_logstd(s); std = logstd.exp()
-        normal = torch.distributions.Normal(mean, std); x = normal.rsample(); y = torch.tanh(x)
-        logp = (normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+    def getAction(self, s):
+        tMean, tLogstd = self._meanLogstd(s); tStd = tLogstd.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd); tX = tNormal.rsample(); tY = torch.tanh(tX)
+        tLogp = (tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
     @torch.no_grad()
-    def act_deterministic(self, s):
-        mean, _ = self._mean_logstd(s); return torch.tanh(mean)
+    def actDeterministic(self, s):
+        tMean, _ = self._meanLogstd(s); return torch.tanh(tMean)
 
 
 class CriticC51(nn.Module):
@@ -193,27 +193,27 @@ class CriticC51(nn.Module):
                 nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU(),
                 nn.Linear(hidden, num_atoms))
         self.qs = nn.ModuleList([qnet() for _ in range(num_q)])
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def logits(self, s, a):
-        x = torch.cat([self.proj(s), a], dim=-1)
-        return torch.stack([q(x) for q in self.qs], dim=0)
+        tX = torch.cat([self.proj(s), a], dim=-1)
+        return torch.stack([tQ2(tX) for tQ2 in self.qs], dim=0)
 
-    def q_values(self, s, a):
+    def qValues(self, s, a):
         return (F.softmax(self.logits(s, a), dim=-1) * self.support).sum(-1)
 
 
 @torch.no_grad()
-def project_target(tc, ns, na, rewards, bootstrap, gamma):
-    probs = F.softmax(tc.logits(ns, na), dim=-1); support = tc.support
-    v_min, v_max, A = tc.v_min, tc.v_max, tc.num_atoms; Q, Nn, _ = probs.shape
-    dz = (v_max - v_min) / (A - 1)
-    tz = (rewards.view(1, Nn, 1) + bootstrap.view(1, Nn, 1) * gamma * support.view(1, 1, A)).clamp(v_min, v_max).expand(Q, Nn, A)
-    b = (tz - v_min) / dz; l = b.floor().long(); u = b.ceil().long(); is_int = (u == l)
-    l = torch.where((l > 0) & is_int, l - 1, l); u = torch.where((l == 0) & is_int, u + 1, u)
-    l = l.clamp(0, A - 1); u = u.clamp(0, A - 1); m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b)); m.scatter_add_(2, u, probs * (b - l.float()))
-    return m
+def projectTarget(tc, ns, na, rewards, bootstrap, gamma):
+    tProbs = F.softmax(tc.logits(ns, na), dim=-1); tSupport = tc.support
+    tVMin, tVMax, tA = tc.v_min, tc.v_max, tc.num_atoms; tQ, tNn, _ = tProbs.shape
+    tDz = (tVMax - tVMin) / (tA - 1)
+    tTz = (rewards.view(1, tNn, 1) + bootstrap.view(1, tNn, 1) * gamma * tSupport.view(1, 1, tA)).clamp(tVMin, tVMax).expand(tQ, tNn, tA)
+    tB = (tTz - tVMin) / tDz; tL = tB.floor().long(); tU = tB.ceil().long(); tIsInt = (tU == tL)
+    tL = torch.where((tL > 0) & tIsInt, tL - 1, tL); tU = torch.where((tL == 0) & tIsInt, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1); tU = tU.clamp(0, tA - 1); tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB)); tM.scatter_add_(2, tU, tProbs * (tB - tL.float()))
+    return tM
 
 
 class Buffer:
@@ -224,20 +224,20 @@ class Buffer:
         self.done = torch.zeros(cap, device=dev)
 
     def add(self, o, a, r, n, d):
-        B = o.shape[0]
-        if B == 0:
+        tB2 = o.shape[0]
+        if tB2 == 0:
             return
-        idx = (torch.arange(B, device=self.device) + self.ptr) % self.cap
-        self.obs[idx] = o; self.act[idx] = a; self.rew[idx] = r; self.nxt[idx] = n; self.done[idx] = d
-        np_ = self.ptr + B
-        if np_ >= self.cap:
+        tIdx = (torch.arange(tB2, device=self.device) + self.ptr) % self.cap
+        self.obs[tIdx] = o; self.act[tIdx] = a; self.rew[tIdx] = r; self.nxt[tIdx] = n; self.done[tIdx] = d
+        tNp = self.ptr + tB2
+        if tNp >= self.cap:
             self.full = True
-        self.ptr = np_ % self.cap
+        self.ptr = tNp % self.cap
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr
-        idx = torch.randint(0, hi, (bs,), device=self.device)
-        return self.obs[idx], self.act[idx], self.rew[idx], self.nxt[idx], self.done[idx]
+        tHi = self.cap if self.full else self.ptr
+        tIdx = torch.randint(0, tHi, (bs,), device=self.device)
+        return self.obs[tIdx], self.act[tIdx], self.rew[tIdx], self.nxt[tIdx], self.done[tIdx]
 
 
 actor = Actor(obs_dim, act_dim).to(DEVICE)
@@ -268,27 +268,27 @@ buf = Buffer(args.buffer_size, obs_dim, act_dim, DEVICE)
 crit_params = list(critic.parameters()); targ_params = list(critic_target.parameters())
 
 
-def update_critic(o, a, r, n, d):
+def updateCritic(o, a, r, n, d):
     with torch.no_grad():
-        na, nlogp = actor.get_action(n); bootstrap = (1.0 - d)
-        r_ent = r - bootstrap * args.gamma * (alpha.squeeze() * nlogp.squeeze(-1))
-        target = project_target(critic_target, n, na, r_ent, bootstrap, args.gamma)
-    logp = F.log_softmax(critic.logits(o, a), dim=-1)
-    loss = (-(target * logp).sum(-1).mean(-1)).sum()
-    critic_opt.zero_grad(set_to_none=True); loss.backward(); critic_opt.step()
+        tNa, tNlogp = actor.getAction(n); tBootstrap = (1.0 - d)
+        tREnt = r - tBootstrap * args.gamma * (alpha.squeeze() * tNlogp.squeeze(-1))
+        tTarget = projectTarget(critic_target, n, tNa, tREnt, tBootstrap, args.gamma)
+    tLogp = F.log_softmax(critic.logits(o, a), dim=-1)
+    tLoss = (-(tTarget * tLogp).sum(-1).mean(-1)).sum()
+    critic_opt.zero_grad(set_to_none=True); tLoss.backward(); critic_opt.step()
 
 
-def update_actor(o):
-    a_pi, logp = actor.get_action(o); qv = critic.q_values(o, a_pi).mean(0)
-    (alpha.squeeze() * logp.squeeze(-1) - qv).mean().backward()
+def updateActor(o):
+    tAPi, tLogp = actor.getAction(o); tQv = critic.qValues(o, tAPi).mean(0)
+    (alpha.squeeze() * tLogp.squeeze(-1) - tQv).mean().backward()
     actor_opt.step(); actor_opt.zero_grad(set_to_none=True)
     with torch.no_grad():
-        _, logp2 = actor.get_action(o)
-    aloss = -(log_alpha.exp() * (logp2 + target_entropy)).mean()
-    alpha_opt.zero_grad(set_to_none=True); aloss.backward(); alpha_opt.step()
+        _, tLogp2 = actor.getAction(o)
+    tAloss = -(log_alpha.exp() * (tLogp2 + target_entropy)).mean()
+    alpha_opt.zero_grad(set_to_none=True); tAloss.backward(); alpha_opt.step()
 
 
-def soft_update():
+def softUpdate():
     with torch.no_grad():
         torch._foreach_lerp_(targ_params, crit_params, args.tau)
 
@@ -297,21 +297,21 @@ def soft_update():
 _ee = SceneEntityCfg("ee_frame"); _oc = SceneEntityCfg(TARGET)
 def _dist():
     return torch.norm(env.scene[TARGET].data.root_pos_w - MR._tcp(env, _ee), dim=1)
-def stage_done(s):
+def stageDone(s):
     if s == 0:
-        return MR._align_held(env, _dist())
+        return MR._alignHeld(env, _dist())
     if s == 1:
-        return MR._is_grasped(env, _oc)
-    return MR.is_fold_success(env, _oc)
+        return MR._isGrasped(env, _oc)
+    return MR.isFoldSuccess(env, _oc)
 
 
-def to_t(x):
+def toT(x):
     return torch.as_tensor(np.asarray(x, dtype=np.float32), device=DEVICE)
 
 
 print(f"[STAGED s{TRAIN_STAGE}] start. sr-target={args.success_rate_target} hits={args.min_sr_hits} bonus={args.bonus}", flush=True)
 obs = np.nan_to_num(np.asarray(sb3_env.reset(), dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
-obs_t = to_t(obs)
+obs_t = toT(obs)
 stage_ptr = torch.zeros(N_ENVS, dtype=torch.long, device=DEVICE)
 done_latch = torch.zeros(N_ENVS, dtype=torch.bool, device=DEVICE)   # train-stage done reached this episode
 reached = torch.zeros(N_ENVS, dtype=torch.bool, device=DEVICE)      # episode reached the train stage
@@ -325,25 +325,25 @@ while global_step < args.total_timesteps:
     for s in range(TRAIN_STAGE):
         m = (stage_ptr == s)
         if m.any():
-            action[m] = priors[s].act_deterministic(obs_t[m])
+            action[m] = priors[s].actDeterministic(obs_t[m])
     if m_tr.any():
         if global_step < args.learning_starts:
             action[m_tr] = torch.rand(int(m_tr.sum()), act_dim, device=DEVICE) * 2 - 1
         else:
             with torch.no_grad():
-                a_tr, _ = actor.get_action(obs_t[m_tr])
+                a_tr, _ = actor.getAction(obs_t[m_tr])
             action[m_tr] = a_tr
 
     next_obs, rew, done, infos = sb3_env.step(action.detach().cpu().numpy().astype(np.float32))
     next_obs = np.nan_to_num(np.asarray(next_obs, dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
     rew = np.nan_to_num(np.asarray(rew, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
-    done = np.asarray(done); next_t = to_t(next_obs)
+    done = np.asarray(done); next_t = toT(next_obs)
 
     # stage conditions AFTER the step
-    appr = stage_done(0); grsp = stage_done(1); trd = stage_done(TRAIN_STAGE)
+    appr = stageDone(0); grsp = stageDone(1); trd = stageDone(TRAIN_STAGE)
     # collect training-stage transitions (only envs that ACTED with the trainee), with a done-bonus
     if m_tr.any():
-        r_tr = to_t(rew)[m_tr] + args.bonus * (trd[m_tr] & ~done_latch[m_tr]).float()
+        r_tr = toT(rew)[m_tr] + args.bonus * (trd[m_tr] & ~done_latch[m_tr]).float()
         buf.add(obs_t[m_tr], action[m_tr].detach(), r_tr, next_t[m_tr], torch.zeros(int(m_tr.sum()), device=DEVICE))
     done_latch |= (trd & m_tr)
     # advance prior stages on their done-conditions (never past the train stage)
@@ -365,10 +365,10 @@ while global_step < args.total_timesteps:
     if global_step >= args.learning_starts and (buf.full or buf.ptr >= args.batch_size):
         for j in range(args.num_updates):
             o, a, r, n, d = buf.sample(args.batch_size)
-            update_critic(o, a, r, n, d)
+            updateCritic(o, a, r, n, d)
             if j % args.policy_frequency == 0:
-                update_actor(o)
-            soft_update()
+                updateActor(o)
+            softUpdate()
         alpha = log_alpha.exp().detach()
 
     sr = (sum(_succ_recent) / len(_succ_recent)) if _succ_recent else 0.0
@@ -387,14 +387,14 @@ while global_step < args.total_timesteps:
         print(f"[STAGED s{TRAIN_STAGE}={STAGE_NAME}] t={global_step} stage_sr={sr:.3f} ({_ep_total} eps, "
               f"reached={float(reached.float().mean()):.2f}, envs@[{_c0},{_c1},{_c2}]) alpha={float(alpha):.3f}", flush=True)
         try:
-            dash.push_stats(step=global_step, episode=_ep_total, current_reward=0.0, episode_reward=0.0,
+            dash.pushStats(step=global_step, episode=_ep_total, current_reward=0.0, episode_reward=0.0,
                             cumulative_reward=0.0, best_reward=0.0, success_count=int(sum(_succ_recent)),
                             success_rate=sr,
                             reward_terms={f"s{TRAIN_STAGE}_{STAGE_NAME}_sr": round(sr, 3), "train_stage": TRAIN_STAGE,
                                           "envs@s0": _c0, "envs@s1": _c1, "envs@s2": _c2},
                             cumulative_terms={}, dopamine={})
             if _cam_map:
-                dash.update_cameras(_cam_map)
+                dash.updateCameras(_cam_map)
         except Exception:
             pass
 

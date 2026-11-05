@@ -78,49 +78,49 @@ class Actor(nn.Module):
         self.logstd = nn.Linear(hidden, n_act)   # unused at inference; present so state_dict loads
 
     @torch.no_grad()
-    def act(self, obs_np):
+    def act(self, obsNp):
         """Deterministic action in [-1,1]^7 from a (43,) obs vector."""
-        x = torch.as_tensor(obs_np, dtype=torch.float32).unsqueeze(0)
-        x = self.fc(self.proj(x))
-        return torch.tanh(self.mean(x)).squeeze(0).numpy()
+        tX = torch.as_tensor(obsNp, dtype=torch.float32).unsqueeze(0)
+        tX = self.fc(self.proj(tX))
+        return torch.tanh(self.mean(tX)).squeeze(0).numpy()
 
 
-def load_policy(checkpoint_path, device="cpu"):
-    ckpt = torch.load(checkpoint_path, map_location=device)
-    actor = Actor()
-    state = ckpt["actor"] if isinstance(ckpt, dict) and "actor" in ckpt else ckpt
-    actor.load_state_dict(state)
-    actor.eval()
-    step = ckpt.get("step", "?") if isinstance(ckpt, dict) else "?"
-    print(f"[deploy] loaded actor from {checkpoint_path} (train step {step})")
-    return actor
+def loadPolicy(checkpointPath, device="cpu"):
+    tCkpt = torch.load(checkpointPath, map_location=device)
+    tActor = Actor()
+    tState = tCkpt["actor"] if isinstance(tCkpt, dict) and "actor" in tCkpt else tCkpt
+    tActor.load_state_dict(tState)
+    tActor.eval()
+    tStep = tCkpt.get("step", "?") if isinstance(tCkpt, dict) else "?"
+    print(f"[deploy] loaded actor from {checkpointPath} (train step {tStep})")
+    return tActor
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 #  Helpers: quaternion rotate (wxyz), FK for TCP
 # ════════════════════════════════════════════════════════════════════════════════
-def quat_rotate(q_wxyz, v):
+def quatRotate(qWxyz, v):
     """Rotate vector v by quaternion q (w,x,y,z). Returns (3,)."""
-    w, x, y, z = q_wxyz
+    tW, tX, tY, tZ = qWxyz
     # rotation matrix from quaternion
-    R = np.array([
-        [1 - 2 * (y * y + z * z), 2 * (x * y - z * w),     2 * (x * z + y * w)],
-        [2 * (x * y + z * w),     1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
-        [2 * (x * z - y * w),     2 * (y * z + x * w),     1 - 2 * (x * x + y * y)],
+    tR = np.array([
+        [1 - 2 * (tY * tY + tZ * tZ), 2 * (tX * tY - tZ * tW),     2 * (tX * tZ + tY * tW)],
+        [2 * (tX * tY + tZ * tW),     1 - 2 * (tX * tX + tZ * tZ), 2 * (tY * tZ - tX * tW)],
+        [2 * (tX * tZ - tY * tW),     2 * (tY * tZ + tX * tW),     1 - 2 * (tX * tX + tY * tY)],
     ], dtype=np.float32)
-    return R @ np.asarray(v, dtype=np.float32)
+    return tR @ np.asarray(v, dtype=np.float32)
 
 
-def tcp_from_gripper_link(gl_pos, gl_quat_wxyz):
+def tcpFromGripperLink(glPos, glQuatWxyz):
     """TCP world pos = gripper_link pos + R(gripper_link quat) @ TCP_OFFSET. (Sim ee_frame, both
     target frames share the same offset, so their midpoint == this point.)"""
-    return np.asarray(gl_pos, dtype=np.float32) + quat_rotate(gl_quat_wxyz, TCP_OFFSET)
+    return np.asarray(glPos, dtype=np.float32) + quatRotate(glQuatWxyz, TCP_OFFSET)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 #  Observation builder  (EXACT sim parity)
 # ════════════════════════════════════════════════════════════════════════════════
-def build_obs(joint_pos, joint_vel, target_qpos, cube_pos, cube_quat_wxyz, tcp_pos, is_grasped):
+def buildObs(jointPos, jointVel, targetQpos, cubePos, cubeQuatWxyz, tcpPos, isGrasped):
     """Assemble the 43-dim policy obs IN SIM ORDER.
       joint_pos/joint_vel : (8,) in JOINT_ORDER
       target_qpos         : (7,) = [arm6 commanded target, gripper commanded target] (ActionController.target)
@@ -128,28 +128,28 @@ def build_obs(joint_pos, joint_vel, target_qpos, cube_pos, cube_quat_wxyz, tcp_p
       tcp_pos             : (3,)  SIM WORLD frame (use tcp_from_gripper_link)
       is_grasped          : bool/0-1
     """
-    joint_pos = np.asarray(joint_pos, dtype=np.float32)
-    joint_vel = np.asarray(joint_vel, dtype=np.float32)
-    target_qpos = np.asarray(target_qpos, dtype=np.float32)
-    cube_pos = np.asarray(cube_pos, dtype=np.float32)
-    cube_quat_wxyz = np.asarray(cube_quat_wxyz, dtype=np.float32)
-    tcp_pos = np.asarray(tcp_pos, dtype=np.float32)
-    arm_qpos = joint_pos[:N_ARM]                     # first 6 = arm (JOINT_ORDER)
-    dist_to_rest = arm_qpos - REST_QPOS              # 6-dim VECTOR (sim _dist_to_rest_qpos)
-    tcp_to_obj = cube_pos - tcp_pos
-    obs = np.concatenate([
-        joint_pos,                                   # 8
-        joint_vel,                                   # 8
-        target_qpos,                                 # 7
-        dist_to_rest,                                # 6
-        cube_pos,                                    # 3
-        cube_quat_wxyz,                              # 4
-        tcp_pos,                                     # 3
-        tcp_to_obj,                                  # 3
-        np.array([1.0 if is_grasped else 0.0], dtype=np.float32),  # 1
+    jointPos = np.asarray(jointPos, dtype=np.float32)
+    jointVel = np.asarray(jointVel, dtype=np.float32)
+    targetQpos = np.asarray(targetQpos, dtype=np.float32)
+    cubePos = np.asarray(cubePos, dtype=np.float32)
+    cubeQuatWxyz = np.asarray(cubeQuatWxyz, dtype=np.float32)
+    tcpPos = np.asarray(tcpPos, dtype=np.float32)
+    tArmQpos = jointPos[:N_ARM]                     # first 6 = arm (JOINT_ORDER)
+    tDistToRest = tArmQpos - REST_QPOS              # 6-dim VECTOR (sim _dist_to_rest_qpos)
+    tTcpToObj = cubePos - tcpPos
+    tObs = np.concatenate([
+        jointPos,                                   # 8
+        jointVel,                                   # 8
+        targetQpos,                                 # 7
+        tDistToRest,                                # 6
+        cubePos,                                    # 3
+        cubeQuatWxyz,                              # 4
+        tcpPos,                                     # 3
+        tTcpToObj,                                  # 3
+        np.array([1.0 if isGrasped else 0.0], dtype=np.float32),  # 1
     ]).astype(np.float32)
-    assert obs.shape[0] == OBS_DIM, f"obs dim {obs.shape[0]} != {OBS_DIM}"
-    return obs
+    assert tObs.shape[0] == OBS_DIM, f"obs dim {tObs.shape[0]} != {OBS_DIM}"
+    return tObs
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -171,17 +171,17 @@ class ActionController:
     def step(self, action, pan_qpos):
         """action: (7,) in [-1,1]; pan_qpos: measured shoulder_pan (rad). Returns (arm_target[6], grip_target).
         Replicates the sim action term EXACTLY: delta-on-target + hard per-joint clamps + coupled elbow gate."""
-        a = np.clip(np.asarray(action, dtype=np.float32), -1.0, 1.0)
-        self.arm_target = np.clip(self.arm_target + a[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
+        tA = np.clip(np.asarray(action, dtype=np.float32), -1.0, 1.0)
+        self.arm_target = np.clip(self.arm_target + tA[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
         # coupled elbow gate: until the pan has swung forward (>= PAN_FORWARD) hold the elbow folded in the
         # tuck range so it cannot straighten out / extend backward; once pan is forward the elbow is free.
         if float(pan_qpos) < PAN_FORWARD:
             self.arm_target[ELBOW_IDX] = float(np.clip(self.arm_target[ELBOW_IDX], ELBOW_TUCK_LO, ELBOW_TUCK_HI))
-        self.grip_target = float(np.clip(self.grip_target + a[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
+        self.grip_target = float(np.clip(self.grip_target + tA[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
         return self.arm_target.copy(), self.grip_target
 
     @property
-    def target_qpos7(self):
+    def targetQpos7(self):
         """The 7-dim commanded target for the obs (arm6 + gripper1)."""
         return np.concatenate([self.arm_target, [self.grip_target]]).astype(np.float32)
 
@@ -190,27 +190,27 @@ class ActionController:
 #  Hardware abstraction  (implement these for the real reBot)
 # ════════════════════════════════════════════════════════════════════════════════
 class RobotInterface:
-    def read_joint_state(self):
+    def readJointState(self):
         """-> (joint_pos[8], joint_vel[8]) in JOINT_ORDER. gripper_joint2 mirrors gripper."""
         raise NotImplementedError
 
-    def get_cube_pose(self):
+    def getCubePose(self):
         """-> (pos[3], quat_wxyz[4]) of the TARGET cube, in the SIM WORLD frame (perception)."""
         raise NotImplementedError
 
-    def get_gripper_link_pose(self):
+    def getGripperLinkPose(self):
         """-> (pos[3], quat_wxyz[4]) of gripper_link, SIM WORLD frame (your robot FK)."""
         raise NotImplementedError
 
-    def is_grasped(self):
+    def isGrasped(self):
         """-> bool. Real grasp heuristic (e.g. gripper qpos>0.05 AND motor current high)."""
         raise NotImplementedError
 
-    def send_joint_targets(self, arm_target, gripper_target):
+    def sendJointTargets(self, armTarget, gripperTarget):
         """Command the motors. arm_target[6] rad, gripper_target m (drive BOTH gripper fingers to it)."""
         raise NotImplementedError
 
-    def go_to_rest(self):
+    def goToRest(self):
         """Move smoothly to REST_QPOS (arm) + gripper 0.02 m before an episode."""
         raise NotImplementedError
 
@@ -224,60 +224,60 @@ class MockRobot(RobotInterface):
         self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
         self._t = 0
 
-    def read_joint_state(self):
+    def readJointState(self):
         return self._jp.copy(), np.zeros(N_JOINTS, dtype=np.float32)
 
-    def get_cube_pose(self):
+    def getCubePose(self):
         return np.array([0.30, -0.30, 0.06], dtype=np.float32), np.array([1, 0, 0, 0], dtype=np.float32)
 
-    def get_gripper_link_pose(self):
+    def getGripperLinkPose(self):
         return np.array([0.25, -0.35, 0.25], dtype=np.float32), np.array([1, 0, 0, 0], dtype=np.float32)
 
-    def is_grasped(self):
+    def isGrasped(self):
         return False
 
-    def send_joint_targets(self, arm_target, gripper_target):
+    def sendJointTargets(self, armTarget, gripperTarget):
         # pretend the motors instantly reach target (for shape/flow testing only)
-        self._jp[:N_ARM] = arm_target
-        self._jp[6] = gripper_target
-        self._jp[7] = gripper_target
+        self._jp[:N_ARM] = armTarget
+        self._jp[6] = gripperTarget
+        self._jp[7] = gripperTarget
         self._t += 1
 
-    def go_to_rest(self):
+    def goToRest(self):
         self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 #  Deploy loop
 # ════════════════════════════════════════════════════════════════════════════════
-def run(actor, robot: RobotInterface, hz=CONTROL_HZ, max_steps=0, verbose=True):
-    ctrl = ActionController()
-    robot.go_to_rest()
-    jp, _ = robot.read_joint_state()
-    ctrl.reset(jp[:N_ARM], jp[6])
-    dt = 1.0 / hz
-    step = 0
+def run(actor, robot: RobotInterface, hz=CONTROL_HZ, maxSteps=0, verbose=True):
+    tCtrl = ActionController()
+    robot.goToRest()
+    tJp, _ = robot.readJointState()
+    tCtrl.reset(tJp[:N_ARM], tJp[6])
+    tDt = 1.0 / hz
+    tStep = 0
     try:
-        while max_steps == 0 or step < max_steps:
-            t0 = time.perf_counter()
-            jp, jv = robot.read_joint_state()
-            cube_pos, cube_quat = robot.get_cube_pose()
-            gl_pos, gl_quat = robot.get_gripper_link_pose()
-            tcp = tcp_from_gripper_link(gl_pos, gl_quat)
-            grasped = robot.is_grasped()
+        while maxSteps == 0 or tStep < maxSteps:
+            tT0 = time.perf_counter()
+            tJp, tJv = robot.readJointState()
+            tCubePos, tCubeQuat = robot.getCubePose()
+            tGlPos, tGlQuat = robot.getGripperLinkPose()
+            tTcp = tcpFromGripperLink(tGlPos, tGlQuat)
+            tGrasped = robot.isGrasped()
 
-            obs = build_obs(jp, jv, ctrl.target_qpos7, cube_pos, cube_quat, tcp, grasped)
-            action = actor.act(obs)                      # (7,) in [-1,1]
-            arm_t, grip_t = ctrl.step(action, jp[PAN_IDX])   # pan-gated elbow needs measured pan
-            robot.send_joint_targets(arm_t, grip_t)
+            tObs = buildObs(tJp, tJv, tCtrl.targetQpos7, tCubePos, tCubeQuat, tTcp, tGrasped)
+            tAction = actor.act(tObs)                      # (7,) in [-1,1]
+            tArmT, tGripT = tCtrl.step(tAction, tJp[PAN_IDX])   # pan-gated elbow needs measured pan
+            robot.sendJointTargets(tArmT, tGripT)
 
-            if verbose and step % int(hz) == 0:
-                print(f"[t={step}] grip_t={grip_t:.3f} grasped={grasped} "
-                      f"cube={np.round(cube_pos,3)} tcp={np.round(tcp,3)}", flush=True)
-            step += 1
-            sleep = dt - (time.perf_counter() - t0)
-            if sleep > 0:
-                time.sleep(sleep)
+            if verbose and tStep % int(hz) == 0:
+                print(f"[t={tStep}] grip_t={tGripT:.3f} grasped={tGrasped} "
+                      f"cube={np.round(tCubePos,3)} tcp={np.round(tTcp,3)}", flush=True)
+            tStep += 1
+            tSleep = tDt - (time.perf_counter() - tT0)
+            if tSleep > 0:
+                time.sleep(tSleep)
     except KeyboardInterrupt:
         print("\n[deploy] stopped by user.")
     finally:
@@ -285,22 +285,22 @@ def run(actor, robot: RobotInterface, hz=CONTROL_HZ, max_steps=0, verbose=True):
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--checkpoint", required=True, help="c51_ckpt_*.pt / c51_final.pt from training")
-    ap.add_argument("--hz", type=float, default=CONTROL_HZ)
-    ap.add_argument("--max-steps", type=int, default=0, help="0 = run until Ctrl-C")
-    ap.add_argument("--device", default="cpu")
-    ap.add_argument("--mock", action="store_true", help="run with MockRobot (no hardware, flow test)")
-    args = ap.parse_args()
+    tAp = argparse.ArgumentParser()
+    tAp.add_argument("--checkpoint", required=True, help="c51_ckpt_*.pt / c51_final.pt from training")
+    tAp.add_argument("--hz", type=float, default=CONTROL_HZ)
+    tAp.add_argument("--max-steps", type=int, default=0, help="0 = run until Ctrl-C")
+    tAp.add_argument("--device", default="cpu")
+    tAp.add_argument("--mock", action="store_true", help="run with MockRobot (no hardware, flow test)")
+    tArgs = tAp.parse_args()
 
-    actor = load_policy(args.checkpoint, device=args.device)
-    if args.mock:
-        robot = MockRobot()
+    tActor = loadPolicy(tArgs.checkpoint, device=tArgs.device)
+    if tArgs.mock:
+        tRobot = MockRobot()
         print("[deploy] MOCK mode — implement RobotInterface for real hardware.")
     else:
         raise SystemExit("Implement a RobotInterface for the reBot and pass it to run(); "
                          "or use --mock to test the pipeline. See README.md.")
-    run(actor, robot, hz=args.hz, max_steps=args.max_steps)
+    run(tActor, tRobot, hz=tArgs.hz, maxSteps=tArgs.max_steps)
 
 
 if __name__ == "__main__":

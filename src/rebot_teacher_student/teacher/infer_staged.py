@@ -30,12 +30,12 @@ from isaaclab.sensors import ContactSensorCfg
 from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, TerminationTermCfg as DoneTerm
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 import rebot_teacher_student.env.rewards as MR
 
 DEVICE = "cuda:0"; N = args.num_envs; TARGET = args.target_cube; NS = len(args.ckpts)
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)
-env_cfg = configure_env(env_cfg, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
+env_cfg = configureEnv(env_cfg, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
 _obj = getattr(env_cfg.scene, TARGET); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -44,7 +44,7 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, {})
+applyMotorLimits(env, {})
 
 
 class Actor(nn.Module):
@@ -69,15 +69,15 @@ obs_mgr = env.observation_manager
 _ee = SceneEntityCfg("ee_frame"); _oc = SceneEntityCfg(TARGET)
 def _dist():
     return torch.norm(env.scene[TARGET].data.root_pos_w - MR._tcp(env, _ee), dim=1)
-def stage_done(s):                     # done condition that ADVANCES out of stage s
+def stageDone(s):                     # done condition that ADVANCES out of stage s
     # 4-stage chain: 0 reaching -> 1 align -> 2 grasp -> 3 lift (matches train_c51_joint)
     if s == 0:                         # reaching: reached the cube vicinity
         return _dist() < (MR.ALIGN_DIST + 0.05)
     if s == 1:                         # align: open jaws aligned-and-held (latch)
-        return MR._align_held(env, _dist())
+        return MR._alignHeld(env, _dist())
     if s == 2:                         # grasp: contact-grasp after align
-        return MR._is_grasped(env, _oc)
-    return MR.is_fold_success(env, _oc)   # lift: lifted + returned = success
+        return MR._isGrasped(env, _oc)
+    return MR.isFoldSuccess(env, _oc)   # lift: lifted + returned = success
 
 
 obs = env.reset()[0]["policy"]
@@ -97,10 +97,10 @@ for step in range(args.episodes * 110):
         ever_stage[:, s] |= (stage == s)
     # advance stages (last stage doesn't advance; its done = end-to-end success)
     for s in range(NS - 1):
-        adv = (stage == s) & stage_done(s)
+        adv = (stage == s) & stageDone(s)
         stage = torch.where(adv, stage + 1, stage)
     # end-to-end success = the LAST stage's done reached (place_done if 3 stages, else that stage's done)
-    ep_succ |= (stage == NS - 1) & stage_done(NS - 1)
+    ep_succ |= (stage == NS - 1) & stageDone(NS - 1)
     dones = term | trunc
     if dones.any():
         idx = torch.nonzero(dones).flatten()

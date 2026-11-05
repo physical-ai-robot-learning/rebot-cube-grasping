@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def orthogonal_init(m):
+def orthogonalInit(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
         nn.init.orthogonal_(m.weight)
         if m.bias is not None:
@@ -50,11 +50,11 @@ class CNNEncoder(nn.Module):
                 nn.Conv2d(64, 64, 3, stride=1), nn.ReLU(), nn.Flatten())  # 6 -> 4 => 64*4*4 = 1024
         else:
             raise ValueError(f"unsupported image size {image_size}")
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def forward(self, img_uint8):
-        x = img_uint8.permute(0, 3, 1, 2).float() / 255.0 - 0.5
-        return self.conv(x)
+        tX = img_uint8.permute(0, 3, 1, 2).float() / 255.0 - 0.5
+        return self.conv(tX)
 
 
 class Projection(nn.Module):
@@ -71,9 +71,9 @@ class Projection(nn.Module):
         self.repr_dim = (50 if use_wrist else 0) + 50 + 256   # 356 (wrist+front) | 306 (front-only)
 
     def forward(self, wf, ff, state):
-        parts = [self.wrist_proj(wf)] if self.use_wrist else []
-        parts += [self.front_proj(ff), self.state_proj(state)]
-        return torch.cat(parts, dim=-1)
+        tParts = [self.wrist_proj(wf)] if self.use_wrist else []
+        tParts += [self.front_proj(ff), self.state_proj(state)]
+        return torch.cat(tParts, dim=-1)
 
 
 class Actor(nn.Module):
@@ -89,33 +89,33 @@ class Actor(nn.Module):
             nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU())
         self.mean = nn.Linear(hidden, n_act)
         self.logstd = nn.Linear(hidden, n_act)
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
-    def _mean_logstd(self, wf, ff, s):
-        x = self.fc(self.proj(wf, ff, s))
-        mean = self.mean(x)
-        logstd = torch.tanh(self.logstd(x))
-        logstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (logstd + 1)
-        return mean, logstd
+    def _meanLogstd(self, wf, ff, s):
+        tX = self.fc(self.proj(wf, ff, s))
+        tMean = self.mean(tX)
+        tLogstd = torch.tanh(self.logstd(tX))
+        tLogstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLogstd + 1)
+        return tMean, tLogstd
 
-    def mean_action(self, wf, ff, s):
+    def meanAction(self, wf, ff, s):
         """Deterministic squashed action tanh(mean). Keeps gradient (for imitation regression)."""
-        mean, _ = self._mean_logstd(wf, ff, s)
-        return torch.tanh(mean)
+        tMean, _ = self._meanLogstd(wf, ff, s)
+        return torch.tanh(tMean)
 
-    def get_action(self, wf, ff, s):
-        mean, logstd = self._mean_logstd(wf, ff, s)
-        std = logstd.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x = normal.rsample()
-        y = torch.tanh(x)
-        logp = (normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+    def getAction(self, wf, ff, s):
+        tMean, tLogstd = self._meanLogstd(wf, ff, s)
+        tStd = tLogstd.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd)
+        tX = tNormal.rsample()
+        tY = torch.tanh(tX)
+        tLogp = (tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
     @torch.no_grad()
-    def act_deterministic(self, wf, ff, s):
-        mean, _ = self._mean_logstd(wf, ff, s)
-        return torch.tanh(mean)
+    def actDeterministic(self, wf, ff, s):
+        tMean, _ = self._meanLogstd(wf, ff, s)
+        return torch.tanh(tMean)
 
 
 class StagedVisualActor(nn.Module):
@@ -129,57 +129,57 @@ class StagedVisualActor(nn.Module):
         super().__init__()
         self.n_stages = n_stages
         self.proj = Projection(n_state, use_wrist=use_wrist)
-        d = self.proj.repr_dim
+        tD = self.proj.repr_dim
 
         def body():
-            return nn.Sequential(nn.Linear(d, hidden), nn.LayerNorm(hidden), nn.ReLU(),
+            return nn.Sequential(nn.Linear(tD, hidden), nn.LayerNorm(hidden), nn.ReLU(),
                                  nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU())
         self.bodies = nn.ModuleList([body() for _ in range(n_stages)])
         self.means = nn.ModuleList([nn.Linear(hidden, n_act) for _ in range(n_stages)])
         self.logstds = nn.ModuleList([nn.Linear(hidden, n_act) for _ in range(n_stages)])  # RL fine-tune only
-        self.stage_body = nn.Sequential(nn.Linear(d, hidden), nn.LayerNorm(hidden), nn.ReLU())
+        self.stage_body = nn.Sequential(nn.Linear(tD, hidden), nn.LayerNorm(hidden), nn.ReLU())
         self.stage_out = nn.Linear(hidden, n_stages)
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def feat(self, wf, ff, s):
         return self.proj(wf, ff, s)
 
-    def stage_logits(self, feat):
+    def stageLogits(self, feat):
         return self.stage_out(self.stage_body(feat))
 
-    def all_actions(self, feat):
+    def allActions(self, feat):
         """(N, n_stages, n_act) = tanh(mean) for every stage head."""
-        return torch.stack([torch.tanh(self.means[i](self.bodies[i](feat))) for i in range(self.n_stages)], dim=1)
+        return torch.stack([torch.tanh(self.means[tI](self.bodies[tI](feat))) for tI in range(self.n_stages)], dim=1)
 
-    def action_for(self, feat, stage_idx):
+    def actionFor(self, feat, stageIdx):
         """(N, n_act): each env's action from its `stage_idx` head."""
-        acts = self.all_actions(feat)
-        return acts.gather(1, stage_idx.view(-1, 1, 1).expand(-1, 1, acts.shape[-1])).squeeze(1)
+        tActs = self.allActions(feat)
+        return tActs.gather(1, stageIdx.view(-1, 1, 1).expand(-1, 1, tActs.shape[-1])).squeeze(1)
 
     @torch.no_grad()
-    def act_deploy(self, wf, ff, s):
+    def actDeploy(self, wf, ff, s):
         """deploy: predict stage from vision+proprio -> run the matching head. returns (action(N,n_act), stage(N,))."""
-        feat = self.feat(wf, ff, s)
-        stage = self.stage_logits(feat).argmax(dim=-1)
-        return self.action_for(feat, stage), stage
+        tFeat = self.feat(wf, ff, s)
+        tStage = self.stageLogits(tFeat).argmax(dim=-1)
+        return self.actionFor(tFeat, tStage), tStage
 
     # ── stochastic per-stage head (visual-RL fine-tune ONLY; deploy/distill use the deterministic means) ──
-    def _mean_logstd_stage(self, feat, s):
-        x = self.bodies[s](feat)
-        mean = self.means[s](x)
-        ls = torch.tanh(self.logstds[s](x))
-        ls = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (ls + 1)
-        return mean, ls
+    def _meanLogstdStage(self, feat, s):
+        tX = self.bodies[s](feat)
+        tMean = self.means[s](tX)
+        tLs = torch.tanh(self.logstds[s](tX))
+        tLs = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLs + 1)
+        return tMean, tLs
 
-    def get_action_stage(self, feat, s):
+    def getActionStage(self, feat, s):
         """tanh-squashed Gaussian sample for a batch ALL in stage s. Returns (action(N,n_act), logp(N,1))."""
-        mean, ls = self._mean_logstd_stage(feat, s)
-        std = ls.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x = normal.rsample()
-        y = torch.tanh(x)
-        logp = (normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+        tMean, tLs = self._meanLogstdStage(feat, s)
+        tStd = tLs.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd)
+        tX = tNormal.rsample()
+        tY = torch.tanh(tX)
+        tLogp = (tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
 
 class CriticC51(nn.Module):
@@ -197,39 +197,39 @@ class CriticC51(nn.Module):
                 nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU(),
                 nn.Linear(hidden, num_atoms))
         self.qs = nn.ModuleList([qnet() for _ in range(num_q)])
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def logits(self, wf, ff, s, a):
-        x = torch.cat([self.proj(wf, ff, s), a], dim=-1)
-        return torch.stack([q(x) for q in self.qs], dim=0)
+        tX = torch.cat([self.proj(wf, ff, s), a], dim=-1)
+        return torch.stack([tQ2(tX) for tQ2 in self.qs], dim=0)
 
-    def q_values(self, wf, ff, s, a):
-        probs = F.softmax(self.logits(wf, ff, s, a), dim=-1)
-        return (probs * self.support).sum(-1)
+    def qValues(self, wf, ff, s, a):
+        tProbs = F.softmax(self.logits(wf, ff, s, a), dim=-1)
+        return (tProbs * self.support).sum(-1)
 
 
 @torch.no_grad()
-def project_target(target_critic, nwf, nff, ns, na, rewards, bootstrap, gamma):
+def projectTarget(targetCritic, nwf, nff, ns, na, rewards, bootstrap, gamma):
     """C51 categorical projection for the visual critic. Returns target dists (num_q, N, atoms).
     (Used by the optional visual-RL trainer; the DAgger student is supervised and does not need it.)"""
-    logits = target_critic.logits(nwf, nff, ns, na)
-    probs = F.softmax(logits, dim=-1)
-    support = target_critic.support
-    v_min, v_max, A = target_critic.v_min, target_critic.v_max, target_critic.num_atoms
-    Q, Nn, _ = probs.shape
-    dz = (v_max - v_min) / (A - 1)
-    tz = rewards.view(1, Nn, 1) + bootstrap.view(1, Nn, 1) * gamma * support.view(1, 1, A)
-    tz = tz.clamp(v_min, v_max).expand(Q, Nn, A)
-    b = (tz - v_min) / dz
-    l = b.floor().long(); u = b.ceil().long()
-    is_int = (u == l)
-    l = torch.where((l > 0) & is_int, l - 1, l)
-    u = torch.where((l == 0) & is_int, u + 1, u)
-    l = l.clamp(0, A - 1); u = u.clamp(0, A - 1)
-    m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b))
-    m.scatter_add_(2, u, probs * (b - l.float()))
-    return m
+    tLogits = targetCritic.logits(nwf, nff, ns, na)
+    tProbs = F.softmax(tLogits, dim=-1)
+    tSupport = targetCritic.support
+    tVMin, tVMax, tA = targetCritic.v_min, targetCritic.v_max, targetCritic.num_atoms
+    tQ, tNn, _ = tProbs.shape
+    tDz = (tVMax - tVMin) / (tA - 1)
+    tTz = rewards.view(1, tNn, 1) + bootstrap.view(1, tNn, 1) * gamma * tSupport.view(1, 1, tA)
+    tTz = tTz.clamp(tVMin, tVMax).expand(tQ, tNn, tA)
+    tB = (tTz - tVMin) / tDz
+    tL = tB.floor().long(); tU = tB.ceil().long()
+    tIsInt = (tU == tL)
+    tL = torch.where((tL > 0) & tIsInt, tL - 1, tL)
+    tU = torch.where((tL == 0) & tIsInt, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1); tU = tU.clamp(0, tA - 1)
+    tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB))
+    tM.scatter_add_(2, tU, tProbs * (tB - tL.float()))
+    return tM
 
 
 # ── state-only teacher ──
@@ -248,6 +248,6 @@ class StateOnlyActor(nn.Module):
         self.logstd = nn.Linear(hidden, n_act)
 
     @torch.no_grad()
-    def act_deterministic(self, s):
-        x = self.fc(self.proj(s))
-        return torch.tanh(self.mean(x))
+    def actDeterministic(self, s):
+        tX = self.fc(self.proj(s))
+        return torch.tanh(self.mean(tX))

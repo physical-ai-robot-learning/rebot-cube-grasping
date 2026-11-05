@@ -171,7 +171,8 @@ class _Normaliser(ast.NodeTransformer):
 
     def visit_ImportFrom(self, node):
         tModule = _resolveRelative(node, self.mPath) if node.level else (node.module or "")
-        tBindings = [(tAlias.asname or tAlias.name, mapModule(f"{tModule}.{tAlias.name}")) for tAlias in node.names]
+        tBindings = [(tAlias.asname or tAlias.name, mapModule(f"{tModule}.{self._name(tAlias.name)}"))
+                     for tAlias in node.names]
         return self._importMarker(node, tBindings)
 
 

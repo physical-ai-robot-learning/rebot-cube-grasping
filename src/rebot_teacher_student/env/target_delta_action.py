@@ -25,9 +25,9 @@ class TargetDeltaJointPositionAction(JointAction):
         # (real-servo / cable safety). None = no extra clamp (physics joint limits still apply).
         self._tlo = self._thi = None
         if getattr(cfg, "target_lo", None) is not None and getattr(cfg, "target_hi", None) is not None:
-            dev = self._target_qpos.device
-            self._tlo = torch.tensor(cfg.target_lo, device=dev, dtype=self._target_qpos.dtype)
-            self._thi = torch.tensor(cfg.target_hi, device=dev, dtype=self._target_qpos.dtype)
+            tDev = self._target_qpos.device
+            self._tlo = torch.tensor(cfg.target_lo, device=tDev, dtype=self._target_qpos.dtype)
+            self._thi = torch.tensor(cfg.target_hi, device=tDev, dtype=self._target_qpos.dtype)
         # Coupled limit: gate elbow EXTENSION on the shoulder_pan facing `couple_object`. Until the pan
         # points at the cube, the elbow is held bent (<= couple_elbow_cap) so the arm cannot straighten
         # out and extend backward; once the pan faces the cube, the elbow is free to reach forward.
@@ -45,10 +45,10 @@ class TargetDeltaJointPositionAction(JointAction):
 
     def apply_actions(self):
         # ManiSkill exact: clamp RAW action to [-1,1] THEN scale
-        raw_clamped = self.raw_actions.clamp(-1.0, 1.0)
-        delta = raw_clamped * self._scale
+        tRawClamped = self.raw_actions.clamp(-1.0, 1.0)
+        tDelta = tRawClamped * self._scale
         # Accumulate on previous target
-        self._target_qpos = self._target_qpos + delta
+        self._target_qpos = self._target_qpos + tDelta
         # HARD per-joint restriction (pan front-180, wrist anti-overspin) on the COMMANDED target.
         if self._tlo is not None:
             self._target_qpos = self._target_qpos.clamp(self._tlo, self._thi)
@@ -56,14 +56,14 @@ class TargetDeltaJointPositionAction(JointAction):
         # (~90deg). Below that the elbow is folded (<= couple_elbow_cap), so the arm cannot straighten
         # out and extend backward; once pan is at the front edge, the elbow is free to reach.
         if self._couple is not None:
-            pan = self._asset.data.joint_pos[:, self._pan_jid]           # actual shoulder_pan
-            forward = pan >= self._pan_forward
+            tPan = self._asset.data.joint_pos[:, self._pan_jid]           # actual shoulder_pan
+            tForward = tPan >= self._pan_forward
             # pan forward enough -> elbow free over its full limit; else HOLD elbow in a compact tuck
             # range [elbow_lo, elbow_hi] (BOTH sides) so it neither straightens out nor folds back to
             # -3.14. Clamping both sides makes the elbow fold naturally into the tuck when pan swings back.
-            lo = torch.where(forward, torch.full_like(pan, -3.1416), torch.full_like(pan, self._elbow_lo))
-            hi = torch.where(forward, torch.zeros_like(pan),         torch.full_like(pan, self._elbow_hi))
-            self._target_qpos[:, self._elbow_local] = self._target_qpos[:, self._elbow_local].clamp(lo, hi)
+            tLo = torch.where(tForward, torch.full_like(tPan, -3.1416), torch.full_like(tPan, self._elbow_lo))
+            tHi = torch.where(tForward, torch.zeros_like(tPan),         torch.full_like(tPan, self._elbow_hi))
+            self._target_qpos[:, self._elbow_local] = self._target_qpos[:, self._elbow_local].clamp(tLo, tHi)
         # Set as position target (PD controller tracks this)
         self._asset.set_joint_position_target(self._target_qpos, joint_ids=self._joint_ids)
 

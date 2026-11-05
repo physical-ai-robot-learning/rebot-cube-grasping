@@ -12,18 +12,18 @@ import torch.nn.functional as F
 
 
 @torch.no_grad()
-def project_target(tc, nfd, nwd, nori, ns, na, rewards, bootstrap, gamma):
-    logits = tc.logits(nfd, nwd, nori, ns, na)
-    probs = F.softmax(logits, dim=-1); support = tc.support
-    v_min, v_max, A = tc.v_min, tc.v_max, tc.num_atoms
-    Q, Nn, _ = probs.shape
-    dz = (v_max - v_min) / (A - 1)
-    tz = rewards.view(1, Nn, 1) + bootstrap.view(1, Nn, 1) * gamma * support.view(1, 1, A)
-    tz = tz.clamp(v_min, v_max).expand(Q, Nn, A)
-    b = (tz - v_min) / dz; l = b.floor().long(); u = b.ceil().long()
-    is_int = (u == l)
-    l = torch.where((l > 0) & is_int, l - 1, l); u = torch.where((l == 0) & is_int, u + 1, u)
-    l = l.clamp(0, A - 1); u = u.clamp(0, A - 1)
-    m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b)); m.scatter_add_(2, u, probs * (b - l.float()))
-    return m
+def projectTarget(tc, nfd, nwd, nori, ns, na, rewards, bootstrap, gamma):
+    tLogits = tc.logits(nfd, nwd, nori, ns, na)
+    tProbs = F.softmax(tLogits, dim=-1); tSupport = tc.support
+    tVMin, tVMax, tA = tc.v_min, tc.v_max, tc.num_atoms
+    tQ, tNn, _ = tProbs.shape
+    tDz = (tVMax - tVMin) / (tA - 1)
+    tTz = rewards.view(1, tNn, 1) + bootstrap.view(1, tNn, 1) * gamma * tSupport.view(1, 1, tA)
+    tTz = tTz.clamp(tVMin, tVMax).expand(tQ, tNn, tA)
+    tB = (tTz - tVMin) / tDz; tL = tB.floor().long(); tU = tB.ceil().long()
+    tIsInt = (tU == tL)
+    tL = torch.where((tL > 0) & tIsInt, tL - 1, tL); tU = torch.where((tL == 0) & tIsInt, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1); tU = tU.clamp(0, tA - 1)
+    tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB)); tM.scatter_add_(2, tU, tProbs * (tB - tL.float()))
+    return tM

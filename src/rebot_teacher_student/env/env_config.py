@@ -19,42 +19,42 @@ _REST_QPOS = torch.tensor([0.0, -1.15, -1.00, 0.55, 0.0, 0.0])
 
 # ── Custom observation functions ──
 
-def tcp_pos_w(env, ee_frame_cfg=None):
+def tcpPosW(env, ee_frame_cfg=None):
     """TCP position in world frame. Shape: (N, 3)."""
     from isaaclab.managers import SceneEntityCfg
-    cfg = ee_frame_cfg or SceneEntityCfg("ee_frame")
-    ee = env.scene[cfg.name]
-    jaw0 = ee.data.target_pos_w[:, 0, :]
-    jaw1 = ee.data.target_pos_w[:, 1, :]
-    return (jaw0 + jaw1) * 0.5
+    tCfg = ee_frame_cfg or SceneEntityCfg("ee_frame")
+    tEe = env.scene[tCfg.name]
+    tJaw0 = tEe.data.target_pos_w[:, 0, :]
+    tJaw1 = tEe.data.target_pos_w[:, 1, :]
+    return (tJaw0 + tJaw1) * 0.5
 
 
-def tcp_to_obj_pos(env, ee_frame_cfg=None, object_cfg=None):
+def tcpToObjPos(env, ee_frame_cfg=None, object_cfg=None):
     """Relative position from TCP to object. Shape: (N, 3)."""
     from isaaclab.managers import SceneEntityCfg
-    ee_cfg = ee_frame_cfg or SceneEntityCfg("ee_frame")
-    obj_cfg = object_cfg or SceneEntityCfg("cube")  # module-level fallback (overridden by configure_env)
-    ee = env.scene[ee_cfg.name]
-    obj = env.scene[obj_cfg.name]
-    tcp = (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
-    return obj.data.root_pos_w - tcp
+    tEeCfg = ee_frame_cfg or SceneEntityCfg("ee_frame")
+    tObjCfg = object_cfg or SceneEntityCfg("cube")  # module-level fallback (overridden by configure_env)
+    tEe = env.scene[tEeCfg.name]
+    tObj = env.scene[tObjCfg.name]
+    tTcp = (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
+    return tObj.data.root_pos_w - tTcp
 
 
-def is_grasped_obs(env, robot_cfg=None, object_cfg=None, ee_frame_cfg=None):
+def isGraspedObs(env, robot_cfg=None, object_cfg=None, ee_frame_cfg=None):
     """Binary grasp signal (geometric: cube at TCP + gripper closed). Shape: (N, 1)."""
-    from rebot_teacher_student.env.rewards import _is_grasped
-    _oc = object_cfg or SceneEntityCfg("cube")
-    return _is_grasped(env, _oc, min_force=0.3).float().unsqueeze(-1)
+    from rebot_teacher_student.env.rewards import _isGrasped
+    tOc = object_cfg or SceneEntityCfg("cube")
+    return _isGrasped(env, tOc, min_force=0.3).float().unsqueeze(-1)
 
 
-def joint_vel_obs(env, robot_cfg=None):
+def jointVelObs(env, robot_cfg=None):
     """Joint velocities. Shape: (N, 6). Squint includes qvel in obs."""
     from isaaclab.managers import SceneEntityCfg
-    cfg = robot_cfg or SceneEntityCfg("robot")
-    return env.scene[cfg.name].data.joint_vel
+    tCfg = robot_cfg or SceneEntityCfg("robot")
+    return env.scene[tCfg.name].data.joint_vel
 
 
-def reset_cubes_mixed(env, env_ids, cube_names=("cube", "cube_blue", "cube_purple"),
+def resetCubesMixed(env, env_ids, cube_names=("cube", "cube_blue", "cube_purple"),
                       x_range=(0.15, 0.55), y_range=(-0.40, -0.20),
                       yaw_range=(-3.14159, 3.14159), min_sep=0.08, max_tries=12):
     """(reset event) Place ALL cubes at fully-random, NON-OVERLAPPING positions in a box centered on
@@ -66,44 +66,44 @@ def reset_cubes_mixed(env, env_ids, cube_names=("cube", "cube_blue", "cube_purpl
     import torch as _t
     from isaaclab.utils.math import quat_from_euler_xyz
     env_ids = _t.as_tensor(env_ids, device=env.device) if not _t.is_tensor(env_ids) else env_ids
-    n = int(env_ids.numel())
-    if n == 0:
+    tN = int(env_ids.numel())
+    if tN == 0:
         return
-    origins = env.scene.env_origins[env_ids]                 # (n,3) world env offsets
-    dev = origins.device
-    placed = []                                              # already-placed cube xy (local), (n,2) each
-    for name in cube_names:
-        asset = env.scene.get(name) if hasattr(env.scene, "get") else env.scene[name]
-        if asset is None:
+    tOrigins = env.scene.env_origins[env_ids]                 # (n,3) world env offsets
+    tDev = tOrigins.device
+    tPlaced = []                                              # already-placed cube xy (local), (n,2) each
+    for tName in cube_names:
+        tAsset = env.scene.get(tName) if hasattr(env.scene, "get") else env.scene[tName]
+        if tAsset is None:
             continue
-        xy = _t.stack([_t.empty(n, device=dev).uniform_(*x_range),
-                       _t.empty(n, device=dev).uniform_(*y_range)], dim=-1)
+        tXy = _t.stack([_t.empty(tN, device=tDev).uniform_(*x_range),
+                       _t.empty(tN, device=tDev).uniform_(*y_range)], dim=-1)
         for _ in range(max_tries):                           # resample only the colliding envs
-            if not placed:
+            if not tPlaced:
                 break
-            bad = _t.zeros(n, dtype=_t.bool, device=dev)
-            for prev in placed:
-                bad |= (_t.norm(xy - prev, dim=-1) < min_sep)
-            if not bool(bad.any()):
+            tBad = _t.zeros(tN, dtype=_t.bool, device=tDev)
+            for tPrev in tPlaced:
+                tBad |= (_t.norm(tXy - tPrev, dim=-1) < min_sep)
+            if not bool(tBad.any()):
                 break
-            m = int(bad.sum())
-            xy[bad, 0] = _t.empty(m, device=dev).uniform_(*x_range)
-            xy[bad, 1] = _t.empty(m, device=dev).uniform_(*y_range)
-        placed.append(xy.clone())
-        root = asset.data.default_root_state[env_ids].clone()   # [:, 2] = default spawn height
-        pos = _t.stack([origins[:, 0] + xy[:, 0], origins[:, 1] + xy[:, 1], origins[:, 2] + root[:, 2]], dim=-1)
-        yaw = _t.empty(n, device=dev).uniform_(*yaw_range)
-        quat = quat_from_euler_xyz(_t.zeros(n, device=dev), _t.zeros(n, device=dev), yaw)
-        asset.write_root_pose_to_sim(_t.cat([pos, quat], dim=-1), env_ids=env_ids)
-        asset.write_root_velocity_to_sim(_t.zeros(n, 6, device=dev), env_ids=env_ids)
+            tM = int(tBad.sum())
+            tXy[tBad, 0] = _t.empty(tM, device=tDev).uniform_(*x_range)
+            tXy[tBad, 1] = _t.empty(tM, device=tDev).uniform_(*y_range)
+        tPlaced.append(tXy.clone())
+        tRoot = tAsset.data.default_root_state[env_ids].clone()   # [:, 2] = default spawn height
+        tPos = _t.stack([tOrigins[:, 0] + tXy[:, 0], tOrigins[:, 1] + tXy[:, 1], tOrigins[:, 2] + tRoot[:, 2]], dim=-1)
+        tYaw = _t.empty(tN, device=tDev).uniform_(*yaw_range)
+        tQuat = quat_from_euler_xyz(_t.zeros(tN, device=tDev), _t.zeros(tN, device=tDev), tYaw)
+        tAsset.write_root_pose_to_sim(_t.cat([tPos, tQuat], dim=-1), env_ids=env_ids)
+        tAsset.write_root_velocity_to_sim(_t.zeros(tN, 6, device=tDev), env_ids=env_ids)
 
 
-def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube"):
+def configureEnv(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube"):
     """Configure env for reBot LiftCube. target_cube selects which cube to pick
     (cube=red, cube_blue, cube_purple); the other two stay as randomized distractors."""
     from rebot_teacher_student.env.rewards import (
-        sq_reaching, sq_grasped, sq_place, sq_not_lifted, sq_open_approach, sq_align_hold,
-        sq_close_after_align, table_collision_penalty, success_latch, count_successes,
+        sqReaching, sqGrasped, sqPlace, sqNotLifted, sqOpenApproach, sqAlignHold,
+        sqCloseAfterAlign, tableCollisionPenalty, successLatch, countSuccesses,
     )
 
     # ══════════════════════════════════════════
@@ -168,34 +168,34 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     # with ONE custom event that samples all 3 cubes from a single box centered on the arm (x in
     # [0.15,0.55] symmetric about base 0.35) -> the red target is mixed across the workspace.
     from isaaclab.managers import EventTermCfg as _EventTerm
-    _CUBE_NAMES = ("cube", "cube_blue", "cube_purple")
+    tCUBENAMES = ("cube", "cube_blue", "cube_purple")
     try:
-        for _en in list(vars(env_cfg.events)):
-            if _en.startswith('_'):
+        for tEn in list(vars(env_cfg.events)):
+            if tEn.startswith('_'):
                 continue
-            _ev = getattr(env_cfg.events, _en, None)
-            _ac = (getattr(_ev, 'params', {}) or {}).get('asset_cfg', None)
-            if _ac is not None and getattr(_ac, 'name', '') in _CUBE_NAMES:
-                setattr(env_cfg.events, _en, None)    # drop the old fixed-base per-cube reset
+            tEv = getattr(env_cfg.events, tEn, None)
+            tAc = (getattr(tEv, 'params', {}) or {}).get('asset_cfg', None)
+            if tAc is not None and getattr(tAc, 'name', '') in tCUBENAMES:
+                setattr(env_cfg.events, tEn, None)    # drop the old fixed-base per-cube reset
     except Exception:
         pass
     # WIDENED (feedback v2): bigger box + reaches the gripper-rest projection (~0.35,-0.41) so the cube
     # also spawns RIGHT UNDER the gripper (that near case was rare before and failed). y now extends back
     # to -0.47 (toward the base, easy reach) and the box is wider; still within arm reach.
     env_cfg.events.reset_cubes_mixed = _EventTerm(
-        func=reset_cubes_mixed, mode="reset",
-        params={"cube_names": _CUBE_NAMES, "x_range": (0.13, 0.57), "y_range": (-0.47, -0.18),
+        func=resetCubesMixed, mode="reset",
+        params={"cube_names": tCUBENAMES, "x_range": (0.13, 0.57), "y_range": (-0.47, -0.18),
                 "yaw_range": (-3.14159, 3.14159), "min_sep": 0.08})
 
     # Disable any domain-randomization event that targets a removed camera (state-mode = no cameras).
     if hasattr(env_cfg, 'events'):
-        for _ev_name in list(vars(env_cfg.events)):
-            if _ev_name.startswith('_'):
+        for tEvName in list(vars(env_cfg.events)):
+            if tEvName.startswith('_'):
                 continue
-            _ev = getattr(env_cfg.events, _ev_name, None)
-            _ac = (getattr(_ev, 'params', {}) or {}).get('asset_cfg', None)
-            if _ac is not None and getattr(_ac, 'name', '') in ('front', 'side', 'wrist'):
-                setattr(env_cfg.events, _ev_name, None)
+            tEv = getattr(env_cfg.events, tEvName, None)
+            tAc = (getattr(tEv, 'params', {}) or {}).get('asset_cfg', None)
+            if tAc is not None and getattr(tAc, 'name', '') in ('front', 'side', 'wrist'):
+                setattr(env_cfg.events, tEvName, None)
 
     if hasattr(env_cfg.observations, 'subtask_terms'):
         env_cfg.observations.subtask_terms = None
@@ -209,9 +209,9 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     from isaaclab.envs.mdp import joint_pos, root_pos_w, root_quat_w
 
     # Clear ALL existing obs terms
-    for attr in list(vars(env_cfg.observations.policy)):
-        if not attr.startswith('_') and attr not in ('concatenate_terms', 'concatenate_dim', 'enable_corruption', 'corruption_cfg'):
-            setattr(env_cfg.observations.policy, attr, None)
+    for tAttr in list(vars(env_cfg.observations.policy)):
+        if not tAttr.startswith('_') and tAttr not in ('concatenate_terms', 'concatenate_dim', 'enable_corruption', 'corruption_cfg'):
+            setattr(env_cfg.observations.policy, tAttr, None)
 
     # 1. Joint positions (6D)
     env_cfg.observations.policy.qpos = ObsTerm(
@@ -221,36 +221,36 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
 
     # 2. Joint velocities (6D) — Squint includes qvel
     env_cfg.observations.policy.qvel = ObsTerm(
-        func=joint_vel_obs,
+        func=jointVelObs,
         params={"robot_cfg": SceneEntityCfg("robot")},
     )
 
     # 3. Controller target_qpos (6D)
-    def _target_qpos(env, robot_cfg=None):
+    def _targetQpos(env, robot_cfg=None):
         import torch as _t
-        am = env.action_manager
-        targets = []
-        for term in am._terms.values():
-            if hasattr(term, '_target_qpos'):
-                targets.append(term._target_qpos)
-        if targets:
-            return _t.cat(targets, dim=-1)
+        tAm = env.action_manager
+        tTargets = []
+        for tTerm in tAm._terms.values():
+            if hasattr(tTerm, '_target_qpos'):
+                tTargets.append(tTerm._target_qpos)
+        if tTargets:
+            return _t.cat(tTargets, dim=-1)
         return env.scene["robot"].data.joint_pos
     env_cfg.observations.policy.target_qpos = ObsTerm(
-        func=_target_qpos,
+        func=_targetQpos,
         params={"robot_cfg": SceneEntityCfg("robot")},
     )
 
     # 4. dist_to_rest_qpos (5D, exclude gripper) — Squint exact
-    def _dist_to_rest_qpos(env, robot_cfg=None):
+    def _distToRestQpos(env, robot_cfg=None):
         # reBot: 6 arm joints by name vs rest pose (robust to action-term internals)
-        robot = env.scene["robot"]
-        arm_ids, _ = robot.find_joints(["shoulder_pan", "shoulder_lift", "elbow_flex",
+        tRobot = env.scene["robot"]
+        tArmIds, _ = tRobot.find_joints(["shoulder_pan", "shoulder_lift", "elbow_flex",
                                         "wrist_flex", "wrist_yaw", "wrist_roll"])
-        q = robot.data.joint_pos[:, arm_ids]
-        return q - _REST_QPOS.to(q.device)
+        tQ = tRobot.data.joint_pos[:, tArmIds]
+        return tQ - _REST_QPOS.to(tQ.device)
     env_cfg.observations.policy.dist_to_rest = ObsTerm(
-        func=_dist_to_rest_qpos,
+        func=_distToRestQpos,
         params={"robot_cfg": SceneEntityCfg("robot")},
     )
 
@@ -266,18 +266,18 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     )
     # 7. TCP position (3D)
     env_cfg.observations.policy.tcp_pos = ObsTerm(
-        func=tcp_pos_w,
+        func=tcpPosW,
         params={"ee_frame_cfg": SceneEntityCfg("ee_frame")},
     )
     # 8. TCP-to-object (3D)
     env_cfg.observations.policy.tcp_to_obj = ObsTerm(
-        func=tcp_to_obj_pos,
+        func=tcpToObjPos,
         params={"ee_frame_cfg": SceneEntityCfg("ee_frame"),
                 "object_cfg": SceneEntityCfg(target_cube)},
     )
     # 9. Is grasped (1D)
     env_cfg.observations.policy.is_grasped = ObsTerm(
-        func=is_grasped_obs,
+        func=isGraspedObs,
         params={"robot_cfg": SceneEntityCfg("robot"),
                 "object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
@@ -336,9 +336,9 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     #  TERMINATIONS — time_out only
     # ══════════════════════════════════════════
     if hasattr(env_cfg, 'terminations'):
-        for attr in list(vars(env_cfg.terminations)):
-            if not attr.startswith('_') and attr != 'time_out':
-                setattr(env_cfg.terminations, attr, None)
+        for tAttr in list(vars(env_cfg.terminations)):
+            if not tAttr.startswith('_') and tAttr != 'time_out':
+                setattr(env_cfg.terminations, tAttr, None)
 
     # ── Fleet-wide success counter (ALL envs, not just env_0) ──────────────────────
     # success_latch: termination term that ALWAYS returns False; runs every step before
@@ -347,9 +347,9 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     # Counts feed the dashboard via maniskill_rewards._succ_total / _ep_total / _succ_recent.
     from isaaclab.managers import EventTermCfg as _EventTerm
     env_cfg.terminations.success_latch = DoneTerm(
-        func=success_latch,
+        func=successLatch,
         params={"object_cfg": SceneEntityCfg(target_cube)})
-    env_cfg.events.success_counter = _EventTerm(func=count_successes, mode="reset", params={})
+    env_cfg.events.success_counter = _EventTerm(func=countSuccesses, mode="reset", params={})
 
     # ══════════════════════════════════════════
     #  REWARDS — Squint-exact (5 terms)
@@ -359,173 +359,173 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     #  Squint normalized reward = raw / 3, so weight_squint = 1/3
     #  => weight_isaaclab = (1/3) / 0.1 = 10/3
     # ══════════════════════════════════════════
-    _DT_COMP = 10.0  # 1 / dt = 1 / 0.1
+    tDTCOMP = 10.0  # 1 / dt = 1 / 0.1
 
     # SQUINT-EXACT 5 terms (lift.py:385-398), all /3 (normalized_dense) -> weight = coef/3*_DT_COMP.
     # No dopamine, no chained gates, no 15cm bar, no FOLDED pose. Stationary + ungated.
 
     # 1. Reaching: 1 - tanh(5 * dist(tcp, cube))   [coef +1]
     env_cfg.rewards.reaching = RewTerm(
-        func=sq_reaching,
+        func=sqReaching,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
-        weight=1.0 / 3 * _DT_COMP)
+        weight=1.0 / 3 * tDTCOMP)
 
     # 2. Grasped: binary +1 when grasped   [coef +1]
     env_cfg.rewards.grasped = RewTerm(
-        func=sq_grasped,
+        func=sqGrasped,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame"),
                 "robot_cfg": SceneEntityCfg("robot")},
-        weight=1.0 / 3 * _DT_COMP)
+        weight=1.0 / 3 * tDTCOMP)
 
     # 3. Place: exp(-2*dist_to_rest) * grasped -- return arm to REST while holding   [coef +1]
     env_cfg.rewards.place = RewTerm(
-        func=sq_place,
+        func=sqPlace,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame"),
                 "robot_cfg": SceneEntityCfg("robot")},
-        weight=1.0 / 3 * _DT_COMP)
+        weight=1.0 / 3 * tDTCOMP)
 
     # 4. Table collision penalty   [coef -3]
     env_cfg.rewards.table_penalty = RewTerm(
-        func=table_collision_penalty,
+        func=tableCollisionPenalty,
         params={"table_height": 0.04,
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
-        weight=-3.0 / 3 * _DT_COMP)
+        weight=-3.0 / 3 * tDTCOMP)
 
     # 5. Not-lifted penalty (full Squint weight, ~5mm threshold)   [coef -1]
     env_cfg.rewards.not_lifted = RewTerm(
-        func=sq_not_lifted,
+        func=sqNotLifted,
         params={"object_cfg": SceneEntityCfg(target_cube)},
-        weight=-1.0 / 3 * _DT_COMP)
+        weight=-1.0 / 3 * tDTCOMP)
 
     # 6. Pre-grasp wide-open shaping (gated ~grasped so it never fights the grasp). Small weight.
     env_cfg.rewards.open_approach = RewTerm(
-        func=sq_open_approach,
+        func=sqOpenApproach,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
-        weight=0.15 / 3 * _DT_COMP)  # ~0.5 -- modest vs the +1 main terms
+        weight=0.15 / 3 * tDTCOMP)  # ~0.5 -- modest vs the +1 main terms
 
     # 7. Pre-grasp ALIGNMENT-HOLD (feedback v2: reach/align is poor). Reward GROWS the longer the OPEN
     #    jaws stay aligned ON the cube (up to ~3s = 30 steps), teaching the policy to seat the open mouth
     #    on the cube and settle before closing. Gated ~grasped + jaws-open so it never fights the grasp.
     #    Below the +1 main terms (grasp/place stay dominant -> it still closes, doesn't just hover).
     env_cfg.rewards.align_hold = RewTerm(
-        func=sq_align_hold,
+        func=sqAlignHold,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
-        weight=0.3 / 3 * _DT_COMP)   # modest: a non-farmable pre-grasp nudge; grasp/place (+1) dominate
+        weight=0.3 / 3 * tDTCOMP)   # modest: a non-farmable pre-grasp nudge; grasp/place (+1) dominate
 
     # 8. CLOSE-after-align (user idea): after the align-hold, reward closing the gripper -> bridges
     #    hold -> close -> grasp (the missing link). Gated latch + near + ~grasped (stops at grasp).
     env_cfg.rewards.close_align = RewTerm(
-        func=sq_close_after_align,
+        func=sqCloseAfterAlign,
         params={"object_cfg": SceneEntityCfg(target_cube),
                 "ee_frame_cfg": SceneEntityCfg("ee_frame")},
-        weight=0.4 / 3 * _DT_COMP)
+        weight=0.4 / 3 * tDTCOMP)
 
     # (action_rate smoothness penalty DROPPED -- the HARD joint limits + elbow gate in arm_action already
     #  prevent the gross twisting/backward motion; residual fine jitter, if any, is handled at deploy by
     #  the EMA action filter in rebot_deploy.py. pan/wrist limits live in the action term, not here.)
 
     # Keep Squint's 5 + pre-grasp open (all bounded). Motion shaping is via the action-term hard limits.
-    keep = {"reaching", "grasped", "place", "table_penalty", "not_lifted", "open_approach",
+    tKeep = {"reaching", "grasped", "place", "table_penalty", "not_lifted", "open_approach",
             "align_hold", "close_align"}
-    for name in list(vars(env_cfg.rewards)):
-        if not name.startswith("_") and name not in keep:
-            setattr(env_cfg.rewards, name, None)
+    for tName in list(vars(env_cfg.rewards)):
+        if not tName.startswith("_") and tName not in tKeep:
+            setattr(env_cfg.rewards, tName, None)
 
     return env_cfg
 
 
-def apply_motor_limits(env, cfg):
+def applyMotorLimits(env, cfg):
     """Set PD gains — STS3215 real servo matching."""
     try:
         import omni.usd
         from pxr import UsdPhysics
-        stage = omni.usd.get_context().get_stage()
-        count = 0
+        tStage = omni.usd.get_context().get_stage()
+        tCount = 0
         # reBot: keep the verified Damiao actuator gains from REBOT_FOLLOWER_CFG (do NOT override here).
         # (Previously forced STS3215 servo gains 20/2/3.5 on EVERY angular drive -- wrong for reBot.)
         try:
             print("[Motor] velocity: unlimited", flush=True)
-        except Exception as ve:
-            print(f"[Motor] velocity limit failed: {ve}", flush=True)
-        if count > 0:
-            print(f"[Motor] PD: stiffness=20 damping=2 force=3.5Nm STS3215-real ({count} joints)", flush=True)
-    except Exception as e:
-        print(f"[Motor] Error: {e}", flush=True)
+        except Exception as tVe:
+            print(f"[Motor] velocity limit failed: {tVe}", flush=True)
+        if tCount > 0:
+            print(f"[Motor] PD: stiffness=20 damping=2 force=3.5Nm STS3215-real ({tCount} joints)", flush=True)
+    except Exception as tE:
+        print(f"[Motor] Error: {tE}", flush=True)
 
     # Gripper friction = 2.0 (Squint-exact: SO101.py urdf_config)
     try:
         import omni.usd
         from pxr import UsdPhysics
-        stage = omni.usd.get_context().get_stage()
-        grip_count = 0
-        for prim in stage.Traverse():
-            name = prim.GetName().lower()
-            if name in ("gripper_left", "gripper_right", "gripper_link"):
-                mat = UsdPhysics.MaterialAPI.Get(stage, prim.GetPath())
-                if not mat:
-                    mat = UsdPhysics.MaterialAPI.Apply(prim)
-                if mat:
-                    mat.GetStaticFrictionAttr().Set(2.0)
-                    mat.GetDynamicFrictionAttr().Set(2.0)
-                    mat.GetRestitutionAttr().Set(0.0)
-                    grip_count += 1
-        print(f"[Gripper] friction=2.0 on {grip_count} prims (Squint-exact)", flush=True)
-    except Exception as e:
-        print(f"[Gripper] Friction error: {e}", flush=True)
+        tStage = omni.usd.get_context().get_stage()
+        tGripCount = 0
+        for tPrim in tStage.Traverse():
+            tName = tPrim.GetName().lower()
+            if tName in ("gripper_left", "gripper_right", "gripper_link"):
+                tMat = UsdPhysics.MaterialAPI.Get(tStage, tPrim.GetPath())
+                if not tMat:
+                    tMat = UsdPhysics.MaterialAPI.Apply(tPrim)
+                if tMat:
+                    tMat.GetStaticFrictionAttr().Set(2.0)
+                    tMat.GetDynamicFrictionAttr().Set(2.0)
+                    tMat.GetRestitutionAttr().Set(0.0)
+                    tGripCount += 1
+        print(f"[Gripper] friction=2.0 on {tGripCount} prims (Squint-exact)", flush=True)
+    except Exception as tE:
+        print(f"[Gripper] Friction error: {tE}", flush=True)
 
     # Robot link mass readout
     try:
         import omni.usd
         from pxr import UsdPhysics
-        stage = omni.usd.get_context().get_stage()
-        total_robot_mass = 0.0
-        for prim in stage.Traverse():
-            path = str(prim.GetPath())
-            if "/env_0/" not in path or "cube" in prim.GetName().lower():
+        tStage = omni.usd.get_context().get_stage()
+        tTotalRobotMass = 0.0
+        for tPrim in tStage.Traverse():
+            tPath = str(tPrim.GetPath())
+            if "/env_0/" not in tPath or "cube" in tPrim.GetName().lower():
                 continue
-            mass_api = UsdPhysics.MassAPI.Get(stage, prim.GetPath())
-            if mass_api:
-                m = mass_api.GetMassAttr().Get()
-                if m and m > 0:
-                    total_robot_mass += m
-                    print(f"[Robot] {prim.GetName():25s} mass={m:.4f} kg", flush=True)
-        print(f"[Robot] Total robot mass (env_0): {total_robot_mass:.4f} kg", flush=True)
-    except Exception as e:
-        print(f"[Robot] Mass readout error: {e}", flush=True)
+            tMassApi = UsdPhysics.MassAPI.Get(tStage, tPrim.GetPath())
+            if tMassApi:
+                tM = tMassApi.GetMassAttr().Get()
+                if tM and tM > 0:
+                    tTotalRobotMass += tM
+                    print(f"[Robot] {tPrim.GetName():25s} mass={tM:.4f} kg", flush=True)
+        print(f"[Robot] Total robot mass (env_0): {tTotalRobotMass:.4f} kg", flush=True)
+    except Exception as tE:
+        print(f"[Robot] Mass readout error: {tE}", flush=True)
 
     # Cube physics: set mass=20g + friction (Squint ~density-200 scale; was 50g/18x heavier)
     try:
         import omni.usd
         from pxr import UsdPhysics
-        stage = omni.usd.get_context().get_stage()
-        cube_count = 0
-        for prim in stage.Traverse():
-            if "cube" in prim.GetName().lower():
-                mass_api = UsdPhysics.MassAPI.Get(stage, prim.GetPath())
-                if not mass_api:
-                    mass_api = UsdPhysics.MassAPI.Apply(prim)
-                if mass_api:
-                    mass_api.GetMassAttr().Set(0.02)  # 20g
-                    cube_count += 1
-                mat = UsdPhysics.MaterialAPI.Get(stage, prim.GetPath())
-                if mat:
-                    mat.GetStaticFrictionAttr().Set(0.3)
-                    mat.GetDynamicFrictionAttr().Set(0.3)
-                    mat.GetRestitutionAttr().Set(0.0)
+        tStage = omni.usd.get_context().get_stage()
+        tCubeCount = 0
+        for tPrim in tStage.Traverse():
+            if "cube" in tPrim.GetName().lower():
+                tMassApi = UsdPhysics.MassAPI.Get(tStage, tPrim.GetPath())
+                if not tMassApi:
+                    tMassApi = UsdPhysics.MassAPI.Apply(tPrim)
+                if tMassApi:
+                    tMassApi.GetMassAttr().Set(0.02)  # 20g
+                    tCubeCount += 1
+                tMat = UsdPhysics.MaterialAPI.Get(tStage, tPrim.GetPath())
+                if tMat:
+                    tMat.GetStaticFrictionAttr().Set(0.3)
+                    tMat.GetDynamicFrictionAttr().Set(0.3)
+                    tMat.GetRestitutionAttr().Set(0.0)
         # Verify
-        for prim in stage.Traverse():
-            if "cube" in prim.GetName().lower():
-                mass_api = UsdPhysics.MassAPI.Get(stage, prim.GetPath())
-                if mass_api:
-                    m = mass_api.GetMassAttr().Get()
-                    if "/env_0/" in str(prim.GetPath()):
-                        print(f"[Cube] mass={m:.4f} kg ({m*1000:.1f}g) friction=0.3", flush=True)
+        for tPrim in tStage.Traverse():
+            if "cube" in tPrim.GetName().lower():
+                tMassApi = UsdPhysics.MassAPI.Get(tStage, tPrim.GetPath())
+                if tMassApi:
+                    tM = tMassApi.GetMassAttr().Get()
+                    if "/env_0/" in str(tPrim.GetPath()):
+                        print(f"[Cube] mass={tM:.4f} kg ({tM*1000:.1f}g) friction=0.3", flush=True)
                 break
-        print(f"[Cube] Set {cube_count} cubes to 20g", flush=True)
-    except Exception as e:
-        print(f"[Cube] Physics error: {e}", flush=True)
+        print(f"[Cube] Set {tCubeCount} cubes to 20g", flush=True)
+    except Exception as tE:
+        print(f"[Cube] Physics error: {tE}", flush=True)

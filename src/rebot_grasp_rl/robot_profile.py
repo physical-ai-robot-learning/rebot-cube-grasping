@@ -116,6 +116,6 @@ OFFICIAL = RobotProfile(
 )
 
 
-def select_profile():
+def selectProfile():
     """ROBOT_OFFICIAL=1 -> OFFICIAL else OURS. Read once in the entry file."""
     return OFFICIAL if int(os.environ.get("ROBOT_OFFICIAL", "0")) else OURS

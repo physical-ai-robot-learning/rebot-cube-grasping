@@ -29,7 +29,7 @@ _VIEWS = ("front", "iso", "wrist")
 
 _cam_frames = {}
 _cam_lock = threading.Lock()
-_replay = {v: [] for v in _VIEWS}
+_replay = {tV: [] for tV in _VIEWS}
 _replay_lock = threading.Lock()
 _stats = {"target_cube": "cube", "reward_history": [], "success_count": 0}
 _stats_lock = threading.Lock()
@@ -37,57 +37,57 @@ _MAX_HIST = 600
 
 
 def _jpeg(img, q=70):
-    b = io.BytesIO()
-    Image.fromarray(img.astype(np.uint8)).save(b, format="JPEG", quality=q)
-    return b.getvalue()
+    tB = io.BytesIO()
+    Image.fromarray(img.astype(np.uint8)).save(tB, format="JPEG", quality=q)
+    return tB.getvalue()
 
 
-def update_cameras(cam_map):
+def updateCameras(camMap):
     """cam_map: {name: isaaclab Camera}. Cache live rgb as JPEG."""
-    for name, cam in cam_map.items():
+    for tName, tCam in camMap.items():
         try:
-            rgb = cam.data.output.get("rgb")
-            if rgb is None:
+            tRgb = tCam.data.output.get("rgb")
+            if tRgb is None:
                 continue
-            img = rgb[0, :, :, :3].cpu().numpy()
-            if img.dtype != np.uint8:
-                img = (img * 255).clip(0, 255).astype(np.uint8)
+            tImg = tRgb[0, :, :, :3].cpu().numpy()
+            if tImg.dtype != np.uint8:
+                tImg = (tImg * 255).clip(0, 255).astype(np.uint8)
             with _cam_lock:
-                _cam_frames[name] = _jpeg(img)
+                _cam_frames[tName] = _jpeg(tImg)
         except Exception:
             pass
 
 
-def set_camera_image(name, np_img):
+def setCameraImage(name, npImg):
     with _cam_lock:
-        _cam_frames[name] = _jpeg(np.asarray(np_img))
+        _cam_frames[name] = _jpeg(np.asarray(npImg))
 
 
-def set_replay(view_frames):
+def setReplay(viewFrames):
     """Store the last successful episode's frames. view_frames: {view: [HxWx3 uint8, ...]}."""
-    enc = {}
-    for v in _VIEWS:
-        frames = view_frames.get(v, [])
-        enc[v] = [_jpeg(np.asarray(f)) for f in frames]
+    tEnc = {}
+    for tV in _VIEWS:
+        tFrames = viewFrames.get(tV, [])
+        tEnc[tV] = [_jpeg(np.asarray(tF)) for tF in tFrames]
     with _replay_lock:
-        for v in _VIEWS:
-            _replay[v] = enc[v]
+        for tV in _VIEWS:
+            _replay[tV] = tEnc[tV]
 
 
-def push_stats(**kw):
+def pushStats(**kw):
     with _stats_lock:
         _stats.update(kw)
-        h = _stats.setdefault("reward_history", [])
-        h.append({
+        tH = _stats.setdefault("reward_history", [])
+        tH.append({
             "step": kw.get("step", _stats.get("step", 0)),
             "current": kw.get("current_reward", 0.0),
             "cumulative": kw.get("cumulative_reward", 0.0),
         })
-        if len(h) > _MAX_HIST:
-            del h[: len(h) - _MAX_HIST]
+        if len(tH) > _MAX_HIST:
+            del tH[: len(tH) - _MAX_HIST]
 
 
-def _safe_json(obj):
+def _safeJson(obj):
     return json.dumps(obj, default=str).replace("NaN", "0").replace("Infinity", "9e9").replace("-Infinity", "0")
 
 
@@ -107,36 +107,36 @@ class _H(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_GET(self):
-        p = self.path
-        if p == "/api/stats":
+        tP = self.path
+        if tP == "/api/stats":
             with _stats_lock:
-                body = _safe_json(_stats).encode()
+                tBody = _safeJson(_stats).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(body)
-        elif p == "/api/replay":
+            self.wfile.write(tBody)
+        elif tP == "/api/replay":
             with _replay_lock:
-                n = min(len(_replay[v]) for v in _VIEWS) if all(_replay[v] for v in _VIEWS) else 0
+                tN = min(len(_replay[tV]) for tV in _VIEWS) if all(_replay[tV] for tV in _VIEWS) else 0
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"n": n}).encode())
-        elif p.startswith("/cam/"):
-            name = p.split("/cam/")[-1].split("?")[0]
+            self.wfile.write(json.dumps({"n": tN}).encode())
+        elif tP.startswith("/cam/"):
+            tName = tP.split("/cam/")[-1].split("?")[0]
             with _cam_lock:
-                data = _cam_frames.get(name)
-            self._jpg(data)
-        elif p.startswith("/replay/"):
+                tData = _cam_frames.get(tName)
+            self._jpg(tData)
+        elif tP.startswith("/replay/"):
             try:
-                _, _, view, idx = p.split("?")[0].split("/")
+                _, _, tView, tIdx = tP.split("?")[0].split("/")
                 with _replay_lock:
-                    frames = _replay.get(view, [])
-                    data = frames[int(idx)] if frames else None
+                    tFrames = _replay.get(tView, [])
+                    tData = tFrames[int(tIdx)] if tFrames else None
             except Exception:
-                data = None
-            self._jpg(data)
+                tData = None
+            self._jpg(tData)
         else:
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
@@ -149,13 +149,13 @@ class _S(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-def start(port=8890, target_cube="cube"):
+def start(port=8890, targetCube="cube"):
     with _stats_lock:
-        _stats["target_cube"] = target_cube
-    srv = _S(("0.0.0.0", port), _H)
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    print(f"[reBot-dash] http://0.0.0.0:{port}  (target={target_cube})", flush=True)
-    return srv
+        _stats["target_cube"] = targetCube
+    tSrv = _S(("0.0.0.0", port), _H)
+    threading.Thread(target=tSrv.serve_forever, daemon=True).start()
+    print(f"[reBot-dash] http://0.0.0.0:{port}  (target={targetCube})", flush=True)
+    return tSrv
 
 
 _HTML = r"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>reBot SAC</title>
@@ -321,19 +321,19 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=8890)
     ap.add_argument("--demo", action="store_true")
     a = ap.parse_args()
-    start(a.port, target_cube="cube (red)")
+    start(a.port, targetCube="cube (red)")
     if a.demo:
         imgs = {}
         for nm, path in [("front", "/tmp/scene_front.png"), ("iso", "/tmp/scene_iso.png"), ("wrist", "/tmp/scene_wrist.png")]:
             try:
                 im = np.array(Image.open(path).convert("RGB"))
-                set_camera_image(nm, im)
+                setCameraImage(nm, im)
                 imgs[nm] = im
             except Exception as e:
                 print(f"[demo] no {path}: {e}", flush=True)
         # fake "last success replay" = the rendered views repeated as a short clip
         if imgs:
-            set_replay({v: [imgs.get(v, np.zeros((90, 160, 3), np.uint8))] * 12 for v in _VIEWS})
+            setReplay({tV: [imgs.get(tV, np.zeros((90, 160, 3), np.uint8))] * 12 for tV in _VIEWS})
         step, ep, cum, best, ep_r, suc = 0, 0, 0.0, 0.0, 0.0, 0
         cum_terms = {}
         while True:
@@ -349,7 +349,7 @@ if __name__ == "__main__":
                          "lift_hold": cur * 0.2, "table_penalty": -0.05, "not_lifted": -0.03}
             for k, v in cur_terms.items():
                 cum_terms[k] = cum_terms.get(k, 0.0) + v
-            push_stats(step=step, episode=ep, current_reward=cur, episode_reward=ep_r,
+            pushStats(step=step, episode=ep, current_reward=cur, episode_reward=ep_r,
                        cumulative_reward=cum, best_reward=best, success_count=suc,
                        success_rate=suc / max(ep, 1),
                        reward_terms=cur_terms, cumulative_terms=dict(cum_terms))

@@ -75,7 +75,7 @@ def _p2():
 
 def _arrow(ui, img, *args):
     tIm = img.copy()
-    ui._draw_arrow(tIm, *args)
+    ui._drawArrow(tIm, *args)
     return tIm.tobytes()
 
 
@@ -90,8 +90,8 @@ def test_ui_render_helpers():
         "card": ui._card("RSR", "12.5", sub="x"),
         "trimmean": [ui._trimmean(torch.arange(20, dtype=torch.float32)), ui._trimmean(torch.tensor([3.0, 1.0])),
                      ui._trimmean(torch.zeros(0))],
-        "quat_rpy": _r(np.concatenate([np.array(v) for v in ui._quat_rpy([0.9, 0.1, -0.3, 0.2])])),
-        "draw_det": _sha(ui._draw_det(tImg.copy(), [0.5, 0.4, 0.1, 1.0]).tobytes()),
+        "quat_rpy": _r(np.concatenate([np.array(v) for v in ui._quatRpy([0.9, 0.1, -0.3, 0.2])])),
+        "draw_det": _sha(ui._drawDet(tImg.copy(), [0.5, 0.4, 0.1, 1.0]).tobytes()),
         "draw_arrow_long": _sha(_arrow(ui, tImg, 30, 24, 20, -10)),
         "draw_arrow_ring": _sha(_arrow(ui, tImg, 30, 24, 1, 1)),
         "png_len": len(ui._png(tImg)) > 0,
@@ -105,9 +105,9 @@ def test_robot_profile_values(monkeypatch):
     tOut = {"ours": [repr(v) for v in dataclasses.astuple(rp.OURS)],
             "official": [repr(v) for v in dataclasses.astuple(rp.OFFICIAL)]}
     monkeypatch.setenv("ROBOT_OFFICIAL", "1")
-    tOut["select_official"] = rp.select_profile() is rp.OFFICIAL
+    tOut["select_official"] = rp.selectProfile() is rp.OFFICIAL
     monkeypatch.setenv("ROBOT_OFFICIAL", "0")
-    tOut["select_ours"] = rp.select_profile() is rp.OURS
+    tOut["select_ours"] = rp.selectProfile() is rp.OURS
     _check("robot_profile", tOut)
 
 
@@ -136,9 +136,9 @@ def test_project_target_and_nets_on_checkpoints():
         tCritic.eval()
         torch.manual_seed(1)
         tS2 = torch.rand(tN, tStateDim)
-        tA = tActor.act_deterministic(tFd, tWd, tOri, tS2)
-        tQ = tCritic.q_values(tFd, tWd, tOri, tS2, tA)
-        tM = tp.project_target(tCritic, tFd, tWd, tOri, tS2, tA, torch.linspace(-1, 3, tN),
+        tA = tActor.actDeterministic(tFd, tWd, tOri, tS2)
+        tQ = tCritic.qValues(tFd, tWd, tOri, tS2, tA)
+        tM = tp.projectTarget(tCritic, tFd, tWd, tOri, tS2, tA, torch.linspace(-1, 3, tN),
                                torch.tensor([1.0, 0.0, 1.0, 1.0, 0.0]), 0.97)
         tOut[tName] = {"act": _r(tA), "q": _r(tQ), "proj_sum": _r(tM.sum(-1)), "proj_first": _r(tM[0, :, :8])}
     del tState, tAct, tS
@@ -189,15 +189,15 @@ def test_deploy_helpers():
     from rebot_teacher_student.deploy import state_deploy as d
     from rebot_teacher_student.deploy import visual_deploy as dv
     tQ = [0.9, 0.1, -0.3, 0.2]
-    tTcp = d.tcp_from_gripper_link([0.3, -0.2, 0.1], tQ)
-    tObs = d.build_obs(np.arange(8) * 0.1, np.arange(8) * -0.01, np.arange(7) * 0.02, [0.4, -0.5, 0.02],
+    tTcp = d.tcpFromGripperLink([0.3, -0.2, 0.1], tQ)
+    tObs = d.buildObs(np.arange(8) * 0.1, np.arange(8) * -0.01, np.arange(7) * 0.02, [0.4, -0.5, 0.02],
                        [1, 0, 0, 0], tTcp, True)
     tCtrl = d.ActionController()
     tCtrl.reset(d.REST_QPOS, 0.02)
     tSteps = [tCtrl.step(np.array([1, -1, 0.5, 0.2, 0, -0.3, 1.0]), tPan) for tPan in (0.0, 1.6, 1.6)]
-    tState = dv.build_state(np.arange(8) * 0.1, np.arange(7) * 0.05)
+    tState = dv.buildState(np.arange(8) * 0.1, np.arange(7) * 0.05)
     tDs = dv.VisualPolicy._ds((np.arange(90 * 160 * 3) % 251).reshape(90, 160, 3).astype(np.uint8), 16)
     tOut = {"tcp": _r(tTcp), "obs": _r(tObs), "steps": [[_r(a), round(g, 6)] for a, g in tSteps],
-            "target7": _r(tCtrl.target_qpos7), "state": _r(tState), "ds_sha": _sha(tDs.numpy().tobytes()),
-            "quat_rotate": _r(d.quat_rotate(tQ, [1.0, 2.0, 3.0])), "pick_device": dv.pick_device("cpu")}
+            "target7": _r(tCtrl.targetQpos7), "state": _r(tState), "ds_sha": _sha(tDs.numpy().tobytes()),
+            "quat_rotate": _r(d.quatRotate(tQ, [1.0, 2.0, 3.0])), "pick_device": dv.pickDevice("cpu")}
     _check("deploy_helpers", tOut)

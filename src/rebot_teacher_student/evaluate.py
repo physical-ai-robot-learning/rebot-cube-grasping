@@ -70,7 +70,7 @@ from isaaclab_tasks.utils.parse_cfg import parse_env_cfg  # noqa: E402
 import leisaac.tasks.lift_cube  # noqa: E402,F401
 from leisaac.tasks.lift_cube import mdp  # noqa: E402
 
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits  # noqa: E402
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits  # noqa: E402
 import rebot_teacher_student.env.rewards as MR  # noqa: E402
 from rebot_teacher_student.student.visual_nets import StateOnlyActor  # noqa: E402
 
@@ -81,7 +81,7 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
 _obj = getattr(env_cfg.scene, TARGET)
 _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
@@ -91,8 +91,8 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
 if STUDENT:
-    from rebot_teacher_student.env.visual_obs import configure_visual, downsample, student_state, WRIST_SIZE, FRONT_SIZE, STATE_DIM
-    env_cfg = configure_visual(env_cfg, target_cube=TARGET, keep_privileged=True, dr=False, front_only=False)
+    from rebot_teacher_student.env.visual_obs import configureVisual, downsample, studentState, WRIST_SIZE, FRONT_SIZE, STATE_DIM
+    env_cfg = configureVisual(env_cfg, target_cube=TARGET, keep_privileged=True, dr=False, front_only=False)
 else:  # state-only policies never use images (same as train_c51.py without --cameras)
     for cam in ["front", "side", "wrist"]:
         if hasattr(env_cfg.scene, cam):
@@ -103,7 +103,7 @@ else:  # state-only policies never use images (same as train_c51.py without --ca
 env_cfg.seed = args.seed
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 ACT = env.action_manager.total_action_dim
 STEPS_PER_EP = int(env.max_episode_length)
 
@@ -145,16 +145,16 @@ _ee = SceneEntityCfg("ee_frame")
 _oc = SceneEntityCfg(TARGET)
 
 
-def tcp_dist():
+def tcpDist():
     return torch.norm(env.scene[TARGET].data.root_pos_w - MR._tcp(env, _ee), dim=1)
 
 
-def stage_done_v5(s):  # ca032b5 infer_staged.py: approach=align-hold latch, grasp=_is_grasped, place=is_fold_success
+def stageDoneV5(s):  # ca032b5 infer_staged.py: approach=align-hold latch, grasp=_is_grasped, place=is_fold_success
     if s == 0:
-        return MR._align_held(env, tcp_dist())
+        return MR._alignHeld(env, tcpDist())
     if s == 1:
-        return MR._is_grasped(env, _oc)
-    return MR.is_fold_success(env, _oc)
+        return MR._isGrasped(env, _oc)
+    return MR.isFoldSuccess(env, _oc)
 
 
 def sanitize(t):
@@ -169,14 +169,14 @@ if STUDENT:  # camera buffers need a few rendered frames; then start from a fres
 obs = sanitize(obs_dict["policy"])
 
 
-def init_pose():
-    o = env.scene[TARGET].data.root_pos_w - env.scene.env_origins
-    q = env.scene[TARGET].data.root_quat_w  # wxyz
-    yaw = 2.0 * torch.atan2(q[:, 3], q[:, 0])
-    return o[:, 0].tolist(), o[:, 1].tolist(), yaw.tolist()
+def initPose():
+    tO = env.scene[TARGET].data.root_pos_w - env.scene.env_origins
+    tQ = env.scene[TARGET].data.root_quat_w  # wxyz
+    tYaw = 2.0 * torch.atan2(tQ[:, 3], tQ[:, 0])
+    return tO[:, 0].tolist(), tO[:, 1].tolist(), tYaw.tolist()
 
 
-ix, iy, iyaw = init_pose()
+ix, iy, iyaw = initPose()
 stage = torch.zeros(N, dtype=torch.long, device=DEVICE)
 staged_succ = torch.zeros(N, dtype=torch.bool, device=DEVICE)
 grasp_ever = torch.zeros(N, dtype=torch.bool, device=DEVICE)
@@ -190,36 +190,36 @@ max_steps = (args.episodes // N + 2) * (STEPS_PER_EP + 2)
 for _ in range(max_steps):
     with torch.no_grad():
         if args.mode == "single":
-            action = actors[0].act_deterministic(obs)
+            action = actors[0].actDeterministic(obs)
         elif args.mode == "staged3":
             action = torch.zeros(N, ACT, device=DEVICE)
             for s in range(3):
                 m = stage == s
                 if m.any():
-                    action[m] = actors[s].act_deterministic(obs[m])
+                    action[m] = actors[s].actDeterministic(obs[m])
         else:
             f_img = downsample(env.scene["front"].data.output["rgb"], FRONT_SIZE)
             w_img = downsample(env.scene["wrist"].data.output["rgb"], WRIST_SIZE)
-            action = s_actor.act_deterministic(enc_w(w_img), enc_f(f_img), student_state(obs))
+            action = s_actor.actDeterministic(enc_w(w_img), enc_f(f_img), studentState(obs))
     obs_dict, _, term, trunc, _ = env.step(action)
     obs = sanitize(obs_dict["policy"])
     dones = term | trunc
     live = ~dones  # on a done step the state is already the next episode's reset state
     step_in_ep += 1
     if live.any():
-        d = tcp_dist()
+        d = tcpDist()
         min_dist = torch.where(live, torch.minimum(min_dist, d), min_dist)
-        g = MR._is_grasped(env, _oc)
+        g = MR._isGrasped(env, _oc)
         grasp_ever |= g & live
         z = env.scene[TARGET].data.root_pos_w[:, 2] - MR.CUBE_REST_Z
         max_lift = torch.where(live, torch.maximum(max_lift, z), max_lift)
-        succ_now = MR.is_fold_success(env, _oc) & live
+        succ_now = MR.isFoldSuccess(env, _oc) & live
         first_succ = torch.where((first_succ < 0) & succ_now, step_in_ep, first_succ)
         if args.mode == "staged3":
             for s in range(2):
-                adv = (stage == s) & stage_done_v5(s) & live
+                adv = (stage == s) & stageDoneV5(s) & live
                 stage = torch.where(adv, stage + 1, stage)
-            staged_succ |= (stage == 2) & stage_done_v5(2) & live
+            staged_succ |= (stage == 2) & stageDoneV5(2) & live
     if dones.any():
         idx = torch.nonzero(dones).flatten().tolist()
         latch = MR._last_ep_succ[0]
@@ -236,7 +236,7 @@ for _ in range(max_steps):
                 "staged_end_to_end": int(bool(staged_succ[i])) if args.mode == "staged3" else "",
                 "steps": int(step_in_ep[i]),
             })
-        nx, ny, nyaw = init_pose()
+        nx, ny, nyaw = initPose()
         for i in idx:
             ix[i], iy[i], iyaw[i] = nx[i], ny[i], nyaw[i]
         dm = dones
@@ -258,7 +258,7 @@ with open(csv_p, "w", newline="") as f:
     w.writeheader()
     w.writerows(rows)
 n = len(rows)
-k = sum(r["success"] for r in rows)
+k = sum(tR["success"] for tR in rows)
 p = k / n
 z = 1.96  # Wilson 95 % interval
 den = 1 + z * z / n
@@ -267,13 +267,13 @@ half = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den
 summary = {
     "tag": args.tag, "mode": args.mode, "seed": args.seed, "num_envs": N, "episodes": n,
     "successes": k, "success_rate": round(p, 4), "wilson95": [round(ctr - half, 4), round(ctr + half, 4)],
-    "grasped_ever_rate": round(sum(r["grasped_ever"] for r in rows) / n, 4),
+    "grasped_ever_rate": round(sum(tR["grasped_ever"] for tR in rows) / n, 4),
     "steps_per_episode": STEPS_PER_EP, "deterministic": True, "domain_randomization": False,
-    "checkpoints": [{"path": os.path.basename(c), "md5": md5(c)} for c in args.ckpts],
+    "checkpoints": [{"path": os.path.basename(tC), "md5": md5(tC)} for tC in args.ckpts],
     "wall_s": round(time.time() - t0, 1),
 }
 if args.mode == "staged3":
-    summary["staged_end_to_end_rate"] = round(sum(r["staged_end_to_end"] for r in rows) / n, 4)
+    summary["staged_end_to_end_rate"] = round(sum(tR["staged_end_to_end"] for tR in rows) / n, 4)
 with open(os.path.join(args.out_dir, f"{args.tag}_summary.json"), "w") as f:
     json.dump(summary, f, indent=1)
 print("[eval] " + json.dumps(summary), flush=True)

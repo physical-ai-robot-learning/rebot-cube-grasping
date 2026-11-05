@@ -56,31 +56,31 @@ WRIST_AIM_TARGET = (0.05, 0.0, 0.10)       # look forward (+x) + down (+z) at th
 WRIST_ROLL180 = True                       # 180deg optical-axis roll -> upright (fingers at bottom)
 
 
-def _lookat_quat_opengl(eye, target):
+def _lookatQuatOpengl(eye, target):
     """Camera orientation quaternion (wxyz, opengl convention) looking from eye to target.
     Replicates Camera.set_world_poses_from_view's math so it can be baked into OffsetCfg."""
     import torch
     from isaaclab.utils.math import create_rotation_matrix_from_view, quat_from_matrix
-    e = torch.tensor([list(eye)], dtype=torch.float32)
-    t = torch.tensor([list(target)], dtype=torch.float32)
-    R = create_rotation_matrix_from_view(e, t, "Z", device="cpu")
-    return tuple(quat_from_matrix(R)[0].tolist())
+    tE = torch.tensor([list(eye)], dtype=torch.float32)
+    tT = torch.tensor([list(target)], dtype=torch.float32)
+    tR = create_rotation_matrix_from_view(tE, tT, "Z", device="cpu")
+    return tuple(quat_from_matrix(tR)[0].tolist())
 
 
-def _wrist_offset_rot():
+def _wristOffsetRot():
     """Wrist camera orientation (gripper_link frame): look from WRIST_OFFSET_POS toward
     WRIST_AIM_TARGET, then (WRIST_ROLL180) apply a 180deg optical-axis roll so the image is upright.
     Computed lazily (needs isaaclab math + a running app) so it exactly matches the calibration render."""
-    rot = _lookat_quat_opengl(WRIST_OFFSET_POS, WRIST_AIM_TARGET)
+    tRot = _lookatQuatOpengl(WRIST_OFFSET_POS, WRIST_AIM_TARGET)
     if WRIST_ROLL180:
         import torch
         from isaaclab.utils.math import quat_mul
-        q = quat_mul(torch.tensor([list(rot)]), torch.tensor([[0.0, 0.0, 0.0, 1.0]]))
-        rot = tuple(q[0].tolist())
-    return rot
+        tQ = quat_mul(torch.tensor([list(tRot)]), torch.tensor([[0.0, 0.0, 0.0, 1.0]]))
+        tRot = tuple(tQ[0].tolist())
+    return tRot
 
 
-def configure_visual(env_cfg, target_cube="cube", keep_privileged=False, dr=False, front_only=False):
+def configureVisual(env_cfg, target_cube="cube", keep_privileged=False, dr=False, front_only=False):
     """Add a fixed front camera (baked look-at). By default strip privileged obs -> 21D state.
 
     keep_privileged=True  -> DAgger: keep the FULL 43D obs (the teacher needs it); the student
@@ -95,12 +95,12 @@ def configure_visual(env_cfg, target_cube="cube", keep_privileged=False, dr=Fals
 
     # 1) (student-only) strip privileged obs; remaining = qpos + target_qpos + dist_to_rest = 21
     if not keep_privileged:
-        pol = env_cfg.observations.policy
-        for term in _PRIVILEGED_TERMS:
-            if hasattr(pol, term):
-                setattr(pol, term, None)
+        tPol = env_cfg.observations.policy
+        for tTerm in _PRIVILEGED_TERMS:
+            if hasattr(tPol, tTerm):
+                setattr(tPol, tTerm, None)
 
-    _dtypes = ["rgb", "semantic_segmentation"] if dr else ["rgb"]
+    tDtypes = ["rgb", "semantic_segmentation"] if dr else ["rgb"]
 
     # 2) wrist camera. front_only -> drop it entirely (the real wrist mount/framing is OOD; the
     #    student uses front+state only). else OVERRIDE its offset+FoV to the "between the jaws" pose.
@@ -109,55 +109,55 @@ def configure_visual(env_cfg, target_cube="cube", keep_privileged=False, dr=Fals
             env_cfg.scene.wrist = None
     elif getattr(env_cfg.scene, "wrist", None) is not None:
         env_cfg.scene.wrist.offset = TiledCameraCfg.OffsetCfg(
-            pos=WRIST_OFFSET_POS, rot=_wrist_offset_rot(), convention="opengl")
+            pos=WRIST_OFFSET_POS, rot=_wristOffsetRot(), convention="opengl")
         env_cfg.scene.wrist.spawn = sim_utils.PinholeCameraCfg(
             focal_length=12.0, clipping_range=(0.005, 50.0), lock_camera=True)
-        env_cfg.scene.wrist.data_types = list(_dtypes)
+        env_cfg.scene.wrist.data_types = list(tDtypes)
         env_cfg.scene.wrist.width = IMG_RENDER     # match front render res (else composite/downsample mismatch)
         env_cfg.scene.wrist.height = IMG_RENDER
         if dr:
             env_cfg.scene.wrist.colorize_semantic_segmentation = False
 
     # 3) front camera: fixed third-person, env-level prim (static parent) with baked look-at offset.
-    _spawn = sim_utils.PinholeCameraCfg(focal_length=18.0, clipping_range=(0.01, 50.0), lock_camera=True)
-    _front_kw = dict(
+    tSpawn = sim_utils.PinholeCameraCfg(focal_length=18.0, clipping_range=(0.01, 50.0), lock_camera=True)
+    tFrontKw = dict(
         prim_path="{ENV_REGEX_NS}/front_camera",
         offset=TiledCameraCfg.OffsetCfg(
-            pos=FRONT_EYE, rot=_lookat_quat_opengl(FRONT_EYE, FRONT_TARGET), convention="opengl"),
-        data_types=list(_dtypes), spawn=_spawn, width=IMG_RENDER, height=IMG_RENDER, update_period=0)
+            pos=FRONT_EYE, rot=_lookatQuatOpengl(FRONT_EYE, FRONT_TARGET), convention="opengl"),
+        data_types=list(tDtypes), spawn=tSpawn, width=IMG_RENDER, height=IMG_RENDER, update_period=0)
     if dr:
-        _front_kw["colorize_semantic_segmentation"] = False
-    env_cfg.scene.front = TiledCameraCfg(**_front_kw)
+        tFrontKw["colorize_semantic_segmentation"] = False
+    env_cfg.scene.front = TiledCameraCfg(**tFrontKw)
 
     # 4) (dr) semantic-tag robot + all cubes as foreground so the greenscreen keeps them.
     if dr:
         if getattr(env_cfg.scene, "robot", None) is not None and getattr(env_cfg.scene.robot, "spawn", None) is not None:
             env_cfg.scene.robot.spawn.semantic_tags = [("class", "robot")]
-        for _cn in ("cube", "cube_blue", "cube_purple"):
-            _c = getattr(env_cfg.scene, _cn, None)
-            if _c is not None and getattr(_c, "spawn", None) is not None:
-                _c.spawn.semantic_tags = [("class", "cube")]
+        for tCn in ("cube", "cube_blue", "cube_purple"):
+            tC = getattr(env_cfg.scene, tCn, None)
+            if tC is not None and getattr(tC, "spawn", None) is not None:
+                tC.spawn.semantic_tags = [("class", "cube")]
         # also tag the TABLE scene USD so the greenscreen KEEPS the rendered table (cube/arm sit on a real
         # surface by its actual silhouette -> no floating, no hard horizon); only the true far-bg is replaced.
-        _scn = getattr(env_cfg.scene, "scene", None)
-        if _scn is not None and getattr(_scn, "spawn", None) is not None:
-            _scn.spawn.semantic_tags = [("class", "table")]
+        tScn = getattr(env_cfg.scene, "scene", None)
+        if tScn is not None and getattr(tScn, "spawn", None) is not None:
+            tScn.spawn.semantic_tags = [("class", "table")]
 
         # 5) (dr) lighting randomization per reset — per-env scene light (/World/envs/env_*/Light).
         #    only changes rendered rgb (student input); does NOT touch physics/state -> teacher safe.
         from isaaclab.managers import EventTermCfg as _EventTerm
-        env_cfg.events.dr_lighting = _EventTerm(func=randomize_light, mode="reset",
+        env_cfg.events.dr_lighting = _EventTerm(func=randomizeLight, mode="reset",
             params={"intensity_range": (700.0, 3500.0), "color_lo": 0.65, "color_hi": 1.0})
         # 6) (dr) camera FoV (focal) variation per reset for front + wrist -> robust to the real
         #    camera's focal/FoV not exactly matching sim. focal is a per-prim USD attr (sticks).
         if not front_only:
-            env_cfg.events.dr_camera = _EventTerm(func=randomize_camera, mode="reset",
+            env_cfg.events.dr_camera = _EventTerm(func=randomizeCamera, mode="reset",
                 params={"focal_jitter": 0.30})   # widened 0.10->0.30: real cube apparent-size/FoV spans more
 
     return env_cfg
 
 
-def randomize_camera(env, env_ids, focal_jitter=0.10):
+def randomizeCamera(env, env_ids, focal_jitter=0.10):
     """(DR reset event) jitter front + wrist camera focal length (FoV) per env, within +/-focal_jitter.
     Only affects the rendered FoV (the student's visual input) -> robust to real camera focal mismatch.
     focalLength is a per-prim USD attr (UsdGeom.Camera), so unlike pose it persists. Fully guarded."""
@@ -165,21 +165,21 @@ def randomize_camera(env, env_ids, focal_jitter=0.10):
         import random
         import omni.usd
         from pxr import UsdGeom
-        stage = omni.usd.get_context().get_stage()
-        ids = env_ids.tolist() if hasattr(env_ids, "tolist") else list(env_ids)
-        for i in ids:
-            ii = int(i)
-            for path, focal in ((f"/World/envs/env_{ii}/front_camera", FRONT_FOCAL),
-                                (f"/World/envs/env_{ii}/Robot/gripper_link/fp_camera", WRIST_FOCAL)):
-                p = stage.GetPrimAtPath(path)
-                if not p or not p.IsValid():
+        tStage = omni.usd.get_context().get_stage()
+        tIds = env_ids.tolist() if hasattr(env_ids, "tolist") else list(env_ids)
+        for tI in tIds:
+            tIi = int(tI)
+            for tPath, tFocal in ((f"/World/envs/env_{tIi}/front_camera", FRONT_FOCAL),
+                                (f"/World/envs/env_{tIi}/Robot/gripper_link/fp_camera", WRIST_FOCAL)):
+                tP = tStage.GetPrimAtPath(tPath)
+                if not tP or not tP.IsValid():
                     continue
-                UsdGeom.Camera(p).GetFocalLengthAttr().Set(focal * (1.0 + random.uniform(-focal_jitter, focal_jitter)))
+                UsdGeom.Camera(tP).GetFocalLengthAttr().Set(tFocal * (1.0 + random.uniform(-focal_jitter, focal_jitter)))
     except Exception:
         pass
 
 
-def randomize_light(env, env_ids, intensity_range=(700.0, 3500.0), color_lo=0.65, color_hi=1.0):
+def randomizeLight(env, env_ids, intensity_range=(700.0, 3500.0), color_lo=0.65, color_hi=1.0):
     """(DR reset event) randomize each resetting env's scene light intensity + color (UsdLux).
     Only affects rendered rgb (the student's visual input), not physics/state — teacher unaffected.
     Fully guarded: any failure is a no-op so it can never crash training."""
@@ -187,15 +187,15 @@ def randomize_light(env, env_ids, intensity_range=(700.0, 3500.0), color_lo=0.65
         import random
         import omni.usd
         from pxr import UsdLux, Gf
-        stage = omni.usd.get_context().get_stage()
-        ids = env_ids.tolist() if hasattr(env_ids, "tolist") else list(env_ids)
-        for i in ids:
-            p = stage.GetPrimAtPath(f"/World/envs/env_{int(i)}/Light")
-            if not p or not p.IsValid():
+        tStage = omni.usd.get_context().get_stage()
+        tIds = env_ids.tolist() if hasattr(env_ids, "tolist") else list(env_ids)
+        for tI in tIds:
+            tP = tStage.GetPrimAtPath(f"/World/envs/env_{int(tI)}/Light")
+            if not tP or not tP.IsValid():
                 continue
-            api = UsdLux.LightAPI(p)
-            api.GetIntensityAttr().Set(random.uniform(*intensity_range))
-            api.GetColorAttr().Set(Gf.Vec3f(*(random.uniform(color_lo, color_hi) for _ in range(3))))
+            tApi = UsdLux.LightAPI(tP)
+            tApi.GetIntensityAttr().Set(random.uniform(*intensity_range))
+            tApi.GetColorAttr().Set(Gf.Vec3f(*(random.uniform(color_lo, color_hi) for _ in range(3))))
     except Exception:
         pass
 
@@ -204,80 +204,80 @@ def downsample(rgb, size):
     """(N,H,W,C>=3) uint8 -> (N,size,size,3) uint8 via area interpolation (SQUINT-style)."""
     import torch
     import torch.nn.functional as F
-    x = rgb[..., :3].permute(0, 3, 1, 2).float()
-    x = F.interpolate(x, size=(size, size), mode="area")
-    return x.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
+    tX = rgb[..., :3].permute(0, 3, 1, 2).float()
+    tX = F.interpolate(tX, size=(size, size), mode="area")
+    return tX.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
 
 
-def student_state(full_obs):
+def studentState(full_obs):
     """Slice the deployable 21D proprio state (qpos+target_qpos+dist_to_rest) from the full 43D obs.
     Used in DAgger where the env keeps the full privileged obs for the teacher."""
     return full_obs[:, STUDENT_STATE_IDX]
 
 
 # ── visual domain randomization (DR) — train-only ─────────────────────────────
-def tag_gripper(env, body_names=("gripper_link", "gripper_left", "gripper_right")):
+def tagGripper(env, body_names=("gripper_link", "gripper_left", "gripper_right")):
     """(DR setup) apply a separate 'gripper' semantic class to the gripper body prims (post-build) so the
     seg distinguishes the gripper from the rest of the robot -> recolor_seg_region(("gripper",)) can paint
     it BLACK while the arm ('robot') is left as rendered. Fully guarded (no-op on failure)."""
     try:
         import omni.usd
         from pxr import Semantics
-        stage = omni.usd.get_context().get_stage()
-        ntag = 0
-        for i in range(env.num_envs):
-            for bn in body_names:
-                p = stage.GetPrimAtPath(f"/World/envs/env_{i}/Robot/{bn}")
-                if not p or not p.IsValid():
+        tStage = omni.usd.get_context().get_stage()
+        tNtag = 0
+        for tI in range(env.num_envs):
+            for tBn in body_names:
+                tP = tStage.GetPrimAtPath(f"/World/envs/env_{tI}/Robot/{tBn}")
+                if not tP or not tP.IsValid():
                     continue
-                sem = Semantics.SemanticsAPI.Apply(p, "Semantics")
-                sem.CreateSemanticTypeAttr().Set("class")
-                sem.CreateSemanticDataAttr().Set("gripper")
-                ntag += 1
-        print(f"[DAG] tag_gripper: tagged {ntag} gripper prims as 'gripper'", flush=True)
-    except Exception as e:
-        print(f"[DAG] tag_gripper failed ({e}) -> gripper stays 'robot'", flush=True)
+                tSem = Semantics.SemanticsAPI.Apply(tP, "Semantics")
+                tSem.CreateSemanticTypeAttr().Set("class")
+                tSem.CreateSemanticDataAttr().Set("gripper")
+                tNtag += 1
+        print(f"[DAG] tag_gripper: tagged {tNtag} gripper prims as 'gripper'", flush=True)
+    except Exception as tE:
+        print(f"[DAG] tag_gripper failed ({tE}) -> gripper stays 'robot'", flush=True)
 
 
-def build_fg_ids(info, fg_classes=("robot", "cube", "table", "gripper")):
+def buildFgIds(info, fg_classes=("robot", "cube", "table", "gripper")):
     """Foreground semantic ids (robot+cube) from a camera's segmentation info dict. Rebuilt each
     frame because replicator ids are not stable across resets. Returns a list[int] (empty if none)."""
-    id2l = (info or {}).get("idToLabels", {}) if isinstance(info, dict) else {}
-    out = []
-    for k, v in id2l.items():
-        cls = v.get("class", "") if isinstance(v, dict) else str(v)
-        if any(c in cls for c in fg_classes):
+    tId2l = (info or {}).get("idToLabels", {}) if isinstance(info, dict) else {}
+    tOut = []
+    for tK, tV in tId2l.items():
+        cls = tV.get("class", "") if isinstance(tV, dict) else str(tV)
+        if any(tC2 in cls for tC2 in fg_classes):
             try:
-                out.append(int(k))
+                tOut.append(int(tK))
             except (ValueError, TypeError):
                 pass
-    return out
+    return tOut
 
 
-def composite_bg(rgb, seg, info, bg, keep_lower=0.0):
+def compositeBg(rgb, seg, info, bg, keep_lower=0.0):
     """Greenscreen: keep foreground (robot+cube) pixels — PLUS the lower `keep_lower` fraction of the image
     (the rendered TABLE surface, with a mild per-env size jitter) so the cube/arm sit on a REAL surface and
     don't FLOAT on the background — and replace only the rest (the far background = upper non-foreground)
     with `bg`. rgb (N,H,W,>=3) uint8, seg (N,H,W,1) int, info seg-info dict, bg (N,H,W,3). -> (N,H,W,3) uint8.
     Returns rgb unchanged if no foreground id resolves (seg not ready)."""
     import torch
-    fg = build_fg_ids(info)
-    rgb3 = rgb[..., :3]
-    if not fg:
-        return rgb3
-    N, H, W = rgb3.shape[0], rgb3.shape[1], rgb3.shape[2]
-    sids = seg[..., 0]
-    fg_t = torch.as_tensor(fg, device=sids.device, dtype=sids.dtype)
-    keep = torch.isin(sids, fg_t)                             # (N,H,W) True=foreground
+    tFg = buildFgIds(info)
+    tRgb3 = rgb[..., :3]
+    if not tFg:
+        return tRgb3
+    tN2, tH, tW = tRgb3.shape[0], tRgb3.shape[1], tRgb3.shape[2]
+    tSids = seg[..., 0]
+    tFgT = torch.as_tensor(tFg, device=tSids.device, dtype=tSids.dtype)
+    tKeep = torch.isin(tSids, tFgT)                             # (N,H,W) True=foreground
     if keep_lower > 0.0:
-        rows = torch.linspace(0.0, 1.0, H, device=rgb3.device).view(1, H, 1)
-        lo = (1.0 - keep_lower) + torch.empty(N, 1, 1, device=rgb3.device).uniform_(-0.04, 0.04)
-        keep = keep | (rows >= lo)                            # + lower table region (mild per-env size)
-    out = torch.where(keep.unsqueeze(-1), rgb3.float(), bg[..., :3].float())
-    return out.round().clamp(0, 255).to(torch.uint8)
+        tRows = torch.linspace(0.0, 1.0, tH, device=tRgb3.device).view(1, tH, 1)
+        tLo = (1.0 - keep_lower) + torch.empty(tN2, 1, 1, device=tRgb3.device).uniform_(-0.04, 0.04)
+        tKeep = tKeep | (tRows >= tLo)                            # + lower table region (mild per-env size)
+    tOut = torch.where(tKeep.unsqueeze(-1), tRgb3.float(), bg[..., :3].float())
+    return tOut.round().clamp(0, 255).to(torch.uint8)
 
 
-def recolor_seg_region(rgb, seg, info, classes=("table",), b_lo=0.50, b_hi=1.05, per_ch=0.18, grain=True, base=0.0):
+def recolorSegRegion(rgb, seg, info, classes=("table",), b_lo=0.50, b_hi=1.05, per_ch=0.18, grain=True, base=0.0):
     """(DR) recolor (+ optional procedural RETEXTURE) ONLY the pixels of `classes` (by semantic silhouette),
     e.g. ("table",) or ("robot",). Keeps the rendered luminance/shading (lum) so shape/perspective are
     preserved (the table/robot stays grounded, no floating), then applies a per-env color tint (+ grain for
@@ -286,49 +286,49 @@ def recolor_seg_region(rgb, seg, info, classes=("table",), b_lo=0.50, b_hi=1.05,
     brightness. NOTE: cubes are deliberately NOT recolored (cube color = the task cue). -> (N,H,W,3) uint8."""
     import torch
     import torch.nn.functional as F
-    x = rgb[..., :3].float()
-    ids = build_fg_ids(info, fg_classes=classes)
-    if not ids:
-        return x.round().clamp(0, 255).to(torch.uint8)
-    N, H, W = rgb.shape[0], rgb.shape[1], rgb.shape[2]
-    dev = rgb.device
-    sids = seg[..., 0]
-    id_t = torch.as_tensor(ids, device=dev, dtype=sids.dtype)
-    mask = torch.isin(sids, id_t).unsqueeze(-1).float()                        # (N,H,W,1) target pixels
-    lum = x.mean(-1, keepdim=True) / 255.0                                     # keep shading/perspective
-    lum = base + (1.0 - base) * lum                                            # lift floor (white -> bright)
-    b = torch.empty(N, 1, 1, 1, device=dev).uniform_(b_lo, b_hi)              # per-env brightness
-    tint = b * (1.0 + per_ch * (torch.rand(N, 1, 1, 3, device=dev) - 0.5))    # per-env color (per_ch=0 -> none)
-    new = lum * tint
+    tX = rgb[..., :3].float()
+    tIds = buildFgIds(info, fg_classes=classes)
+    if not tIds:
+        return tX.round().clamp(0, 255).to(torch.uint8)
+    tN2, tH, tW = rgb.shape[0], rgb.shape[1], rgb.shape[2]
+    tDev = rgb.device
+    tSids = seg[..., 0]
+    tIdT = torch.as_tensor(tIds, device=tDev, dtype=tSids.dtype)
+    tMask = torch.isin(tSids, tIdT).unsqueeze(-1).float()                        # (N,H,W,1) target pixels
+    tLum = tX.mean(-1, keepdim=True) / 255.0                                     # keep shading/perspective
+    tLum = base + (1.0 - base) * tLum                                            # lift floor (white -> bright)
+    tB = torch.empty(tN2, 1, 1, 1, device=tDev).uniform_(b_lo, b_hi)              # per-env brightness
+    tTint = tB * (1.0 + per_ch * (torch.rand(tN2, 1, 1, 3, device=tDev) - 0.5))    # per-env color (per_ch=0 -> none)
+    tNew = tLum * tTint
     if grain:
-        f = torch.randint(4, 16, (1,)).item()                                 # per-env grain frequency = TEXTURE
-        g = torch.rand(N, f, f, 1, device=dev)
-        g = F.interpolate(g.permute(0, 3, 1, 2), size=(H, W), mode="bilinear", align_corners=False).permute(0, 2, 3, 1)
-        new = new * (0.78 + 0.44 * g)
-    new = (new * 255.0).clamp(0, 255)
-    out = mask * new + (1.0 - mask) * x
-    return out.round().clamp(0, 255).to(torch.uint8)
+        tF = torch.randint(4, 16, (1,)).item()                                 # per-env grain frequency = TEXTURE
+        tG = torch.rand(tN2, tF, tF, 1, device=tDev)
+        tG = F.interpolate(tG.permute(0, 3, 1, 2), size=(tH, tW), mode="bilinear", align_corners=False).permute(0, 2, 3, 1)
+        tNew = tNew * (0.78 + 0.44 * tG)
+    tNew = (tNew * 255.0).clamp(0, 255)
+    tOut = tMask * tNew + (1.0 - tMask) * tX
+    return tOut.round().clamp(0, 255).to(torch.uint8)
 
 
-def wrist_aug(img, roll, tx, ty):
+def wristAug(img, roll, tx, ty):
     """(DR, wrist only) per-env roll + translate augmentation so the student is robust to the real
     wrist-cam mount being rotated/offset vs sim (real rig was 90deg off; 128px eye-in-hand is very
     roll/pos sensitive). img (N,H,W,3) uint8; roll (N,) rad; tx,ty (N,) normalized (fraction of half-
     extent). Applied per-EPISODE (angles redrawn on reset) via a single affine grid_sample."""
     import torch
     import torch.nn.functional as F
-    N, H, W, _ = img.shape
-    x = img.permute(0, 3, 1, 2).float()
-    cos, sin = torch.cos(roll), torch.sin(roll)
-    theta = torch.zeros(N, 2, 3, device=img.device, dtype=torch.float32)
-    theta[:, 0, 0] = cos;  theta[:, 0, 1] = -sin; theta[:, 0, 2] = tx
-    theta[:, 1, 0] = sin;  theta[:, 1, 1] = cos;  theta[:, 1, 2] = ty
-    grid = F.affine_grid(theta, x.shape, align_corners=False)
-    out = F.grid_sample(x, grid, mode="bilinear", padding_mode="border", align_corners=False)
-    return out.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
+    tN2, tH, tW, _ = img.shape
+    tX = img.permute(0, 3, 1, 2).float()
+    tCos, tSin = torch.cos(roll), torch.sin(roll)
+    tTheta = torch.zeros(tN2, 2, 3, device=img.device, dtype=torch.float32)
+    tTheta[:, 0, 0] = tCos;  tTheta[:, 0, 1] = -tSin; tTheta[:, 0, 2] = tx
+    tTheta[:, 1, 0] = tSin;  tTheta[:, 1, 1] = tCos;  tTheta[:, 1, 2] = ty
+    tGrid = F.affine_grid(tTheta, tX.shape, align_corners=False)
+    tOut = F.grid_sample(tX, tGrid, mode="bilinear", padding_mode="border", align_corners=False)
+    return tOut.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
 
 
-def image_dr(img, glare=True, scale=True):
+def imageDr(img, glare=True, scale=True):
     """(DR, TRAIN-ONLY, image-space) close the sim2real gaps the greenscreen/lighting DR MISSED, applied
     per-env at FULL render res BEFORE downsample. img (N,H,W,3) uint8 -> (N,H,W,3) uint8.
       gap4 ISP color: per-channel gain (white-balance) + gamma + contrast + brightness — the real camera
@@ -343,54 +343,54 @@ def image_dr(img, glare=True, scale=True):
            (front); the wrist's geometry DR is wrist_aug (roll/translate)."""
     import torch
     import torch.nn.functional as F
-    dev = img.device
-    N, H, W, _ = img.shape
-    x = img[..., :3].float() / 255.0
+    tDev = img.device
+    tN2, tH, tW, _ = img.shape
+    tX = img[..., :3].float() / 255.0
     # ISP color: gain (WB) + gamma + contrast + brightness
-    x = x * torch.empty(N, 1, 1, 3, device=dev).uniform_(0.92, 1.10)   # WB gain (mild -> keep cube colors readable)
-    x = x.clamp(1e-4, 4.0).pow(torch.empty(N, 1, 1, 1, device=dev).uniform_(0.85, 1.18))
-    m = x.mean(dim=(1, 2), keepdim=True)
-    x = (x - m) * torch.empty(N, 1, 1, 1, device=dev).uniform_(0.90, 1.12) + m
-    x = (x + torch.empty(N, 1, 1, 1, device=dev).uniform_(-0.05, 0.05)).clamp(0.0, 1.0)
+    tX = tX * torch.empty(tN2, 1, 1, 3, device=tDev).uniform_(0.92, 1.10)   # WB gain (mild -> keep cube colors readable)
+    tX = tX.clamp(1e-4, 4.0).pow(torch.empty(tN2, 1, 1, 1, device=tDev).uniform_(0.85, 1.18))
+    tM = tX.mean(dim=(1, 2), keepdim=True)
+    tX = (tX - tM) * torch.empty(tN2, 1, 1, 1, device=tDev).uniform_(0.90, 1.12) + tM
+    tX = (tX + torch.empty(tN2, 1, 1, 1, device=tDev).uniform_(-0.05, 0.05)).clamp(0.0, 1.0)
     # specular-glare proxy: per-env elliptical bright hotspot toward white
     if glare:
-        yy = torch.linspace(0, 1, H, device=dev).view(1, H, 1)
-        xx = torch.linspace(0, 1, W, device=dev).view(1, 1, W)
-        cx = torch.empty(N, 1, 1, device=dev).uniform_(0.1, 0.9)
-        cy = torch.empty(N, 1, 1, device=dev).uniform_(0.05, 0.6)
-        ang = torch.empty(N, 1, 1, device=dev).uniform_(0.0, 3.14159)
-        sx = torch.empty(N, 1, 1, device=dev).uniform_(0.04, 0.30)
-        sy = torch.empty(N, 1, 1, device=dev).uniform_(0.02, 0.10)
-        alpha = torch.empty(N, 1, 1, device=dev).uniform_(0.0, 0.50)   # milder gloss (don't blow out cubes)
-        dx = xx - cx; dy = yy - cy
-        ca = torch.cos(ang); sa = torch.sin(ang)
-        u = (dx * ca + dy * sa) / sx; v = (-dx * sa + dy * ca) / sy
-        g = (alpha * torch.exp(-(u * u + v * v))).unsqueeze(-1)
-        x = (x + g * (1.0 - x)).clamp(0.0, 1.0)
+        tYy = torch.linspace(0, 1, tH, device=tDev).view(1, tH, 1)
+        tXx = torch.linspace(0, 1, tW, device=tDev).view(1, 1, tW)
+        tCx = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.1, 0.9)
+        tCy = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.05, 0.6)
+        tAng = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.0, 3.14159)
+        tSx = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.04, 0.30)
+        tSy = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.02, 0.10)
+        tAlpha = torch.empty(tN2, 1, 1, device=tDev).uniform_(0.0, 0.50)   # milder gloss (don't blow out cubes)
+        tDx = tXx - tCx; tDy = tYy - tCy
+        tCa = torch.cos(tAng); tSa = torch.sin(tAng)
+        tU = (tDx * tCa + tDy * tSa) / tSx; tV = (-tDx * tSa + tDy * tCa) / tSy
+        tG = (tAlpha * torch.exp(-(tU * tU + tV * tV))).unsqueeze(-1)
+        tX = (tX + tG * (1.0 - tX)).clamp(0.0, 1.0)
     # cube apparent-size + aspect/anisotropy: per-env independent x/y scale + translate
     if scale:
-        xt = x.permute(0, 3, 1, 2)
-        theta = torch.zeros(N, 2, 3, device=dev)
-        theta[:, 0, 0] = torch.empty(N, device=dev).uniform_(0.80, 1.25)  # scene/table apparent-size variation
-        theta[:, 0, 2] = torch.empty(N, device=dev).uniform_(-0.07, 0.07)
-        theta[:, 1, 1] = torch.empty(N, device=dev).uniform_(0.80, 1.25)  # independent -> slight aspect
-        theta[:, 1, 2] = torch.empty(N, device=dev).uniform_(-0.07, 0.07)
-        grid = F.affine_grid(theta, xt.shape, align_corners=False)
-        x = F.grid_sample(xt, grid, mode="bilinear", padding_mode="reflection", align_corners=False).permute(0, 2, 3, 1)
-    return (x * 255.0).round().clamp(0, 255).to(torch.uint8)
+        tXt = tX.permute(0, 3, 1, 2)
+        tTheta = torch.zeros(tN2, 2, 3, device=tDev)
+        tTheta[:, 0, 0] = torch.empty(tN2, device=tDev).uniform_(0.80, 1.25)  # scene/table apparent-size variation
+        tTheta[:, 0, 2] = torch.empty(tN2, device=tDev).uniform_(-0.07, 0.07)
+        tTheta[:, 1, 1] = torch.empty(tN2, device=tDev).uniform_(0.80, 1.25)  # independent -> slight aspect
+        tTheta[:, 1, 2] = torch.empty(tN2, device=tDev).uniform_(-0.07, 0.07)
+        tGrid = F.affine_grid(tTheta, tXt.shape, align_corners=False)
+        tX = F.grid_sample(tXt, tGrid, mode="bilinear", padding_mode="reflection", align_corners=False).permute(0, 2, 3, 1)
+    return (tX * 255.0).round().clamp(0, 255).to(torch.uint8)
 
 
-def add_proprio_noise(s21, arm_std=0.0122, grip_std=0.001, tgt_std=0.0122):
+def addProprioNoise(s21, arm_std=0.0122, grip_std=0.001, tgt_std=0.0122):
     """Add encoder-style gaussian noise to the 21D student state (TRAIN-ONLY, student path).
     Layout (STUDENT_STATE_IDX): qpos[0:8] (arm 0:6 + gripper 6:8) | target_qpos[8:15] | dist_to_rest[15:21].
     dist_to_rest = arm_qpos - REST, so the SAME per-joint draw added to arm qpos MUST be added to
     dist_to_rest (else a physically impossible (qpos,dist) pair). arm_std 0.0122 rad ~= 0.7deg."""
     import torch
-    s = s21.clone()
-    n = s.shape[0]
-    arm = torch.randn(n, 6, device=s.device) * arm_std        # shared draw (qpos arm == dist_to_rest base)
-    s[:, 0:6] += arm
-    s[:, 15:21] += arm
-    s[:, 6:8] += torch.randn(n, 2, device=s.device) * grip_std     # gripper qpos
-    s[:, 8:15] += torch.randn(n, 7, device=s.device) * tgt_std     # target_qpos (controller cmd, independent)
-    return s
+    tS = s21.clone()
+    tN = tS.shape[0]
+    tArm = torch.randn(tN, 6, device=tS.device) * arm_std        # shared draw (qpos arm == dist_to_rest base)
+    tS[:, 0:6] += tArm
+    tS[:, 15:21] += tArm
+    tS[:, 6:8] += torch.randn(tN, 2, device=tS.device) * grip_std     # gripper qpos
+    tS[:, 8:15] += torch.randn(tN, 7, device=tS.device) * tgt_std     # target_qpos (controller cmd, independent)
+    return tS

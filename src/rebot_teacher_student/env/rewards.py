@@ -20,91 +20,91 @@ FOLDED_QPOS = torch.tensor([0.0, -0.80, -2.10, 0.55, 0.0, 0.0])
 CUBE_REST_Z = 0.06
 
 
-def _get_target_qpos(env):
+def _getTargetQpos(env):
     """Retrieve the target joint positions from the action manager terms."""
-    am = env.action_manager
-    targets = []
-    for term in am._terms.values():
-        if hasattr(term, "_target_qpos"):
-            targets.append(term._target_qpos)
-    if targets:
-        return torch.cat(targets, dim=-1)
+    tAm = env.action_manager
+    tTargets = []
+    for tTerm in tAm._terms.values():
+        if hasattr(tTerm, "_target_qpos"):
+            tTargets.append(tTerm._target_qpos)
+    if tTargets:
+        return torch.cat(tTargets, dim=-1)
     return env.scene["robot"].data.joint_pos
 
 
-def _compute_angle_between(a, b):
+def _computeAngleBetween(a, b):
     """Compute angle between two vector batches."""
-    a_n = a / (a.norm(dim=-1, keepdim=True) + 1e-8)
-    b_n = b / (b.norm(dim=-1, keepdim=True) + 1e-8)
-    return torch.acos((a_n * b_n).sum(dim=-1).clamp(-1, 1))
+    tAN = a / (a.norm(dim=-1, keepdim=True) + 1e-8)
+    tBN = b / (b.norm(dim=-1, keepdim=True) + 1e-8)
+    return torch.acos((tAN * tBN).sum(dim=-1).clamp(-1, 1))
 
 
-def _quat_to_y_axis(q):
+def _quatToYAxis(q):
     """Extract y-axis direction from quaternion (w,x,y,z format).
 
     Given a unit quaternion q = (w, x, y, z), the y-column of the
     corresponding rotation matrix is:
         [2(xy + wz),  1 - 2(x^2 + z^2),  2(yz - wx)]
     """
-    w, x, y, z = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
+    tW, tX, tY, tZ = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
     return torch.stack(
-        [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+        [2 * (tX * tY + tW * tZ), 1 - 2 * (tX * tX + tZ * tZ), 2 * (tY * tZ - tW * tX)],
         dim=-1,
     )
 
 
-def _get_link_body_idx(robot, link_name_substr):
+def _getLinkBodyIdx(robot, link_name_substr):
     """Find body index whose name contains *link_name_substr* (case-insensitive)."""
-    for i, name in enumerate(robot.data.body_names):
-        if link_name_substr in name.lower():
-            return i
+    for tI, tName in enumerate(robot.data.body_names):
+        if link_name_substr in tName.lower():
+            return tI
     return None
 
 
-def _cube_between_jaws(env, max_tcp_dist=0.05):
+def _cubeBetweenJaws(env, max_tcp_dist=0.05):
     """Geometric check: cube center is BETWEEN the two jaw tips.
 
     Uses dot product of (fixed_tip→cube) and (moving_tip→cube).
     If cube is between jaws, these vectors point in opposite directions → dot < 0.
     If robot is pressing from one side (tip pushing), both vectors point same way → dot > 0.
     """
-    ee = env.scene["ee_frame"]
-    fixed_tip = ee.data.target_pos_w[:, 0, :]   # (N, 3)
-    moving_tip = ee.data.target_pos_w[:, 1, :]   # (N, 3)
-    cube_pos = env.scene["cube"].data.root_pos_w  # (N, 3)
+    tEe = env.scene["ee_frame"]
+    tFixedTip = tEe.data.target_pos_w[:, 0, :]   # (N, 3)
+    tMovingTip = tEe.data.target_pos_w[:, 1, :]   # (N, 3)
+    tCubePos = env.scene["cube"].data.root_pos_w  # (N, 3)
 
-    vec_to_fixed = fixed_tip - cube_pos    # cube → fixed jaw
-    vec_to_moving = moving_tip - cube_pos  # cube → moving jaw
+    tVecToFixed = tFixedTip - tCubePos    # cube → fixed jaw
+    tVecToMoving = tMovingTip - tCubePos  # cube → moving jaw
 
     # Dot product < 0 means cube is between the two tips
-    dot = (vec_to_fixed * vec_to_moving).sum(dim=-1)
-    between = dot < 0
+    tDot = (tVecToFixed * tVecToMoving).sum(dim=-1)
+    tBetween = tDot < 0
 
     # Also check cube is near TCP (not far away)
-    tcp = (fixed_tip + moving_tip) * 0.5
-    tcp_dist = (cube_pos - tcp).norm(dim=-1)
-    near = tcp_dist < max_tcp_dist
+    tTcp = (tFixedTip + tMovingTip) * 0.5
+    tTcpDist = (tCubePos - tTcp).norm(dim=-1)
+    tNear = tTcpDist < max_tcp_dist
 
-    return between & near
+    return tBetween & tNear
 
 
-def _is_grasped(env, object_cfg=SceneEntityCfg("cube"), min_force=0.3, max_angle_deg=110, align_tol=0.14):
+def _isGrasped(env, object_cfg=SceneEntityCfg("cube"), min_force=0.3, max_angle_deg=110, align_tol=0.14):
     """Contact-based grasp, NOW ALSO REQUIRING ALIGNMENT (feedback v2 2026-06-11): BOTH fingers press the
     cube (force >= min_force) AND the cube is CENTERED at the grasp center (||cube - TCP|| < align_tol).
     So 'grasped' = a properly ALIGNED grasp, not an off-center edge-catch. This propagates to the grasp
     reward, the place/open gates, AND is_fold_success -> the policy must ALIGN to earn grasp credit and
     success, so it learns alignment (was the weak point). The gripper_contact/jaw_contact sensors are
     pre-filtered to the target cube's rigid body."""
-    grip_force = env.scene["gripper_contact"].data.force_matrix_w[:, 0, 0, :]
-    jaw_force = env.scene["jaw_contact"].data.force_matrix_w[:, 0, 0, :]
-    grip_ok = grip_force.norm(dim=-1) >= min_force
-    jaw_ok = jaw_force.norm(dim=-1) >= min_force
-    obj = env.scene[object_cfg.name]
-    tcp = _tcp(env, SceneEntityCfg("ee_frame"))
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    aligned = dist < align_tol                       # cube in the grasp zone (no off-center edge-catch)
-    held = _align_held(env, dist)                    # AND an align-HOLD was achieved first -> GRASP AFTER
-    return grip_ok & jaw_ok & aligned & held         # ALIGN (the model must align+hold before a grasp counts).
+    tGripForce = env.scene["gripper_contact"].data.force_matrix_w[:, 0, 0, :]
+    tJawForce = env.scene["jaw_contact"].data.force_matrix_w[:, 0, 0, :]
+    tGripOk = tGripForce.norm(dim=-1) >= min_force
+    tJawOk = tJawForce.norm(dim=-1) >= min_force
+    tObj = env.scene[object_cfg.name]
+    tTcp = _tcp(env, SceneEntityCfg("ee_frame"))
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tAligned = tDist < align_tol                       # cube in the grasp zone (no off-center edge-catch)
+    tHeld = _alignHeld(env, tDist)                    # AND an align-HOLD was achieved first -> GRASP AFTER
+    return tGripOk & tJawOk & tAligned & tHeld         # ALIGN (the model must align+hold before a grasp counts).
     # (Earlier this gate gave 0 success ONLY because the align threshold was an impossible 0.035 vs the real
     # ~12cm grasp distance -> the latch could never set. With ALIGN_DIST=0.13 + sq_close_after_align bridging
     # hold->close, the latch sets and the grasp-after-align sequence is learnable.)
@@ -121,11 +121,11 @@ def _dopamine(key, raw_reward):
     """Apply dopamine: R_eff = R_raw × [λ + (1-λ)(1-h)^α]."""
     if key not in _hit_rates:
         _hit_rates[key] = 0.0
-    h_now = (raw_reward > 0.001).float().mean().item()
-    _hit_rates[key] = 0.99 * _hit_rates[key] + 0.01 * h_now  # EMA
-    h = _hit_rates[key]
-    mult = _DOPAMINE_LAMBDA + (1 - _DOPAMINE_LAMBDA) * (1 - h) ** _DOPAMINE_ALPHA
-    return raw_reward * mult
+    tHNow = (raw_reward > 0.001).float().mean().item()
+    _hit_rates[key] = 0.99 * _hit_rates[key] + 0.01 * tHNow  # EMA
+    tH = _hit_rates[key]
+    tMult = _DOPAMINE_LAMBDA + (1 - _DOPAMINE_LAMBDA) * (1 - tH) ** _DOPAMINE_ALPHA
+    return raw_reward * tMult
 
 
 # ======================================================================
@@ -138,232 +138,232 @@ _was_close_to_cube = {}
 _was_jaw_closed = {}
 _retry_count = {}
 
-def grasp_retry_reward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def graspRetryReward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """One-time reward each time agent re-opens jaw after failed grasp attempt near cube.
     Encourages: approach → close (fail) → open → approach again → close."""
-    n = env.num_envs
-    device = env.device
-    key = "retry"
-    if key not in _retry_count or _retry_count[key].shape[0] != n:
-        _was_close_to_cube[key] = torch.zeros(n, dtype=torch.bool, device=device)
-        _was_jaw_closed[key] = torch.zeros(n, dtype=torch.bool, device=device)
-        _retry_count[key] = torch.zeros(n, dtype=torch.long, device=device)
+    tN = env.num_envs
+    tDevice = env.device
+    tKey = "retry"
+    if tKey not in _retry_count or _retry_count[tKey].shape[0] != tN:
+        _was_close_to_cube[tKey] = torch.zeros(tN, dtype=torch.bool, device=tDevice)
+        _was_jaw_closed[tKey] = torch.zeros(tN, dtype=torch.bool, device=tDevice)
+        _retry_count[tKey] = torch.zeros(tN, dtype=torch.long, device=tDevice)
 
     # Reset on new episodes
-    just_reset = env.episode_length_buf <= 1
-    _was_close_to_cube[key][just_reset] = False
-    _was_jaw_closed[key][just_reset] = False
-    _retry_count[key][just_reset] = 0
+    tJustReset = env.episode_length_buf <= 1
+    _was_close_to_cube[tKey][tJustReset] = False
+    _was_jaw_closed[tKey][tJustReset] = False
+    _retry_count[tKey][tJustReset] = 0
 
     # Current state
-    obj = env.scene[object_cfg.name]
-    ee = env.scene[ee_frame_cfg.name]
-    tcp = (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    close = dist < 0.10
-    _r = env.scene["robot"]; _gi = _r.data.joint_names.index("gripper")
-    gripper_qpos = _r.data.joint_pos[:, _gi]   # prismatic, meters (stroke 0~0.0715)
+    tObj = env.scene[object_cfg.name]
+    tEe = env.scene[ee_frame_cfg.name]
+    tTcp = (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tClose = tDist < 0.10
+    tR = env.scene["robot"]; tGi = tR.data.joint_names.index("gripper")
+    tGripperQpos = tR.data.joint_pos[:, tGi]   # prismatic, meters (stroke 0~0.0715)
     # reBot pads CONVERGE at HIGH qpos (joint value goes UP to close the fingers), so the
     # open/closed sense is INVERTED vs a naive "small=closed": gripping = qpos>0.05, released = qpos<0.035.
-    jaw_closed = gripper_qpos > 0.05    # pads gripping
-    jaw_open = gripper_qpos < 0.035     # pads apart (released)
+    tJawClosed = tGripperQpos > 0.05    # pads gripping
+    tJawOpen = tGripperQpos < 0.035     # pads apart (released)
 
     # Detect retry: was close+closed (attempt), now open again (retry)
-    was_attempting = _was_close_to_cube[key] & _was_jaw_closed[key]
-    retrying = was_attempting & jaw_open & close
-    _retry_count[key][retrying] += 1
+    tWasAttempting = _was_close_to_cube[tKey] & _was_jaw_closed[tKey]
+    tRetrying = tWasAttempting & tJawOpen & tClose
+    _retry_count[tKey][tRetrying] += 1
 
     # Update state
-    _was_close_to_cube[key] = close
-    _was_jaw_closed[key] = jaw_closed
+    _was_close_to_cube[tKey] = tClose
+    _was_jaw_closed[tKey] = tJawClosed
 
-    return retrying.float()
+    return tRetrying.float()
 
 
-def reaching_reward(
+def reachingReward(
     env,
     object_cfg=SceneEntityCfg("cube"),
     ee_frame_cfg=SceneEntityCfg("ee_frame"),
 ):
     """Dense reaching reward: 1 - tanh(5 * dist(tcp, cube))."""
-    obj = env.scene[object_cfg.name]
-    ee = env.scene[ee_frame_cfg.name]
-    tcp = (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    base = 1 - torch.tanh(5 * dist)
+    tObj = env.scene[object_cfg.name]
+    tEe = env.scene[ee_frame_cfg.name]
+    tTcp = (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tBase = 1 - torch.tanh(5 * tDist)
     # Only reward reaching when the gripper is NOT flipped -- its mouth must point DOWN, not up.
     # gripper_link local +z points toward the grasp; its world z-component < 0 means pointing down.
-    robot = env.scene["robot"]
-    q = robot.data.body_quat_w[:, robot.data.body_names.index("gripper_link"), :]
-    zc = 1.0 - 2.0 * (q[:, 1] ** 2 + q[:, 2] ** 2)    # gripper_link local +z, world z-component
-    upright = torch.clamp(-zc, min=0.0, max=1.0)       # 1=straight down, 0=horizontal/flipped up
-    gate = _pan_face_ok(env, object_cfg).float()       # GATE: only reward reaching when pan-aligned
-    return _dopamine("reaching", base * upright * gate)
+    tRobot = env.scene["robot"]
+    tQ = tRobot.data.body_quat_w[:, tRobot.data.body_names.index("gripper_link"), :]
+    tZc = 1.0 - 2.0 * (tQ[:, 1] ** 2 + tQ[:, 2] ** 2)    # gripper_link local +z, world z-component
+    tUpright = torch.clamp(-tZc, min=0.0, max=1.0)       # 1=straight down, 0=horizontal/flipped up
+    tGate = _panFaceOk(env, object_cfg).float()       # GATE: only reward reaching when pan-aligned
+    return _dopamine("reaching", tBase * tUpright * tGate)
 
 
 # ── Stage-gate helpers: a stage's reward is given ONLY when the PREVIOUS stage's condition holds ──
 def _tcp(env, ee_frame_cfg):
-    ee = env.scene[ee_frame_cfg.name]
-    return (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
+    tEe = env.scene[ee_frame_cfg.name]
+    return (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
 
 def _gq(env):
-    r = env.scene["robot"]
-    return r.data.joint_pos[:, r.data.joint_names.index("gripper")]
+    tR2 = env.scene["robot"]
+    return tR2.data.joint_pos[:, tR2.data.joint_names.index("gripper")]
 
-def _gripper_down(env):
-    r = env.scene["robot"]
-    q = r.data.body_quat_w[:, r.data.body_names.index("gripper_link"), :]
-    return (1.0 - 2.0 * (q[:, 1] ** 2 + q[:, 2] ** 2)) < 0.0       # gripper mouth points DOWN (not flipped)
+def _gripperDown(env):
+    tR2 = env.scene["robot"]
+    tQ = tR2.data.body_quat_w[:, tR2.data.body_names.index("gripper_link"), :]
+    return (1.0 - 2.0 * (tQ[:, 1] ** 2 + tQ[:, 2] ** 2)) < 0.0       # gripper mouth points DOWN (not flipped)
 
-def _pan_error(env, object_cfg=SceneEntityCfg("cube")):
+def _panError(env, object_cfg=SceneEntityCfg("cube")):
     """|shoulder_pan - required_pan| (wrapped to [0,π]). required_pan points the arm (pan=0 => +Y
     world) at the cube. JOINT-based, so it is NOT fooled by a folded/flipped arm whose gripper happens
     to land at the cube's azimuth (which the old base->gripper measure mistook for 'aligned')."""
-    robot = env.scene["robot"]; obj = env.scene[object_cfg.name]
-    base = robot.data.body_pos_w[:, robot.data.body_names.index("base_link"), :2]
-    dx = obj.data.root_pos_w[:, 0] - base[:, 0]
-    dy = obj.data.root_pos_w[:, 1] - base[:, 1]
-    req = torch.atan2(-dx, dy)
-    pan = robot.data.joint_pos[:, robot.data.joint_names.index("shoulder_pan")]
-    e = pan - req
-    return torch.atan2(torch.sin(e), torch.cos(e)).abs()
+    tRobot = env.scene["robot"]; tObj = env.scene[object_cfg.name]
+    tBase = tRobot.data.body_pos_w[:, tRobot.data.body_names.index("base_link"), :2]
+    tDx = tObj.data.root_pos_w[:, 0] - tBase[:, 0]
+    tDy = tObj.data.root_pos_w[:, 1] - tBase[:, 1]
+    tReq = torch.atan2(-tDx, tDy)
+    tPan = tRobot.data.joint_pos[:, tRobot.data.joint_names.index("shoulder_pan")]
+    tE = tPan - tReq
+    return torch.atan2(torch.sin(tE), torch.cos(tE)).abs()
 
-def _pan_face_ok(env, object_cfg=SceneEntityCfg("cube")):
+def _panFaceOk(env, object_cfg=SceneEntityCfg("cube")):
     """STAGE 0 condition: pan faces the cube (joint-based) AND finger axis matches a cube face."""
-    robot = env.scene["robot"]; obj = env.scene[object_cfg.name]; bn = robot.data.body_names
-    facing = _pan_error(env, object_cfg) < 0.26
-    gl = robot.data.body_pos_w[:, bn.index("gripper_left"), :2]
-    gr = robot.data.body_pos_w[:, bn.index("gripper_right"), :2]
-    faxis = gr - gl; faxis = faxis / (faxis.norm(dim=-1, keepdim=True) + 1e-6)
-    q = obj.data.root_quat_w
-    cx = torch.stack([1 - 2 * (q[:, 2] ** 2 + q[:, 3] ** 2), 2 * (q[:, 1] * q[:, 2] + q[:, 0] * q[:, 3])], dim=-1)
-    cx = cx / (cx.norm(dim=-1, keepdim=True) + 1e-6)
-    dot = (faxis * cx).sum(-1).abs().clamp(max=1.0)
-    s2 = 2.0 * dot * torch.sqrt((1.0 - dot * dot).clamp(min=0.0))
-    return facing & (s2 < 0.40)
+    tRobot = env.scene["robot"]; tObj = env.scene[object_cfg.name]; tBn = tRobot.data.body_names
+    tFacing = _panError(env, object_cfg) < 0.26
+    tGl = tRobot.data.body_pos_w[:, tBn.index("gripper_left"), :2]
+    tGr = tRobot.data.body_pos_w[:, tBn.index("gripper_right"), :2]
+    tFaxis = tGr - tGl; tFaxis = tFaxis / (tFaxis.norm(dim=-1, keepdim=True) + 1e-6)
+    tQ = tObj.data.root_quat_w
+    tCx = torch.stack([1 - 2 * (tQ[:, 2] ** 2 + tQ[:, 3] ** 2), 2 * (tQ[:, 1] * tQ[:, 2] + tQ[:, 0] * tQ[:, 3])], dim=-1)
+    tCx = tCx / (tCx.norm(dim=-1, keepdim=True) + 1e-6)
+    tDot = (tFaxis * tCx).sum(-1).abs().clamp(max=1.0)
+    tS2 = 2.0 * tDot * torch.sqrt((1.0 - tDot * tDot).clamp(min=0.0))
+    return tFacing & (tS2 < 0.40)
 
-def _reach_ok(env, object_cfg, ee_frame_cfg):       # STAGE 1: tcp near cube + pointing down
-    d = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
-    return (d < 0.12) & _gripper_down(env)
+def _reachOk(env, object_cfg, ee_frame_cfg):       # STAGE 1: tcp near cube + pointing down
+    tD = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
+    return (tD < 0.12) & _gripperDown(env)
 
-def _approach_ok(env, object_cfg, ee_frame_cfg):    # STAGE 2: closer + jaw open
-    d = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
-    return (d < 0.08) & (_gq(env) < 0.05)
+def _approachOk(env, object_cfg, ee_frame_cfg):    # STAGE 2: closer + jaw open
+    tD = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
+    return (tD < 0.08) & (_gq(env) < 0.05)
 
-def _near_mouth(env, object_cfg, ee_frame_cfg):     # STAGE 3: cube at the grasp center (gripper-agnostic)
-    d = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
-    return d < 0.05
+def _nearMouth(env, object_cfg, ee_frame_cfg):     # STAGE 3: cube at the grasp center (gripper-agnostic)
+    tD = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
+    return tD < 0.05
 
 
 _pan_held = [None]
 
-def pan_aligned_reward(env, object_cfg=SceneEntityCfg("cube")):
+def panAlignedReward(env, object_cfg=SceneEntityCfg("cube")):
     """STAGE 0 (before reaching): shoulder_pan turns the arm to FACE the target cube -- the
     base->gripper azimuth is aligned with the base->cube azimuth (within ~15deg). Reward GROWS the
     longer it's held facing (up to ~10 s = the full episode) and RESETS when alignment is lost."""
-    n = env.num_envs
-    device = env.device
-    if _pan_held[0] is None or _pan_held[0].shape[0] != n:
-        _pan_held[0] = torch.zeros(n, dtype=torch.long, device=device)
-    just_reset = env.episode_length_buf <= 1
-    _pan_held[0][just_reset] = 0
+    tN = env.num_envs
+    tDevice = env.device
+    if _pan_held[0] is None or _pan_held[0].shape[0] != tN:
+        _pan_held[0] = torch.zeros(tN, dtype=torch.long, device=tDevice)
+    tJustReset = env.episode_length_buf <= 1
+    _pan_held[0][tJustReset] = 0
 
-    aligned = _pan_face_ok(env, object_cfg)        # JOINT-based pan facing + finger-axis matches cube face
+    tAligned = _panFaceOk(env, object_cfg)        # JOINT-based pan facing + finger-axis matches cube face
 
-    _pan_held[0][aligned] += 1
-    _pan_held[0][~aligned] = 0
-    reward = aligned.float() * (_pan_held[0].float() / 50.0).clamp(max=2.0)  # 5s->1.0, 10s->2.0
-    return _dopamine("pan_aligned", reward)
+    _pan_held[0][tAligned] += 1
+    _pan_held[0][~tAligned] = 0
+    tReward = tAligned.float() * (_pan_held[0].float() / 50.0).clamp(max=2.0)  # 5s->1.0, 10s->2.0
+    return _dopamine("pan_aligned", tReward)
 
 
-def pan_flip_penalty(env, object_cfg=SceneEntityCfg("cube")):
+def panFlipPenalty(env, object_cfg=SceneEntityCfg("cube")):
     """Penalty when the base (pan) is rotated AWAY from the cube -- discourages over-rotating /
     flipping the base around. 0 while roughly facing the cube, ramps to 1 when facing backward."""
-    angle = _pan_error(env, object_cfg)            # JOINT-based pan error (robust to fold/flip)
-    return torch.clamp((angle - 1.0) / 1.5, min=0.0, max=1.0)   # 0 below ~57deg, ->1 at ~143deg away
+    tAngle = _panError(env, object_cfg)            # JOINT-based pan error (robust to fold/flip)
+    return torch.clamp((tAngle - 1.0) / 1.5, min=0.0, max=1.0)   # 0 below ~57deg, ->1 at ~143deg away
 
 
 _prev_phi = [None]
 
-def toward_cube_reward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def towardCubeReward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """Dense PROGRESS reward (potential-based): reward pan rotating toward facing the cube AND the
     gripper getting closer. phi = pan_error + 3*tcp_dist (lower=better); reward = prev_phi - cur_phi
     (toward cube = +, away = -; telescopes so it can't be farmed). UNGATED -> guides pan/lift from
     the very first step (fixes 'pan/lift go the opposite way' during early exploration)."""
-    n = env.num_envs
-    pe = _pan_error(env, object_cfg)
-    d = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
-    phi = pe + 3.0 * d
-    if _prev_phi[0] is None or _prev_phi[0].shape[0] != n:
-        _prev_phi[0] = phi.clone()
-    just_reset = env.episode_length_buf <= 1
-    _prev_phi[0][just_reset] = phi[just_reset]
-    reward = (_prev_phi[0] - phi).clamp(-1.0, 1.0)
-    _prev_phi[0] = phi.clone()
-    return reward
+    tN = env.num_envs
+    tPe = _panError(env, object_cfg)
+    tD = torch.norm(env.scene[object_cfg.name].data.root_pos_w - _tcp(env, ee_frame_cfg), dim=1)
+    tPhi = tPe + 3.0 * tD
+    if _prev_phi[0] is None or _prev_phi[0].shape[0] != tN:
+        _prev_phi[0] = tPhi.clone()
+    tJustReset = env.episode_length_buf <= 1
+    _prev_phi[0][tJustReset] = tPhi[tJustReset]
+    tReward = (_prev_phi[0] - tPhi).clamp(-1.0, 1.0)
+    _prev_phi[0] = tPhi.clone()
+    return tReward
 
 
 _aligned_held = [None]
 
-def aligned_reward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def alignedReward(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """Pre-grasp ALIGNED stage: the target cube sits INSIDE the open gripper mouth (at the TCP /
     grasp center). Reward GROWS the longer it is held aligned -- 3 s (=30 steps) -> 1.0, up to 2.0 --
     and RESETS to 0 the moment the cube leaves the mouth or the gripper closes. Bridges reaching->grasp."""
-    n = env.num_envs
-    device = env.device
-    if _aligned_held[0] is None or _aligned_held[0].shape[0] != n:
-        _aligned_held[0] = torch.zeros(n, dtype=torch.long, device=device)
-    just_reset = env.episode_length_buf <= 1
-    _aligned_held[0][just_reset] = 0
+    tN = env.num_envs
+    tDevice = env.device
+    if _aligned_held[0] is None or _aligned_held[0].shape[0] != tN:
+        _aligned_held[0] = torch.zeros(tN, dtype=torch.long, device=tDevice)
+    tJustReset = env.episode_length_buf <= 1
+    _aligned_held[0][tJustReset] = 0
 
-    obj = env.scene[object_cfg.name]
-    ee = env.scene[ee_frame_cfg.name]
-    tcp = (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    _r = env.scene["robot"]; _gi = _r.data.joint_names.index("gripper")
-    gripper_open = _r.data.joint_pos[:, _gi] < 0.05            # pads apart -> cube fits in the mouth
-    aligned = (dist < 0.04) & gripper_open & _approach_ok(env, object_cfg, ee_frame_cfg)  # gated by approach
+    tObj = env.scene[object_cfg.name]
+    tEe = env.scene[ee_frame_cfg.name]
+    tTcp = (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tR = env.scene["robot"]; tGi = tR.data.joint_names.index("gripper")
+    tGripperOpen = tR.data.joint_pos[:, tGi] < 0.05            # pads apart -> cube fits in the mouth
+    tAligned = (tDist < 0.04) & tGripperOpen & _approachOk(env, object_cfg, ee_frame_cfg)  # gated by approach
 
-    _aligned_held[0][aligned] += 1
-    _aligned_held[0][~aligned] = 0                              # reset when it leaves the mouth
-    reward = aligned.float() * (_aligned_held[0].float() / 30.0).clamp(max=2.0)  # 1.0 @3s, 2.0 @6s+
-    return _dopamine("aligned", reward)
+    _aligned_held[0][tAligned] += 1
+    _aligned_held[0][~tAligned] = 0                              # reset when it leaves the mouth
+    tReward = tAligned.float() * (_aligned_held[0].float() / 30.0).clamp(max=2.0)  # 1.0 @3s, 2.0 @6s+
+    return _dopamine("aligned", tReward)
 
 
 _approach_open_fired = {}
 
-def approach_open_reward(
+def approachOpenReward(
     env,
     object_cfg=SceneEntityCfg("cube"),
     ee_frame_cfg=SceneEntityCfg("ee_frame"),
 ):
     """One-time reward for first reaching cube with jaw open."""
-    n = env.num_envs
-    device = env.device
-    key = "approach_open"
-    if key not in _approach_open_fired or _approach_open_fired[key].shape[0] != n:
-        _approach_open_fired[key] = torch.zeros(n, dtype=torch.bool, device=device)
+    tN = env.num_envs
+    tDevice = env.device
+    tKey = "approach_open"
+    if tKey not in _approach_open_fired or _approach_open_fired[tKey].shape[0] != tN:
+        _approach_open_fired[tKey] = torch.zeros(tN, dtype=torch.bool, device=tDevice)
 
-    just_reset = env.episode_length_buf <= 1
-    _approach_open_fired[key][just_reset] = False
+    tJustReset = env.episode_length_buf <= 1
+    _approach_open_fired[tKey][tJustReset] = False
 
-    obj = env.scene[object_cfg.name]
-    ee = env.scene[ee_frame_cfg.name]
-    tcp = (ee.data.target_pos_w[:, 0, :] + ee.data.target_pos_w[:, 1, :]) * 0.5
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
+    tObj = env.scene[object_cfg.name]
+    tEe = env.scene[ee_frame_cfg.name]
+    tTcp = (tEe.data.target_pos_w[:, 0, :] + tEe.data.target_pos_w[:, 1, :]) * 0.5
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
 
-    close = dist < 0.10
-    _r = env.scene["robot"]; _gi = _r.data.joint_names.index("gripper")
-    gripper_qpos = _r.data.joint_pos[:, _gi]   # prismatic, meters
-    jaw_open = gripper_qpos < 0.035  # pads APART (reBot pads converge at HIGH qpos -> "open" is LOW qpos)
+    tClose = tDist < 0.10
+    tR = env.scene["robot"]; tGi = tR.data.joint_names.index("gripper")
+    tGripperQpos = tR.data.joint_pos[:, tGi]   # prismatic, meters
+    tJawOpen = tGripperQpos < 0.035  # pads APART (reBot pads converge at HIGH qpos -> "open" is LOW qpos)
 
-    condition = close & jaw_open & _reach_ok(env, object_cfg, ee_frame_cfg) & ~_approach_open_fired[key]
-    _approach_open_fired[key] |= condition
+    tCondition = tClose & tJawOpen & _reachOk(env, object_cfg, ee_frame_cfg) & ~_approach_open_fired[tKey]
+    _approach_open_fired[tKey] |= tCondition
 
-    return condition.float()
+    return tCondition.float()
 
 
-def grasped_reward(
+def graspedReward(
     env,
     object_cfg=SceneEntityCfg("cube"),
     ee_frame_cfg=SceneEntityCfg("ee_frame"),
@@ -371,11 +371,11 @@ def grasped_reward(
 ):
     """Binary: 1 when grasping, 0 otherwise."""
     # GATE: grasp only counts when the cube is at the grasp center (came through the aligned stage)
-    g = _is_grasped(env, object_cfg, min_force=0.3) & _near_mouth(env, object_cfg, ee_frame_cfg)
-    return _dopamine("grasped", g.float())
+    tG = _isGrasped(env, object_cfg, min_force=0.3) & _nearMouth(env, object_cfg, ee_frame_cfg)
+    return _dopamine("grasped", tG.float())
 
 
-def place_reward(
+def placeReward(
     env,
     object_cfg=SceneEntityCfg("cube"),
     ee_frame_cfg=SceneEntityCfg("ee_frame"),
@@ -385,84 +385,84 @@ def place_reward(
     return torch.zeros(env.num_envs, device=env.device)
 
 
-def not_lifted_penalty(env, object_cfg=SceneEntityCfg("cube")):
+def notLiftedPenalty(env, object_cfg=SceneEntityCfg("cube")):
     """Penalty while the cube stays on the table (i.e. near its resting height ~0.06 m).
     Old threshold (0.016) assumed table at z=0, so it was always 'lifted' -> penalty never fired."""
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    item_lifted = cube_z >= (CUBE_REST_Z + 0.02)   # clearly off the table (>2cm above rest)
-    return (~item_lifted).float()
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tItemLifted = tCubeZ >= (CUBE_REST_Z + 0.02)   # clearly off the table (>2cm above rest)
+    return (~tItemLifted).float()
 
 
-def lift_hold_reward(env, object_cfg=SceneEntityCfg("cube")):
+def liftHoldReward(env, object_cfg=SceneEntityCfg("cube")):
     """Reward for lifting cube 15cm + grasped (no fold requirement)."""
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    lifted = (cube_z >= 0.15).float()
-    grasped = _is_grasped(env, object_cfg, min_force=0.3).float()
-    return _dopamine("lift_hold", lifted * grasped)
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tLifted = (tCubeZ >= 0.15).float()
+    tGrasped = _isGrasped(env, object_cfg, min_force=0.3).float()
+    return _dopamine("lift_hold", tLifted * tGrasped)
 
 
-def _fold_3joint(env):
+def _fold3joint(env):
     """3-joint fold errors: pan(0), shoulder_lift(1), elbow(2)."""
-    tgt = _get_target_qpos(env)[:, :-1]  # (N, 5)
-    folded = FOLDED_QPOS[:-1].to(tgt.device)
-    errs = (tgt - folded).abs()
-    return errs[:, 0], errs[:, 1], errs[:, 2]  # pan, lift, elbow
+    tTgt = _getTargetQpos(env)[:, :-1]  # (N, 5)
+    tFolded = FOLDED_QPOS[:-1].to(tTgt.device)
+    tErrs = (tTgt - tFolded).abs()
+    return tErrs[:, 0], tErrs[:, 1], tErrs[:, 2]  # pan, lift, elbow
 
 
-def fold_reward(env, object_cfg=SceneEntityCfg("cube")):
+def foldReward(env, object_cfg=SceneEntityCfg("cube")):
     """3-joint continuous fold: pan + shoulder_lift + elbow. All always-on."""
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    lifted = (cube_z >= 0.15).float()
-    grasped = _is_grasped(env, object_cfg, min_force=0.3).float()
-    pan_err, lift_err, elbow_err = _fold_3joint(env)
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tLifted = (tCubeZ >= 0.15).float()
+    tGrasped = _isGrasped(env, object_cfg, min_force=0.3).float()
+    tPanErr, tLiftErr, tElbowErr = _fold3joint(env)
 
-    s_pan = torch.exp(-2.0 * pan_err)        # pan (0° target)
-    s_lift = torch.exp(-0.5 * lift_err)       # shoulder_lift (-90° target, big range)
-    s_elbow = torch.exp(-0.5 * elbow_err)     # elbow (150° target, big range)
+    tSPan = torch.exp(-2.0 * tPanErr)        # pan (0° target)
+    tSLift = torch.exp(-0.5 * tLiftErr)       # shoulder_lift (-90° target, big range)
+    tSElbow = torch.exp(-0.5 * tElbowErr)     # elbow (150° target, big range)
 
-    return _dopamine("fold", lifted * grasped * (s_pan + s_lift + s_elbow) / 3.0)
+    return _dopamine("fold", tLifted * tGrasped * (tSPan + tSLift + tSElbow) / 3.0)
 
 
 _fh_first = [None]   # step when fold first achieved per env
 _fh_held = [None]    # cumulative steps held since first fold
 
-def fold_hold_reward(env, object_cfg=SceneEntityCfg("cube")):
+def foldHoldReward(env, object_cfg=SceneEntityCfg("cube")):
     """Fold hold: pan<5° AND lift<5° AND elbow<5°, held 70%→save, 95%→big reward."""
-    n = env.num_envs
-    device = env.device
-    if _fh_first[0] is None or _fh_first[0].shape[0] != n:
-        _fh_first[0] = torch.full((n,), -1, dtype=torch.long, device=device)
-        _fh_held[0] = torch.zeros(n, dtype=torch.long, device=device)
+    tN = env.num_envs
+    tDevice = env.device
+    if _fh_first[0] is None or _fh_first[0].shape[0] != tN:
+        _fh_first[0] = torch.full((tN,), -1, dtype=torch.long, device=tDevice)
+        _fh_held[0] = torch.zeros(tN, dtype=torch.long, device=tDevice)
 
-    just_reset = env.episode_length_buf <= 1
-    _fh_first[0][just_reset] = -1
-    _fh_held[0][just_reset] = 0
+    tJustReset = env.episode_length_buf <= 1
+    _fh_first[0][tJustReset] = -1
+    _fh_held[0][tJustReset] = 0
 
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    lifted = (cube_z >= 0.15)
-    grasped = _is_grasped(env, object_cfg, min_force=0.3)
-    pan_err = _fold_3joint(env)[0]
-    holding = lifted & grasped & (pan_err < 0.262)  # pan<15°
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tLifted = (tCubeZ >= 0.15)
+    tGrasped = _isGrasped(env, object_cfg, min_force=0.3)
+    tPanErr = _fold3joint(env)[0]
+    tHolding = tLifted & tGrasped & (tPanErr < 0.262)  # pan<15°
 
-    first_time = holding & (_fh_first[0] < 0)
-    _fh_first[0][first_time] = env.episode_length_buf[first_time]
-    _fh_held[0][holding] += 1
+    tFirstTime = tHolding & (_fh_first[0] < 0)
+    _fh_first[0][tFirstTime] = env.episode_length_buf[tFirstTime]
+    _fh_held[0][tHolding] += 1
 
-    started = _fh_first[0] >= 0
-    elapsed = (env.episode_length_buf - _fh_first[0]).clamp(min=1)
-    ratio = (_fh_held[0].float() / elapsed.float()).clamp(max=1.0)
+    tStarted = _fh_first[0] >= 0
+    tElapsed = (env.episode_length_buf - _fh_first[0]).clamp(min=1)
+    tRatio = (_fh_held[0].float() / tElapsed.float()).clamp(max=1.0)
 
-    above_50 = started & (ratio >= 0.50) & (_fh_held[0] >= 5)
-    reward = torch.zeros(n, device=device)
-    held_frac = (_fh_held[0].float() / env.max_episode_length).clamp(max=1.0)
-    reward[above_50] = held_frac[above_50] ** 2
-    reward[started & ~above_50] = ratio[started & ~above_50] * 1.0
+    tAbove50 = tStarted & (tRatio >= 0.50) & (_fh_held[0] >= 5)
+    tReward = torch.zeros(tN, device=tDevice)
+    tHeldFrac = (_fh_held[0].float() / env.max_episode_length).clamp(max=1.0)
+    tReward[tAbove50] = tHeldFrac[tAbove50] ** 2
+    tReward[tStarted & ~tAbove50] = tRatio[tStarted & ~tAbove50] * 1.0
 
-    return _dopamine("fold_hold", reward)
+    return _dopamine("fold_hold", tReward)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -473,51 +473,51 @@ def fold_hold_reward(env, object_cfg=SceneEntityCfg("cube")):
 #  success = lifted(~off table) & grasped & arm-target back near REST (<0.2).
 #  No dopamine, no chained gates, no 15cm bar, no FOLDED pose. Stationary + ungated.
 # ════════════════════════════════════════════════════════════════════════════════
-def _dist_to_rest(env):
+def _distToRest(env):
     """||commanded arm target qpos - REST_QPOS|| over the 6 arm joints (Squint reached_rest_qpos).
     Uses the COMMANDED target (free at spawn), exactly like Squint's controller._target_qpos."""
-    tgt = _get_target_qpos(env)[:, :6]
-    return torch.norm(tgt - REST_QPOS.to(tgt.device), dim=1)
+    tTgt = _getTargetQpos(env)[:, :6]
+    return torch.norm(tTgt - REST_QPOS.to(tTgt.device), dim=1)
 
 
-def sq_reaching(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def sqReaching(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """Squint reaching: 1 - tanh(5 * dist(tcp, cube)). Ungated, stationary."""
-    obj = env.scene[object_cfg.name]
-    tcp = _tcp(env, ee_frame_cfg)
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    return 1.0 - torch.tanh(5.0 * dist)
+    tObj = env.scene[object_cfg.name]
+    tTcp = _tcp(env, ee_frame_cfg)
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    return 1.0 - torch.tanh(5.0 * tDist)
 
 
-def sq_grasped(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame"),
+def sqGrasped(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame"),
                robot_cfg=SceneEntityCfg("robot")):
     """Squint: binary +1 when grasped. Ungated (no _near_mouth), no dopamine."""
-    return _is_grasped(env, object_cfg, min_force=0.3).float()
+    return _isGrasped(env, object_cfg, min_force=0.3).float()
 
 
-def sq_place(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame"),
+def sqPlace(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame"),
              robot_cfg=SceneEntityCfg("robot")):
     """Place / return-to-rest while holding: exp(-0.5*dist_to_rest) * is_grasped.
     GENTLER decay than Squint's exp(-2*) -- the reBot grasp pose sits ~4 rad from REST (wrists rotated),
     where exp(-2*4)~3e-4 gives NO gradient to return; exp(-0.5*4)=0.135 keeps a real pull toward REST,
     so the policy actually learns the return (-> reached_rest -> success) instead of holding the cube out."""
-    grasped = _is_grasped(env, object_cfg, min_force=0.3).float()
-    return torch.exp(-0.5 * _dist_to_rest(env)) * grasped
+    tGrasped = _isGrasped(env, object_cfg, min_force=0.3).float()
+    return torch.exp(-0.5 * _distToRest(env)) * tGrasped
 
 
-def sq_open_approach(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def sqOpenApproach(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """Pre-grasp shaping: reward opening the jaw WIDE while approaching the cube and NOT yet grasped,
     so the gripper arrives open and can descend over the cube. Gated by ~grasped so it stops the instant
     a grasp forms (never fights the grasp).
     MEASURED gripper convention (diag_gripper_stroke): qpos UP = OPEN (mouth wider), DOWN = CLOSED;
     mouth=4cm (cube) at q~0.035, clears the cube at q>0.04. (The old code rewarded q->0 as "open" which
     was BACKWARDS — q->0 is fully CLOSED.) open_amt=1 at the open cap (q>=0.05), 0 at the grip width."""
-    obj = env.scene[object_cfg.name]
-    tcp = _tcp(env, ee_frame_cfg)
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    open_amt = ((_gq(env) - 0.035) / (0.045 - 0.035)).clamp(0.0, 1.0)  # 1=open(q>=0.045 cap), 0=at grip(q<=0.035)
-    approaching = (dist < 0.15).float()
-    not_grasped = (~_is_grasped(env, object_cfg, min_force=0.3)).float()
-    return open_amt * approaching * not_grasped
+    tObj = env.scene[object_cfg.name]
+    tTcp = _tcp(env, ee_frame_cfg)
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tOpenAmt = ((_gq(env) - 0.035) / (0.045 - 0.035)).clamp(0.0, 1.0)  # 1=open(q>=0.045 cap), 0=at grip(q<=0.035)
+    tApproaching = (tDist < 0.15).float()
+    tNotGrasped = (~_isGrasped(env, object_cfg, min_force=0.3)).float()
+    return tOpenAmt * tApproaching * tNotGrasped
 
 
 # per-env alignment-hold state (module globals). `count` = consecutive OPEN-aligned steps (resets when
@@ -533,7 +533,7 @@ _align_latch = {}
 ALIGN_DIST, ALIGN_OPEN_Q, ALIGN_HOLD_TARGET, ALIGN_UNLOCK, ALIGN_RESET_DIST = 0.13, 0.035, 30, 10, 0.20
 ALIGN_GRIP_Q = 0.03      # gripper qpos where the jaws grip the 4cm cube (mouth ~3.5cm); close target
 
-def sq_align_hold(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def sqAlignHold(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """Pre-grasp ALIGNMENT-HOLD shaping (feedback v2: reach/align is poor). While the OPEN jaws are
     aligned ON the cube (cube within ALIGN_DIST of the TCP AND jaws OPEN, qpos >= ALIGN_OPEN_Q so the
     mouth clears the 4cm cube), reward GROWS with how long the alignment is HELD: a per-env counter
@@ -543,74 +543,74 @@ def sq_align_hold(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEnti
     drifts away / env reset), and _is_grasped REQUIRES it -> the model must align-and-HOLD before a grasp
     counts (grasp after align-hold). jaws-open self-gates this off once the gripper closes (qpos drops
     below ALIGN_OPEN_Q), so there is no circular dependency on _is_grasped."""
-    obj = env.scene[object_cfg.name]
-    tcp = _tcp(env, ee_frame_cfg)
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    aligned = (dist < ALIGN_DIST) & (_gq(env) >= ALIGN_OPEN_Q)
-    n = dist.shape[0]
-    c = _align_count.get(0); l = _align_latch.get(0)
-    if c is None or c.shape[0] != n or c.device != dist.device:
-        c = torch.zeros(n, device=dist.device)
-        l = torch.zeros(n, dtype=torch.bool, device=dist.device)
-    c = torch.where(aligned, c + 1.0, torch.zeros_like(c))
-    pre_latched = l                                            # latch BEFORE this step's update
-    l = (l | (c >= ALIGN_UNLOCK)) & (dist < ALIGN_RESET_DIST)  # set on hold; drop when cube drifts / reset
-    _align_count[0] = c; _align_latch[0] = l
+    tObj = env.scene[object_cfg.name]
+    tTcp = _tcp(env, ee_frame_cfg)
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tAligned = (tDist < ALIGN_DIST) & (_gq(env) >= ALIGN_OPEN_Q)
+    tN = tDist.shape[0]
+    tC = _align_count.get(0); tL = _align_latch.get(0)
+    if tC is None or tC.shape[0] != tN or tC.device != tDist.device:
+        tC = torch.zeros(tN, device=tDist.device)
+        tL = torch.zeros(tN, dtype=torch.bool, device=tDist.device)
+    tC = torch.where(tAligned, tC + 1.0, torch.zeros_like(tC))
+    tPreLatched = tL                                            # latch BEFORE this step's update
+    tL = (tL | (tC >= ALIGN_UNLOCK)) & (tDist < ALIGN_RESET_DIST)  # set on hold; drop when cube drifts / reset
+    _align_count[0] = tC; _align_latch[0] = tL
     # NON-FARMABLE: pay the build-up ramp (0->1 over ALIGN_UNLOCK steps; longer hold = more) ONLY until
     # the hold latches; once latched -> 0. So the policy CANNOT hover forever to farm reward (that was a
     # 0-success local optimum); after the hold it must GRASP (now unlocked) to earn the bigger grasp reward.
-    return (c / float(ALIGN_UNLOCK)).clamp(0.0, 1.0) * aligned.float() * (~pre_latched).float()
+    return (tC / float(ALIGN_UNLOCK)).clamp(0.0, 1.0) * tAligned.float() * (~tPreLatched).float()
 
 
-def _align_held(env, dist):
+def _alignHeld(env, dist):
     """latch from sq_align_hold: an aligned-hold (>= ALIGN_UNLOCK steps) was achieved this episode and not
     since lost. Used by sq_close_after_align to reward closing only AFTER the hold. False until
     sq_align_hold has run."""
-    l = _align_latch.get(0)
-    n = dist.shape[0]
-    if l is None or l.shape[0] != n or l.device != dist.device:
-        return torch.zeros(n, dtype=torch.bool, device=dist.device)
-    return l
+    tL = _align_latch.get(0)
+    tN = dist.shape[0]
+    if tL is None or tL.shape[0] != tN or tL.device != dist.device:
+        return torch.zeros(tN, dtype=torch.bool, device=dist.device)
+    return tL
 
 
-def sq_close_after_align(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
+def sqCloseAfterAlign(env, object_cfg=SceneEntityCfg("cube"), ee_frame_cfg=SceneEntityCfg("ee_frame")):
     """CLOSE-after-align shaping (user idea): once the align-hold LATCH is set (the OPEN jaws were held
     aligned on the cube) and the cube is still in the grasp zone and NOT yet grasped, reward CLOSING the
     gripper (qpos descending from the open width ALIGN_OPEN_Q toward the grip width ALIGN_GRIP_Q). This
     bridges the hold -> close -> grasp transition (the missing link that left the policy hovering open).
     Gated by latch + near + ~grasped, so it fires only AFTER an align-hold and stops once the grasp forms
     (the bigger grasp/place reward then takes over)."""
-    obj = env.scene[object_cfg.name]
-    tcp = _tcp(env, ee_frame_cfg)
-    dist = torch.norm(obj.data.root_pos_w - tcp, dim=1)
-    latch = _align_held(env, dist)
-    near = dist < ALIGN_RESET_DIST
-    not_grasped = ~_is_grasped(env, object_cfg, min_force=0.3)
-    close_amt = ((ALIGN_OPEN_Q - _gq(env)) / (ALIGN_OPEN_Q - ALIGN_GRIP_Q)).clamp(0.0, 1.0)  # 1=at grip width
-    return close_amt * (latch & near & not_grasped).float()
+    tObj = env.scene[object_cfg.name]
+    tTcp = _tcp(env, ee_frame_cfg)
+    tDist = torch.norm(tObj.data.root_pos_w - tTcp, dim=1)
+    tLatch = _alignHeld(env, tDist)
+    tNear = tDist < ALIGN_RESET_DIST
+    tNotGrasped = ~_isGrasped(env, object_cfg, min_force=0.3)
+    tCloseAmt = ((ALIGN_OPEN_Q - _gq(env)) / (ALIGN_OPEN_Q - ALIGN_GRIP_Q)).clamp(0.0, 1.0)  # 1=at grip width
+    return tCloseAmt * (tLatch & tNear & tNotGrasped).float()
 
 
-def sq_not_lifted(env, object_cfg=SceneEntityCfg("cube")):
+def sqNotLifted(env, object_cfg=SceneEntityCfg("cube")):
     """Squint not-lifted penalty (returns 1 while on table). Threshold ~5mm above rest (was 15cm)."""
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    item_lifted = cube_z >= (CUBE_REST_Z + 0.005)
-    return (~item_lifted).float()
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tItemLifted = tCubeZ >= (CUBE_REST_Z + 0.005)
+    return (~tItemLifted).float()
 
 
-def is_fold_success(env, object_cfg=SceneEntityCfg("cube")):
+def isFoldSuccess(env, object_cfg=SceneEntityCfg("cube")):
     """SUCCESS = SQUINT-EXACT (lift.py:354-382 evaluate()): item_lifted & is_grasped & reached_rest_qpos.
       item_lifted  = cube_z >= CUBE_REST_Z + 0.001   (~1mm off the table, = Squint half_size+1e-3)
       grasped      = both fingers in contact-force on the cube (_is_grasped, angle-gated 110deg)
       reached_rest = ||commanded arm target - REST_QPOS|| < 0.2
     Returns a (N,) bool tensor. (min_force kept at our calibrated 0.3 -- Isaac's contact-sensor force
     scale differs from Squint's SAPIEN pairwise force, so the 0.5 N literal does not transfer.)"""
-    obj = env.scene[object_cfg.name]
-    cube_z = obj.data.root_pos_w[:, 2]
-    item_lifted = cube_z >= (CUBE_REST_Z + 0.001)     # Squint: item.z >= half_size + 1e-3
-    grasped = _is_grasped(env, object_cfg, min_force=0.3)
-    reached_rest = _dist_to_rest(env) < 0.2           # Squint reached_rest_qpos < 0.2
-    return item_lifted & grasped & reached_rest
+    tObj = env.scene[object_cfg.name]
+    tCubeZ = tObj.data.root_pos_w[:, 2]
+    tItemLifted = tCubeZ >= (CUBE_REST_Z + 0.001)     # Squint: item.z >= half_size + 1e-3
+    tGrasped = _isGrasped(env, object_cfg, min_force=0.3)
+    tReachedRest = _distToRest(env) < 0.2           # Squint reached_rest_qpos < 0.2
+    return tItemLifted & tGrasped & tReachedRest
 
 
 # ── Fleet-wide success counter (counts SUCCESSFUL EPISODES across ALL envs) ────────
@@ -629,82 +629,82 @@ _succ_flag = [None]      # per-env latch (bool tensor): ongoing episode reached 
 _last_ep_succ = [None]   # per-env success of the most recently FINISHED episode (env_0 replay)
 
 
-def success_latch(env, object_cfg=SceneEntityCfg("cube")):
+def successLatch(env, object_cfg=SceneEntityCfg("cube")):
     """Termination term that NEVER terminates. Side-effect: latch per-env success while
     the terminal state is still valid (pre-reset). Returns an all-False (N,) bool tensor."""
-    n = env.num_envs
-    succ = is_fold_success(env, object_cfg)
-    if _succ_flag[0] is None or _succ_flag[0].shape[0] != n:
-        _succ_flag[0] = torch.zeros(n, dtype=torch.bool, device=succ.device)
-    _succ_flag[0] |= succ
-    return torch.zeros(n, dtype=torch.bool, device=succ.device)
+    tN = env.num_envs
+    tSucc = isFoldSuccess(env, object_cfg)
+    if _succ_flag[0] is None or _succ_flag[0].shape[0] != tN:
+        _succ_flag[0] = torch.zeros(tN, dtype=torch.bool, device=tSucc.device)
+    _succ_flag[0] |= tSucc
+    return torch.zeros(tN, dtype=torch.bool, device=tSucc.device)
 
 
-def count_successes(env, env_ids):
+def countSuccesses(env, env_ids):
     """Reset event: tally latched successes for the just-finished env_ids, then clear them."""
-    flag = _succ_flag[0]
-    if flag is None:
+    tFlag = _succ_flag[0]
+    if tFlag is None:
         return
-    fin = flag[env_ids]
-    _succ_total[0] += int(fin.sum().item())
-    _ep_total[0] += int(fin.numel())
-    _succ_recent.extend(int(v) for v in fin.tolist())
+    tFin = tFlag[env_ids]
+    _succ_total[0] += int(tFin.sum().item())
+    _ep_total[0] += int(tFin.numel())
+    _succ_recent.extend(int(tV) for tV in tFin.tolist())
     if len(_succ_recent) > 500:
         del _succ_recent[:-500]
-    if _last_ep_succ[0] is None or _last_ep_succ[0].shape[0] != flag.shape[0]:
-        _last_ep_succ[0] = torch.zeros_like(flag)
-    _last_ep_succ[0][env_ids] = fin
-    flag[env_ids] = False
+    if _last_ep_succ[0] is None or _last_ep_succ[0].shape[0] != tFlag.shape[0]:
+        _last_ep_succ[0] = torch.zeros_like(tFlag)
+    _last_ep_succ[0][env_ids] = tFin
+    tFlag[env_ids] = False
 
 
-def _touching_table(env):
+def _touchingTable(env):
     """Detect gripper/jaw touching anything other than the cube (i.e. the table)."""
-    gn = env.scene["gripper_contact"].data.net_forces_w[:, 0, :]
-    gc = env.scene["gripper_contact"].data.force_matrix_w[:, 0, 0, :]
-    jn = env.scene["jaw_contact"].data.net_forces_w[:, 0, :]
-    jc = env.scene["jaw_contact"].data.force_matrix_w[:, 0, 0, :]
-    return ((gn - gc).norm(dim=-1) >= 0.01) | ((jn - jc).norm(dim=-1) >= 0.01)
+    tGn = env.scene["gripper_contact"].data.net_forces_w[:, 0, :]
+    tGc = env.scene["gripper_contact"].data.force_matrix_w[:, 0, 0, :]
+    tJn = env.scene["jaw_contact"].data.net_forces_w[:, 0, :]
+    tJc = env.scene["jaw_contact"].data.force_matrix_w[:, 0, 0, :]
+    return ((tGn - tGc).norm(dim=-1) >= 0.01) | ((tJn - tJc).norm(dim=-1) >= 0.01)
 
 
-def table_collision_penalty(
+def tableCollisionPenalty(
     env,
     table_height=0.04,
     ee_frame_cfg=SceneEntityCfg("ee_frame"),
 ):
     """Penalty for touching the table surface."""
-    return _touching_table(env).float()
+    return _touchingTable(env).float()
 
 
 # ── Smoothness penalties ──
 _prev_action = [None]
 _prev_prev_action = [None]
 
-def action_rate_penalty(env):
+def actionRatePenalty(env):
     """||a_t - a_{t-1}||² — penalize sudden action changes."""
-    cur = env.action_manager.action
-    if _prev_action[0] is None or _prev_action[0].shape != cur.shape:
-        _prev_action[0] = cur.clone()
-    penalty = ((cur - _prev_action[0]) ** 2).sum(dim=-1)
-    _prev_action[0] = cur.clone()
-    return penalty
+    tCur = env.action_manager.action
+    if _prev_action[0] is None or _prev_action[0].shape != tCur.shape:
+        _prev_action[0] = tCur.clone()
+    tPenalty = ((tCur - _prev_action[0]) ** 2).sum(dim=-1)
+    _prev_action[0] = tCur.clone()
+    return tPenalty
 
 
-def action_jerk_penalty(env):
+def actionJerkPenalty(env):
     """||a_t - 2*a_{t-1} + a_{t-2}||² — penalize acceleration changes (tremor)."""
-    cur = env.action_manager.action
-    if _prev_action[0] is None or _prev_action[0].shape != cur.shape:
-        _prev_action[0] = cur.clone()
-    if _prev_prev_action[0] is None or _prev_prev_action[0].shape != cur.shape:
-        _prev_prev_action[0] = cur.clone()
-    jerk = cur - 2 * _prev_action[0] + _prev_prev_action[0]
-    penalty = (jerk ** 2).sum(dim=-1)
+    tCur = env.action_manager.action
+    if _prev_action[0] is None or _prev_action[0].shape != tCur.shape:
+        _prev_action[0] = tCur.clone()
+    if _prev_prev_action[0] is None or _prev_prev_action[0].shape != tCur.shape:
+        _prev_prev_action[0] = tCur.clone()
+    tJerk = tCur - 2 * _prev_action[0] + _prev_prev_action[0]
+    tPenalty = (tJerk ** 2).sum(dim=-1)
     _prev_prev_action[0] = _prev_action[0].clone()
-    _prev_action[0] = cur.clone()
-    return penalty
+    _prev_action[0] = tCur.clone()
+    return tPenalty
 
 
-def joint_vel_penalty(env, robot_cfg=SceneEntityCfg("robot")):
+def jointVelPenalty(env, robot_cfg=SceneEntityCfg("robot")):
     """||qvel||^2 over ALL joints -- velocity regularization (calm motion, no twisting/whipping).
     Pairs with action_rate_penalty to smooth the contorted approach that transfers badly to real."""
-    qvel = env.scene[robot_cfg.name].data.joint_vel
-    return (qvel ** 2).sum(dim=-1)
+    tQvel = env.scene[robot_cfg.name].data.joint_vel
+    return (tQvel ** 2).sum(dim=-1)

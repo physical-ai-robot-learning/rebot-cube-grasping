@@ -61,13 +61,13 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"; TARGET = args.target_cube; N = args.num_envs; NS = 4   # reaching -> align -> grasp -> lift
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=TARGET)
 _obj = getattr(env_cfg.scene, TARGET); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -88,15 +88,15 @@ except Exception:
     pass
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 sb3_env = Sb3VecEnvWrapper(env)
 obs_dim = int(np.prod(sb3_env.observation_space.shape)); act_dim = int(np.prod(sb3_env.action_space.shape))
 print(f"[JOINT] obs={obs_dim} act={act_dim} envs={N} stages={NS}", flush=True)
-dash.start(args.http_port, target_cube=TARGET)
+dash.start(args.http_port, targetCube=TARGET)
 os.makedirs(args.save_dir, exist_ok=True)
 
 
-def orthogonal_init(m):
+def orthogonalInit(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight)
         if m.bias is not None:
@@ -111,22 +111,22 @@ class Actor(nn.Module):
         self.proj = nn.Sequential(nn.Linear(ns, 256), nn.LayerNorm(256), nn.ReLU())
         self.fc = nn.Sequential(nn.Linear(256, h), nn.LayerNorm(h), nn.ReLU(),
             nn.Linear(h, h), nn.LayerNorm(h), nn.ReLU(), nn.Linear(h, h), nn.LayerNorm(h), nn.ReLU())
-        self.mean = nn.Linear(h, na); self.logstd = nn.Linear(h, na); self.apply(orthogonal_init)
+        self.mean = nn.Linear(h, na); self.logstd = nn.Linear(h, na); self.apply(orthogonalInit)
 
     def _ml(self, s):
-        x = self.fc(self.proj(s)); m = self.mean(x)
-        ls = torch.tanh(self.logstd(x)); ls = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (ls + 1)
-        return m, ls
+        tX = self.fc(self.proj(s)); tM = self.mean(tX)
+        tLs = torch.tanh(self.logstd(tX)); tLs = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLs + 1)
+        return tM, tLs
 
-    def get_action(self, s):
-        m, ls = self._ml(s); std = ls.exp(); nrm = torch.distributions.Normal(m, std)
-        x = nrm.rsample(); y = torch.tanh(x)
-        logp = (nrm.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+    def getAction(self, s):
+        tM, tLs = self._ml(s); tStd = tLs.exp(); tNrm = torch.distributions.Normal(tM, tStd)
+        tX = tNrm.rsample(); tY = torch.tanh(tX)
+        tLogp = (tNrm.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
     @torch.no_grad()
-    def act_deterministic(self, s):
-        m, _ = self._ml(s); return torch.tanh(m)
+    def actDeterministic(self, s):
+        tM, _ = self._ml(s); return torch.tanh(tM)
 
 
 class CriticC51(nn.Module):
@@ -139,24 +139,24 @@ class CriticC51(nn.Module):
             return nn.Sequential(nn.Linear(256 + na, h), nn.LayerNorm(h), nn.ReLU(),
                 nn.Linear(h, h), nn.LayerNorm(h), nn.ReLU(), nn.Linear(h, h), nn.LayerNorm(h), nn.ReLU(),
                 nn.Linear(h, atoms))
-        self.qs = nn.ModuleList([qn() for _ in range(nq)]); self.apply(orthogonal_init)
+        self.qs = nn.ModuleList([qn() for _ in range(nq)]); self.apply(orthogonalInit)
 
     def logits(self, s, a):
-        x = torch.cat([self.proj(s), a], dim=-1); return torch.stack([q(x) for q in self.qs], dim=0)
+        tX = torch.cat([self.proj(s), a], dim=-1); return torch.stack([tQ2(tX) for tQ2 in self.qs], dim=0)
 
-    def q_values(self, s, a):
+    def qValues(self, s, a):
         return (F.softmax(self.logits(s, a), dim=-1) * self.support).sum(-1)
 
 
 @torch.no_grad()
-def project_target(tc, ns_, na_, rew, boot, gamma):
-    probs = F.softmax(tc.logits(ns_, na_), dim=-1); sup = tc.support
-    vmin, vmax, A = tc.v_min, tc.v_max, tc.num_atoms; Q, Nn, _ = probs.shape; dz = (vmax - vmin) / (A - 1)
-    tz = (rew.view(1, Nn, 1) + boot.view(1, Nn, 1) * gamma * sup.view(1, 1, A)).clamp(vmin, vmax).expand(Q, Nn, A)
-    b = (tz - vmin) / dz; l = b.floor().long(); u = b.ceil().long(); ii = (u == l)
-    l = torch.where((l > 0) & ii, l - 1, l); u = torch.where((l == 0) & ii, u + 1, u)
-    l = l.clamp(0, A - 1); u = u.clamp(0, A - 1); m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b)); m.scatter_add_(2, u, probs * (b - l.float())); return m
+def projectTarget(tc, ns_, na_, rew, boot, gamma):
+    tProbs = F.softmax(tc.logits(ns_, na_), dim=-1); tSup = tc.support
+    tVmin, tVmax, tA = tc.v_min, tc.v_max, tc.num_atoms; tQ, tNn, _ = tProbs.shape; tDz = (tVmax - tVmin) / (tA - 1)
+    tTz = (rew.view(1, tNn, 1) + boot.view(1, tNn, 1) * gamma * tSup.view(1, 1, tA)).clamp(tVmin, tVmax).expand(tQ, tNn, tA)
+    tB = (tTz - tVmin) / tDz; tL = tB.floor().long(); tU = tB.ceil().long(); tIi = (tU == tL)
+    tL = torch.where((tL > 0) & tIi, tL - 1, tL); tU = torch.where((tL == 0) & tIi, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1); tU = tU.clamp(0, tA - 1); tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB)); tM.scatter_add_(2, tU, tProbs * (tB - tL.float())); return tM
 
 
 class Buffer:
@@ -167,20 +167,20 @@ class Buffer:
         self.done = torch.zeros(cap, device=dev)
 
     def add(self, o, a, r, n, d):
-        B = o.shape[0]
-        if B == 0:
+        tB2 = o.shape[0]
+        if tB2 == 0:
             return
-        idx = (torch.arange(B, device=self.device) + self.ptr) % self.cap
-        self.obs[idx] = o; self.act[idx] = a; self.rew[idx] = r; self.nxt[idx] = n; self.done[idx] = d
-        np_ = self.ptr + B
-        self.full = self.full or np_ >= self.cap; self.ptr = np_ % self.cap
+        tIdx = (torch.arange(tB2, device=self.device) + self.ptr) % self.cap
+        self.obs[tIdx] = o; self.act[tIdx] = a; self.rew[tIdx] = r; self.nxt[tIdx] = n; self.done[tIdx] = d
+        tNp = self.ptr + tB2
+        self.full = self.full or tNp >= self.cap; self.ptr = tNp % self.cap
 
     def ready(self, bs):
         return self.full or self.ptr >= bs
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr; idx = torch.randint(0, hi, (bs,), device=self.device)
-        return self.obs[idx], self.act[idx], self.rew[idx], self.nxt[idx], self.done[idx]
+        tHi = self.cap if self.full else self.ptr; tIdx = torch.randint(0, tHi, (bs,), device=self.device)
+        return self.obs[tIdx], self.act[tIdx], self.rew[tIdx], self.nxt[tIdx], self.done[tIdx]
 
 
 # 3 actor-critics
@@ -191,11 +191,11 @@ for s in range(NS):
     targets[s].load_state_dict(critics[s].state_dict())
     for p in targets[s].parameters():
         p.requires_grad_(False)
-a_opt = [torch.optim.Adam(actors[s].parameters(), lr=args.lr) for s in range(NS)]
-c_opt = [torch.optim.Adam(critics[s].parameters(), lr=args.lr) for s in range(NS)]
+a_opt = [torch.optim.Adam(actors[tS].parameters(), lr=args.lr) for tS in range(NS)]
+c_opt = [torch.optim.Adam(critics[tS].parameters(), lr=args.lr) for tS in range(NS)]
 log_alpha = [torch.zeros(1, requires_grad=True, device=DEVICE) for _ in range(NS)]
-al_opt = [torch.optim.Adam([log_alpha[s]], lr=args.lr) for s in range(NS)]
-alpha = [log_alpha[s].exp().detach() for s in range(NS)]
+al_opt = [torch.optim.Adam([log_alpha[tS]], lr=args.lr) for tS in range(NS)]
+alpha = [log_alpha[tS].exp().detach() for tS in range(NS)]
 target_entropy = -float(act_dim)
 bufs = [Buffer(args.buffer_size, obs_dim, act_dim, DEVICE) for _ in range(NS)]
 
@@ -216,49 +216,49 @@ if args.warm:
         print(f"[JOINT] warm s{s} <- {wpaths[s]} (alpha={float(alpha[s]):.3f})", flush=True)
 
 
-def update_stage(s):
-    o, a, r, n, d = bufs[s].sample(args.batch_size)
+def updateStage(s):
+    tO, tA2, tR, tN, tD = bufs[s].sample(args.batch_size)
     with torch.no_grad():
-        na, nlogp = actors[s].get_action(n); boot = (1.0 - d)
-        r_ent = r - boot * args.gamma * (alpha[s].squeeze() * nlogp.squeeze(-1))
-        tgt = project_target(targets[s], n, na, r_ent, boot, args.gamma)
-    logp = F.log_softmax(critics[s].logits(o, a), dim=-1)
-    closs = (-(tgt * logp).sum(-1).mean(-1)).sum()
-    c_opt[s].zero_grad(set_to_none=True); closs.backward(); c_opt[s].step()
-    return o
+        tNa, tNlogp = actors[s].getAction(tN); tBoot = (1.0 - tD)
+        tREnt = tR - tBoot * args.gamma * (alpha[s].squeeze() * tNlogp.squeeze(-1))
+        tTgt = projectTarget(targets[s], tN, tNa, tREnt, tBoot, args.gamma)
+    tLogp = F.log_softmax(critics[s].logits(tO, tA2), dim=-1)
+    tCloss = (-(tTgt * tLogp).sum(-1).mean(-1)).sum()
+    c_opt[s].zero_grad(set_to_none=True); tCloss.backward(); c_opt[s].step()
+    return tO
 
 
-def update_actor_stage(s, o):
-    api, logp = actors[s].get_action(o); qv = critics[s].q_values(o, api).mean(0)
-    aloss = (alpha[s].squeeze() * logp.squeeze(-1) - qv).mean()
-    a_opt[s].zero_grad(set_to_none=True); aloss.backward(); a_opt[s].step()
+def updateActorStage(s, o):
+    tApi, tLogp = actors[s].getAction(o); tQv = critics[s].qValues(o, tApi).mean(0)
+    tAloss = (alpha[s].squeeze() * tLogp.squeeze(-1) - tQv).mean()
+    a_opt[s].zero_grad(set_to_none=True); tAloss.backward(); a_opt[s].step()
     with torch.no_grad():
-        _, lp2 = actors[s].get_action(o)
-    alloss = -(log_alpha[s].exp() * (lp2 + target_entropy)).mean()
-    al_opt[s].zero_grad(set_to_none=True); alloss.backward(); al_opt[s].step()
+        _, tLp2 = actors[s].getAction(o)
+    tAlloss = -(log_alpha[s].exp() * (tLp2 + target_entropy)).mean()
+    al_opt[s].zero_grad(set_to_none=True); tAlloss.backward(); al_opt[s].step()
 
 
 _ee = SceneEntityCfg("ee_frame"); _oc = SceneEntityCfg(TARGET)
 def _dist():
     return torch.norm(env.scene[TARGET].data.root_pos_w - MR._tcp(env, _ee), dim=1)
-def stage_cond(s):
+def stageCond(s):
     # 4 stages: 0 reaching -> 1 align -> 2 grasp -> 3 lift. Each returns the env-wise done-condition.
     if s == 0:   # reaching done: gripper reached the cube vicinity (slightly looser than the align band)
         return _dist() < (MR.ALIGN_DIST + 0.05)
     if s == 1:   # align done: open jaws aligned-and-HELD over the cube (the align-hold latch)
-        return MR._align_held(env, _dist())
+        return MR._alignHeld(env, _dist())
     if s == 2:   # grasp done: contact-grasp (requires the align-hold latch -> grasp-after-align)
-        return MR._is_grasped(env, _oc)
-    return MR.is_fold_success(env, _oc)   # lift done: lifted + grasped + returned to REST = success
+        return MR._isGrasped(env, _oc)
+    return MR.isFoldSuccess(env, _oc)   # lift done: lifted + grasped + returned to REST = success
 
 
-def to_t(x):
+def toT(x):
     return torch.as_tensor(np.asarray(x, dtype=np.float32), device=DEVICE)
 
 
 print(f"[JOINT] start. sr-target={args.success_rate_target} hits={args.min_sr_hits} bonus={args.bonus}", flush=True)
 obs = np.nan_to_num(np.asarray(sb3_env.reset(), dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
-obs_t = to_t(obs)
+obs_t = toT(obs)
 stage = torch.zeros(N, dtype=torch.long, device=DEVICE)
 bonus_given = torch.zeros(N, dtype=torch.bool, device=DEVICE)   # got this stage's bonus already
 ep_succ = torch.zeros(N, dtype=torch.bool, device=DEVICE)       # reached place-done this episode
@@ -275,13 +275,13 @@ while gstep < args.total_timesteps:
                 action[m] = torch.rand(int(m.sum()), act_dim, device=DEVICE) * 2 - 1
             else:
                 with torch.no_grad():
-                    a_s, _ = actors[s].get_action(obs_t[m])
+                    a_s, _ = actors[s].getAction(obs_t[m])
                 action[m] = a_s
     next_obs, rew, done, infos = sb3_env.step(action.detach().cpu().numpy().astype(np.float32))
     next_obs = np.nan_to_num(np.asarray(next_obs, dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
     rew = np.nan_to_num(np.asarray(rew, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
-    next_t = to_t(next_obs); rew_t = to_t(rew)
-    conds = [stage_cond(0), stage_cond(1), stage_cond(2), stage_cond(3)]
+    next_t = toT(next_obs); rew_t = toT(rew)
+    conds = [stageCond(0), stageCond(1), stageCond(2), stageCond(3)]
     # per-stage collect (full reward + this-stage done bonus, once)
     for s in range(NS):
         m = (pre_stage == s)
@@ -310,9 +310,9 @@ while gstep < args.total_timesteps:
         for s in range(NS):
             if bufs[s].ready(args.batch_size):
                 for j in range(args.num_updates):
-                    o = update_stage(s)
+                    o = updateStage(s)
                     if j % args.policy_frequency == 0:
-                        update_actor_stage(s, o)
+                        updateActorStage(s, o)
                     with torch.no_grad():
                         torch._foreach_lerp_(list(targets[s].parameters()), list(critics[s].parameters()), args.tau)
                 alpha[s] = log_alpha[s].exp().detach()
@@ -331,11 +331,11 @@ while gstep < args.total_timesteps:
         break
 
     if nit % 20 == 0:
-        c = [int((stage == s).sum()) for s in range(NS)]
+        c = [int((stage == tS).sum()) for tS in range(NS)]
         print(f"[JOINT] t={gstep} end2end_sr={sr:.3f} ({_ep} eps) envs@[reach{c[0]},align{c[1]},grasp{c[2]},lift{c[3]}] "
               f"alpha=[{float(alpha[0]):.2f},{float(alpha[1]):.2f},{float(alpha[2]):.2f},{float(alpha[3]):.2f}]", flush=True)
         try:
-            dash.push_stats(step=gstep, episode=_ep, current_reward=0.0, episode_reward=0.0, cumulative_reward=0.0,
+            dash.pushStats(step=gstep, episode=_ep, current_reward=0.0, episode_reward=0.0, cumulative_reward=0.0,
                             best_reward=0.0, success_count=int(sum(_rec)), success_rate=sr,
                             reward_terms={"end2end_sr": round(sr, 3), "reach": c[0], "align": c[1], "grasp": c[2], "lift": c[3]},
                             cumulative_terms={}, dopamine={})

@@ -68,9 +68,9 @@ def test_eval_hooks_writer_and_summary(tmp_path, monkeypatch):
     eval_hooks.seed(cfg)
     assert cfg.seed == 7
     cases = torch.tensor([[0.1, -0.5, 0.2, 0.0], [0.3, -0.6, -0.1, 0.0], [0.5, -0.7, 0.0, 0.0]])
-    eval_hooks.log_episodes(cases, torch.tensor([0, 2]), torch.tensor([4, 5]), torch.tensor([True, True]),
+    eval_hooks.logEpisodes(cases, torch.tensor([0, 2]), torch.tensor([4, 5]), torch.tensor([True, True]),
                             torch.tensor([False, False]), torch.tensor([True, False]), torch.tensor([False, False]), 640)
-    eval_hooks.log_episodes(cases, torch.tensor([1]), torch.tensor([0]), torch.tensor([False]),
+    eval_hooks.logEpisodes(cases, torch.tensor([1]), torch.tensor([0]), torch.tensor([False]),
                             torch.tensor([False]), torch.tensor([False]), torch.tensor([False]), 960)
     monkeypatch.setenv("EVAL_EXIT_WHEN_DONE", "0")
     eval_hooks.finish({"rsr_pct": 0.0, "rsr_old_pct": 33.3, "search_pct": 66.7, "covered": 3, "M": 3})
@@ -114,8 +114,8 @@ def test_video_hook_writes_episode_clip(tmp_path, monkeypatch):
     sys.modules.pop("rebot_grasp_rl.eval_hooks", None)
     eval_hooks = importlib.import_module("rebot_grasp_rl.eval_hooks")   # re-read the EVAL_* variables
     for i in range(6):
-        eval_hooks.video_frame(np.full((64, 64, 3), 10 * i, np.uint8), np.zeros((64, 64, 3), np.uint8), 0 if i < 3 else 1)
-    eval_hooks.video_end(36, True, False, True, False)
+        eval_hooks.videoFrame(np.full((64, 64, 3), 10 * i, np.uint8), np.zeros((64, 64, 3), np.uint8), 0 if i < 3 else 1)
+    eval_hooks.videoEnd(36, True, False, True, False)
     assert (tmp_path / "ep00_case36_reach_privileged.mp4").stat().st_size > 0
     assert (tmp_path / "videos.csv").read_text().startswith("ep00_case36_reach_privileged.mp4,36,1,0,1,0,6,search|approach")
 

@@ -36,8 +36,8 @@ class _Block(nn.Module):
         self.ln2 = nn.LayerNorm(d)
 
     def forward(self, tok):
-        a, _ = self.attn(tok, tok, tok)
-        tok = self.ln1(tok + a)            # cross/self-attention residual
+        tA, _ = self.attn(tok, tok, tok)
+        tok = self.ln1(tok + tA)            # cross/self-attention residual
         tok = self.ln2(tok + self.ffn(tok))  # FFN (MLP) residual
         return tok
 
@@ -63,23 +63,23 @@ class DetCrossAttn(nn.Module):
             self.pool_attn = nn.MultiheadAttention(d, nheads, batch_first=True)
 
     def forward(self, front_det, wrist_det, cube_ori, cube3d, acq=None):
-        ft = self.front_embed(front_det) + self.tok_id[0]
-        wt = self.wrist_embed(wrist_det) + self.tok_id[1]
-        ot = self.ori_embed(cube_ori) + self.tok_id[2]
-        ct = self.cube_embed(cube3d) + self.tok_id[3]
-        _toks = [ft, wt, ot, ct]
+        tFt = self.front_embed(front_det) + self.tok_id[0]
+        tWt = self.wrist_embed(wrist_det) + self.tok_id[1]
+        tOt = self.ori_embed(cube_ori) + self.tok_id[2]
+        tCt = self.cube_embed(cube3d) + self.tok_id[3]
+        tToks = [tFt, tWt, tOt, tCt]
         if D_ACQ > 0:
-            _toks.append(self.acq_embed(acq) + self.tok_id[4])   # user 2026-08-01: 5th FRONT-guided aim token
-        tok = torch.stack(_toks, dim=1)                  # (B, _NTOK, d) -- front + wrist + ori + cube3d [+ acq]
-        for blk in self.blocks:
-            tok = blk(tok)                                 # cross-attention KEPT (tokens mix here)
+            tToks.append(self.acq_embed(acq) + self.tok_id[4])   # user 2026-08-01: 5th FRONT-guided aim token
+        tTok = torch.stack(tToks, dim=1)                  # (B, _NTOK, d) -- front + wrist + ori + cube3d [+ acq]
+        for tBlk in self.blocks:
+            tTok = tBlk(tTok)                                 # cross-attention KEPT (tokens mix here)
         if DET_POOL == "concat":
-            return tok.flatten(1)                          # (B, 4*d) -- keep all 4 enriched tokens
+            return tTok.flatten(1)                          # (B, 4*d) -- keep all 4 enriched tokens
         if DET_POOL == "attn":
-            q = self.pool_q.expand(tok.shape[0], -1, -1)
-            pooled, _ = self.pool_attn(q, tok, tok)        # learnable query attends over the 4 tokens
-            return pooled.squeeze(1)                        # (B, d)
-        return tok.mean(dim=1)                             # (B, d) -- mean pool
+            tQ = self.pool_q.expand(tTok.shape[0], -1, -1)
+            tPooled, _ = self.pool_attn(tQ, tTok, tTok)        # learnable query attends over the 4 tokens
+            return tPooled.squeeze(1)                        # (B, d)
+        return tTok.mean(dim=1)                             # (B, d) -- mean pool
 
 
 class DetProjection(nn.Module):
@@ -89,57 +89,57 @@ class DetProjection(nn.Module):
         super().__init__()
         self.det = DetCrossAttn(d=d, blocks=blocks)   # user 2026-07-07: per-instance blocks (deploy loads slim-search + full-approach in one process)
         if not PROPRIO_OFF:
-            sp_in = n_state if CUBE3D_MLP else n_state - D_CUBE - D_ACQ   # CUBE3D_MLP -> cube3d ALSO in MLP (3d-twice); else proprio only (exclude cube3d + acq tail)
-            self.state_proj = nn.Sequential(nn.Linear(sp_in, 256), nn.LayerNorm(256), nn.ReLU())
+            tSpIn = n_state if CUBE3D_MLP else n_state - D_CUBE - D_ACQ   # CUBE3D_MLP -> cube3d ALSO in MLP (3d-twice); else proprio only (exclude cube3d + acq tail)
+            self.state_proj = nn.Sequential(nn.Linear(tSpIn, 256), nn.LayerNorm(256), nn.ReLU())
 
     def forward(self, front_det, wrist_det, cube_ori, state):
         if D_ACQ > 0:                                               # state tail = [... cube_rel(D_CUBE), acq(D_ACQ)]
-            acq = state[:, -D_ACQ:]                                 # user 2026-08-01: front-guided aim vector [pcx,pcy,pv]
-            cube3d = state[:, -(D_CUBE + D_ACQ):-D_ACQ]
+            tAcq = state[:, -D_ACQ:]                                 # user 2026-08-01: front-guided aim vector [pcx,pcy,pv]
+            tCube3d = state[:, -(D_CUBE + D_ACQ):-D_ACQ]
         else:
-            acq = None
-            cube3d = state[:, -D_CUBE:]                              # front-cam coordinate-transform offset -> attention token (kept even when PROPRIO_OFF)
-        det = self.det(front_det, wrist_det, cube_ori, cube3d, acq)
+            tAcq = None
+            tCube3d = state[:, -D_CUBE:]                              # front-cam coordinate-transform offset -> attention token (kept even when PROPRIO_OFF)
+        tDet = self.det(front_det, wrist_det, cube_ori, tCube3d, tAcq)
         if PROPRIO_OFF:
-            return det                                              # vision-only tokens, NO proprio MLP
-        proprio = state if CUBE3D_MLP else state[:, :-(D_CUBE + D_ACQ)]   # 3d-twice -> full state to MLP; else proprio-only (drop cube3d + acq)
-        return torch.cat([det, self.state_proj(proprio)], dim=-1)
+            return tDet                                              # vision-only tokens, NO proprio MLP
+        tProprio = state if CUBE3D_MLP else state[:, :-(D_CUBE + D_ACQ)]   # 3d-twice -> full state to MLP; else proprio-only (drop cube3d + acq)
+        return torch.cat([tDet, self.state_proj(tProprio)], dim=-1)
 
 
 class DetActor(nn.Module):
     def __init__(self, n_state, n_act, hidden=_ACTOR_HID, layers=_ACTOR_LAYERS, blocks=_BLOCKS):
         super().__init__()
         self.proj = DetProjection(n_state, blocks=blocks)
-        _seq = [nn.Linear(DetProjection.OUT_DIM, hidden), nn.LayerNorm(hidden), nn.ReLU()]
+        tSeq = [nn.Linear(DetProjection.OUT_DIM, hidden), nn.LayerNorm(hidden), nn.ReLU()]
         for _ in range(max(1, layers) - 1):
-            _seq += [nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU()]
-        self.fc = nn.Sequential(*_seq)
+            tSeq += [nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU()]
+        self.fc = nn.Sequential(*tSeq)
         self.mean = nn.Linear(hidden, n_act)
         self.logstd = nn.Linear(hidden, n_act)
 
-    def _mean_logstd(self, fd, wd, ori, s):
-        x = self.fc(self.proj(fd, wd, ori, s))
-        return self.mean(x), self.logstd(x).clamp(-5, 2)
+    def _meanLogstd(self, fd, wd, ori, s):
+        tX = self.fc(self.proj(fd, wd, ori, s))
+        return self.mean(tX), self.logstd(tX).clamp(-5, 2)
 
     def sample(self, fd, wd, ori, s):
-        mean, logstd = self._mean_logstd(fd, wd, ori, s)
-        std = logstd.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x = normal.rsample(); y = torch.tanh(x)
-        logp = (normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)).sum(1, keepdim=True)
-        return y, logp
+        tMean, tLogstd = self._meanLogstd(fd, wd, ori, s)
+        tStd = tLogstd.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd)
+        tX = tNormal.rsample(); tY = torch.tanh(tX)
+        tLogp = (tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)).sum(1, keepdim=True)
+        return tY, tLogp
 
-    def mean_action(self, fd, wd, ori, s):
-        mean, _ = self._mean_logstd(fd, wd, ori, s)
-        return torch.tanh(mean)
+    def meanAction(self, fd, wd, ori, s):
+        tMean, _ = self._meanLogstd(fd, wd, ori, s)
+        return torch.tanh(tMean)
 
     # trainer-compatible aliases (match train_c51_visual Actor API)
-    def get_action(self, fd, wd, ori, s):
+    def getAction(self, fd, wd, ori, s):
         return self.sample(fd, wd, ori, s)
 
     @torch.no_grad()
-    def act_deterministic(self, fd, wd, ori, s):
-        return self.mean_action(fd, wd, ori, s)
+    def actDeterministic(self, fd, wd, ori, s):
+        return self.meanAction(fd, wd, ori, s)
 
 
 class DetCriticC51(nn.Module):
@@ -148,24 +148,24 @@ class DetCriticC51(nn.Module):
         self.num_atoms, self.num_q, self.v_min, self.v_max = num_atoms, num_q, v_min, v_max
         self.register_buffer("support", torch.linspace(v_min, v_max, num_atoms))
         self.proj = DetProjection(n_state, d=d)
-        qin = DetProjection.OUT_DIM + n_act
+        tQin = DetProjection.OUT_DIM + n_act
         def _mkq():
-            _s = [nn.Linear(qin, hidden), nn.LayerNorm(hidden), nn.ReLU()]
+            tS = [nn.Linear(tQin, hidden), nn.LayerNorm(hidden), nn.ReLU()]
             for _ in range(max(1, layers) - 1):
-                _s += [nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU()]
-            _s += [nn.Linear(hidden, num_atoms)]
-            return nn.Sequential(*_s)
+                tS += [nn.Linear(hidden, hidden), nn.LayerNorm(hidden), nn.ReLU()]
+            tS += [nn.Linear(hidden, num_atoms)]
+            return nn.Sequential(*tS)
         self.qs = nn.ModuleList([_mkq() for _ in range(num_q)])
 
     def forward(self, fd, wd, ori, s, a):
-        x = torch.cat([self.proj(fd, wd, ori, s), a], dim=-1)
-        return torch.stack([q(x) for q in self.qs], dim=0)            # (Q,N,A) logits
+        tX = torch.cat([self.proj(fd, wd, ori, s), a], dim=-1)
+        return torch.stack([tQ(tX) for tQ in self.qs], dim=0)            # (Q,N,A) logits
 
     # trainer-compatible aliases (match train_c51_visual CriticC51 API)
     def logits(self, fd, wd, ori, s, a):
         return self.forward(fd, wd, ori, s, a)
 
-    def q_values(self, fd, wd, ori, s, a):
+    def qValues(self, fd, wd, ori, s, a):
         import torch.nn.functional as F
-        probs = F.softmax(self.forward(fd, wd, ori, s, a), dim=-1)
-        return (probs * self.support).sum(-1)                          # (Q,N)
+        tProbs = F.softmax(self.forward(fd, wd, ori, s, a), dim=-1)
+        return (tProbs * self.support).sum(-1)                          # (Q,N)

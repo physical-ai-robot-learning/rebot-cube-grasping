@@ -85,7 +85,7 @@ import leisaac.tasks.lift_cube  # noqa: F401  (registers the task)
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
 
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
 
@@ -93,7 +93,7 @@ DEVICE = "cuda:0"
 
 # ── Env setup (Squint-matched env via configure_env) ──
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=args.num_envs)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
 
 # Contact sensors on the reBot fingers, pair-wise filtered to the TARGET cube (grasp detection).
 _target_obj = getattr(env_cfg.scene, args.target_cube)
@@ -138,14 +138,14 @@ except Exception:
     pass
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 sb3_env = Sb3VecEnvWrapper(env)
 N_ENVS = args.num_envs
 obs_dim = int(np.prod(sb3_env.observation_space.shape))
 act_dim = int(np.prod(sb3_env.action_space.shape))
 print(f"[C51] obs_dim={obs_dim} act_dim={act_dim} num_envs={N_ENVS}", flush=True)
 
-dash.start(args.http_port, target_cube=args.target_cube)
+dash.start(args.http_port, targetCube=args.target_cube)
 
 # Live monitor cameras (front/iso/wrist) for the dashboard. front/iso are re-pointed at the workspace
 # via look-at each push (robust to the base_link +90deg frame and to resets). wrist is the gripper POV.
@@ -170,7 +170,7 @@ os.makedirs(args.save_dir, exist_ok=True)
 # ────────────────────────────────────────────────────────────────────────────────
 #  Networks
 # ────────────────────────────────────────────────────────────────────────────────
-def orthogonal_init(m):
+def orthogonalInit(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight)
         if m.bias is not None:
@@ -190,29 +190,29 @@ class Actor(nn.Module):
         )
         self.mean = nn.Linear(hidden, n_act)
         self.logstd = nn.Linear(hidden, n_act)
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
-    def _mean_logstd(self, s):
-        x = self.fc(self.proj(s))
-        mean = self.mean(x)
-        logstd = torch.tanh(self.logstd(x))
-        logstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (logstd + 1)
-        return mean, logstd
+    def _meanLogstd(self, s):
+        tX = self.fc(self.proj(s))
+        tMean = self.mean(tX)
+        tLogstd = torch.tanh(self.logstd(tX))
+        tLogstd = self.LOG_STD_MIN + 0.5 * (self.LOG_STD_MAX - self.LOG_STD_MIN) * (tLogstd + 1)
+        return tMean, tLogstd
 
-    def get_action(self, s):
-        mean, logstd = self._mean_logstd(s)
-        std = logstd.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x = normal.rsample()
-        y = torch.tanh(x)
-        logp = normal.log_prob(x) - torch.log(1 - y.pow(2) + 1e-6)
-        logp = logp.sum(1, keepdim=True)
-        return y, logp                      # action in [-1,1] (env action terms clamp to [-1,1])
+    def getAction(self, s):
+        tMean, tLogstd = self._meanLogstd(s)
+        tStd = tLogstd.exp()
+        tNormal = torch.distributions.Normal(tMean, tStd)
+        tX = tNormal.rsample()
+        tY = torch.tanh(tX)
+        tLogp = tNormal.log_prob(tX) - torch.log(1 - tY.pow(2) + 1e-6)
+        tLogp = tLogp.sum(1, keepdim=True)
+        return tY, tLogp                      # action in [-1,1] (env action terms clamp to [-1,1])
 
     @torch.no_grad()
-    def act_deterministic(self, s):
-        mean, _ = self._mean_logstd(s)
-        return torch.tanh(mean)
+    def actDeterministic(self, s):
+        tMean, _ = self._meanLogstd(s)
+        return torch.tanh(tMean)
 
 
 class CriticC51(nn.Module):
@@ -230,40 +230,40 @@ class CriticC51(nn.Module):
                 nn.Linear(hidden, num_atoms),
             )
         self.qs = nn.ModuleList([qnet() for _ in range(num_q)])
-        self.apply(orthogonal_init)
+        self.apply(orthogonalInit)
 
     def logits(self, s, a):                  # -> (num_q, N, atoms)
-        x = torch.cat([self.proj(s), a], dim=-1)
-        return torch.stack([q(x) for q in self.qs], dim=0)
+        tX = torch.cat([self.proj(s), a], dim=-1)
+        return torch.stack([tQ2(tX) for tQ2 in self.qs], dim=0)
 
-    def q_values(self, s, a):                # expected Q -> (num_q, N)
-        probs = F.softmax(self.logits(s, a), dim=-1)
-        return (probs * self.support).sum(-1)
+    def qValues(self, s, a):                # expected Q -> (num_q, N)
+        tProbs = F.softmax(self.logits(s, a), dim=-1)
+        return (tProbs * self.support).sum(-1)
 
 
 @torch.no_grad()
-def project_target(target_critic, next_s, next_a, rewards, bootstrap, gamma):
+def projectTarget(targetCritic, nextS, nextA, rewards, bootstrap, gamma):
     """C51 categorical projection (Squint envs categorical). Returns target dists (num_q, N, atoms)."""
-    logits = target_critic.logits(next_s, next_a)            # (Q, N, A)
-    probs = F.softmax(logits, dim=-1)
-    support = target_critic.support
-    v_min, v_max, A = target_critic.v_min, target_critic.v_max, target_critic.num_atoms
-    Q, Nn, _ = probs.shape
-    dz = (v_max - v_min) / (A - 1)
-    tz = rewards.view(1, Nn, 1) + bootstrap.view(1, Nn, 1) * gamma * support.view(1, 1, A)
-    tz = tz.clamp(v_min, v_max).expand(Q, Nn, A)
-    b = (tz - v_min) / dz
-    l = b.floor().long()
-    u = b.ceil().long()
-    is_int = (u == l)
-    l = torch.where((l > 0) & is_int, l - 1, l)
-    u = torch.where((l == 0) & is_int, u + 1, u)
-    l = l.clamp(0, A - 1)
-    u = u.clamp(0, A - 1)
-    m = torch.zeros_like(probs)
-    m.scatter_add_(2, l, probs * (u.float() - b))
-    m.scatter_add_(2, u, probs * (b - l.float()))
-    return m
+    tLogits = targetCritic.logits(nextS, nextA)            # (Q, N, A)
+    tProbs = F.softmax(tLogits, dim=-1)
+    tSupport = targetCritic.support
+    tVMin, tVMax, tA = targetCritic.v_min, targetCritic.v_max, targetCritic.num_atoms
+    tQ, tNn, _ = tProbs.shape
+    tDz = (tVMax - tVMin) / (tA - 1)
+    tTz = rewards.view(1, tNn, 1) + bootstrap.view(1, tNn, 1) * gamma * tSupport.view(1, 1, tA)
+    tTz = tTz.clamp(tVMin, tVMax).expand(tQ, tNn, tA)
+    tB = (tTz - tVMin) / tDz
+    tL = tB.floor().long()
+    tU = tB.ceil().long()
+    tIsInt = (tU == tL)
+    tL = torch.where((tL > 0) & tIsInt, tL - 1, tL)
+    tU = torch.where((tL == 0) & tIsInt, tU + 1, tU)
+    tL = tL.clamp(0, tA - 1)
+    tU = tU.clamp(0, tA - 1)
+    tM = torch.zeros_like(tProbs)
+    tM.scatter_add_(2, tL, tProbs * (tU.float() - tB))
+    tM.scatter_add_(2, tU, tProbs * (tB - tL.float()))
+    return tM
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -279,18 +279,18 @@ class Buffer:
         self.done = torch.zeros(cap, device=device)
 
     def add(self, o, a, r, n, d):
-        B = o.shape[0]
-        idx = (torch.arange(B, device=self.device) + self.ptr) % self.cap
-        self.obs[idx] = o; self.act[idx] = a; self.rew[idx] = r; self.nxt[idx] = n; self.done[idx] = d
-        newptr = self.ptr + B
-        if newptr >= self.cap:
+        tB2 = o.shape[0]
+        tIdx = (torch.arange(tB2, device=self.device) + self.ptr) % self.cap
+        self.obs[tIdx] = o; self.act[tIdx] = a; self.rew[tIdx] = r; self.nxt[tIdx] = n; self.done[tIdx] = d
+        tNewptr = self.ptr + tB2
+        if tNewptr >= self.cap:
             self.full = True
-        self.ptr = newptr % self.cap
+        self.ptr = tNewptr % self.cap
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr
-        idx = torch.randint(0, hi, (bs,), device=self.device)
-        return self.obs[idx], self.act[idx], self.rew[idx], self.nxt[idx], self.done[idx]
+        tHi = self.cap if self.full else self.ptr
+        tIdx = torch.randint(0, tHi, (bs,), device=self.device)
+        return self.obs[tIdx], self.act[tIdx], self.rew[tIdx], self.nxt[tIdx], self.done[tIdx]
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -331,41 +331,41 @@ print(f"[C51] networks ready. UTD={args.num_updates} batch={args.batch_size} gam
       f"atoms={args.num_atoms} v=[{args.v_min},{args.v_max}] tau={args.tau} lr={args.lr}", flush=True)
 
 
-def update_critic(o, a, r, n, d):
+def updateCritic(o, a, r, n, d):
     with torch.no_grad():
-        na, nlogp = actor.get_action(n)
-        bootstrap = (1.0 - d)                                   # bootstrap_at_done='always' -> d is 0
+        tNa, tNlogp = actor.getAction(n)
+        tBootstrap = (1.0 - d)                                   # bootstrap_at_done='always' -> d is 0
         # entropy-augmented reward (soft) folded into the distributional target support shift
-        r_ent = r - bootstrap * args.gamma * (alpha.squeeze() * nlogp.squeeze(-1))
-        target_dist = project_target(critic_target, n, na, r_ent, bootstrap, args.gamma)  # (Q,N,A)
-    logits = critic.logits(o, a)                                # (Q,N,A)
-    logp = F.log_softmax(logits, dim=-1)
-    q_losses = -(target_dist * logp).sum(-1).mean(-1)           # (Q,)
-    critic_loss = q_losses.sum()
+        tREnt = r - tBootstrap * args.gamma * (alpha.squeeze() * tNlogp.squeeze(-1))
+        tTargetDist = projectTarget(critic_target, n, tNa, tREnt, tBootstrap, args.gamma)  # (Q,N,A)
+    tLogits = critic.logits(o, a)                                # (Q,N,A)
+    tLogp = F.log_softmax(tLogits, dim=-1)
+    tQLosses = -(tTargetDist * tLogp).sum(-1).mean(-1)           # (Q,)
+    tCriticLoss = tQLosses.sum()
     critic_opt.zero_grad(set_to_none=True)
-    critic_loss.backward()
+    tCriticLoss.backward()
     critic_opt.step()
-    return critic_loss.detach()
+    return tCriticLoss.detach()
 
 
-def update_actor(o):
-    a_pi, logp = actor.get_action(o)
-    qv = critic.q_values(o, a_pi).mean(0)                       # MEAN over ensemble (No-CDQ) -> (N,)
-    actor_loss = (alpha.squeeze() * logp.squeeze(-1) - qv).mean()
+def updateActor(o):
+    tAPi, tLogp = actor.getAction(o)
+    tQv = critic.qValues(o, tAPi).mean(0)                       # MEAN over ensemble (No-CDQ) -> (N,)
+    tActorLoss = (alpha.squeeze() * tLogp.squeeze(-1) - tQv).mean()
     actor_opt.zero_grad(set_to_none=True)
-    actor_loss.backward()
+    tActorLoss.backward()
     actor_opt.step()
     # alpha (autotune)
     with torch.no_grad():
-        _, logp2 = actor.get_action(o)
-    alpha_loss = -(log_alpha.exp() * (logp2 + target_entropy)).mean()
+        _, tLogp2 = actor.getAction(o)
+    tAlphaLoss = -(log_alpha.exp() * (tLogp2 + target_entropy)).mean()
     alpha_opt.zero_grad(set_to_none=True)
-    alpha_loss.backward()
+    tAlphaLoss.backward()
     alpha_opt.step()
-    return actor_loss.detach()
+    return tActorLoss.detach()
 
 
-def soft_update():
+def softUpdate():
     with torch.no_grad():
         torch._foreach_lerp_(targ_params, crit_params, args.tau)
 
@@ -373,14 +373,14 @@ def soft_update():
 # ────────────────────────────────────────────────────────────────────────────────
 #  Training loop
 # ────────────────────────────────────────────────────────────────────────────────
-def to_t(x):
+def toT(x):
     return torch.as_tensor(np.asarray(x, dtype=np.float32), device=DEVICE)
 
 
 print(f"[C51] Starting training: target={args.total_timesteps} steps, success_target={args.success_target}", flush=True)
 obs = sb3_env.reset()
 obs = np.nan_to_num(np.asarray(obs, dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
-obs_t = to_t(obs)
+obs_t = toT(obs)
 
 global_step = 0
 n_iter = 0
@@ -398,7 +398,7 @@ while global_step < args.total_timesteps:
         action = (torch.rand(N_ENVS, act_dim, device=DEVICE) * 2.0 - 1.0)
     else:
         with torch.no_grad():
-            action, _ = actor.get_action(obs_t)
+            action, _ = actor.getAction(obs_t)
     a_np = action.detach().cpu().numpy().astype(np.float32)
     next_obs, rew, done, infos = sb3_env.step(a_np)
     next_obs = np.nan_to_num(np.asarray(next_obs, dtype=np.float32), nan=0.0, posinf=100.0, neginf=-100.0)
@@ -409,7 +409,7 @@ while global_step < args.total_timesteps:
     # bootstrap on next_obs and store done=0. (Sb3VecEnvWrapper's terminal_observation is the POST-reset
     # obs, so there is no genuine pre-reset terminal obs to substitute -- the next-obs approximation is
     # fine for this fixed-horizon, no-terminal-state task; only ~1/50 transitions are boundaries.)
-    buf.add(obs_t, action.detach(), to_t(rew), to_t(next_obs), torch.zeros(N_ENVS, device=DEVICE))
+    buf.add(obs_t, action.detach(), toT(rew), toT(next_obs), torch.zeros(N_ENVS, device=DEVICE))
 
     # ── episode bookkeeping (all envs) ──
     ep_rew += rew
@@ -422,7 +422,7 @@ while global_step < args.total_timesteps:
     ep_hist = ep_hist[-200:]
 
     obs = next_obs
-    obs_t = to_t(obs)
+    obs_t = toT(obs)
     global_step += N_ENVS
     n_iter += 1
 
@@ -430,10 +430,10 @@ while global_step < args.total_timesteps:
     if global_step >= args.learning_starts:
         for j in range(args.num_updates):
             o, a, r, n, d = buf.sample(args.batch_size)
-            update_critic(o, a, r, n, d)
+            updateCritic(o, a, r, n, d)
             if j % args.policy_frequency == 0:
-                update_actor(o)
-            soft_update()
+                updateActor(o)
+            softUpdate()
         alpha = log_alpha.exp().detach()
 
     # ── early stop: count target OR success-rate target ──
@@ -481,7 +481,7 @@ while global_step < args.total_timesteps:
         sr = (sum(recent) / len(recent)) if recent else 0.0
         _best = best_reward if best_reward != float("-inf") else 0.0
         _mean_ep = float(np.mean(ep_hist[-20:])) if ep_hist else 0.0   # completed-episode mean
-        dash.push_stats(
+        dash.pushStats(
             step=global_step, episode=MR._ep_total[0],
             current_reward=float(rew.mean()), episode_reward=_mean_ep,
             cumulative_reward=cum_reward, best_reward=_best,
@@ -494,7 +494,7 @@ while global_step < args.total_timesteps:
                 if _cam_eyes is not None:
                     for _nm, _eye in _cam_eyes.items():
                         _cam_map[_nm].set_world_poses_from_view(_eye, _cam_tgt)
-                dash.update_cameras(_cam_map)
+                dash.updateCameras(_cam_map)
             except Exception as _e:
                 pass
 

@@ -85,10 +85,10 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 from rebot_teacher_student.env.visual_obs import (
-    configure_visual, downsample, student_state, composite_bg, add_proprio_noise, wrist_aug, image_dr,
-    recolor_seg_region, tag_gripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM, TEACHER_STATE_DIM)
+    configureVisual, downsample, studentState, compositeBg, addProprioNoise, wristAug, imageDr,
+    recolorSegRegion, tagGripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM, TEACHER_STATE_DIM)
 from rebot_teacher_student.student.visual_nets import CNNEncoder, Actor, StateOnlyActor
 import rebot_teacher_student.env.rewards as MR
 from rebot_teacher_student import dashboard as dash
@@ -98,7 +98,7 @@ BUF_DEV = torch.device(args.buffer_device)
 
 # ── Env (FULL 43D obs for the teacher + front/wrist cameras for the student) ──
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=args.num_envs)
-env_cfg = configure_env(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
+env_cfg = configureEnv(env_cfg, CFG, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
 _obj = getattr(env_cfg.scene, args.target_cube); _cp = _obj.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -106,11 +106,11 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
-env_cfg = configure_visual(env_cfg, target_cube=args.target_cube, keep_privileged=True, dr=args.dr,
+env_cfg = configureVisual(env_cfg, target_cube=args.target_cube, keep_privileged=True, dr=args.dr,
                            front_only=args.front_only)
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, CFG)
+applyMotorLimits(env, CFG)
 N_ENVS = args.num_envs
 act_dim = env.action_manager.total_action_dim
 print(f"[DAG] num_envs={N_ENVS} act_dim={act_dim} student_state={STATE_DIM} wrist={WRIST_SIZE} front={FRONT_SIZE}", flush=True)
@@ -148,7 +148,7 @@ def WF(w):
     """wrist features (None in front-only mode; the Projection ignores it then)."""
     return None if FRONT_ONLY else enc_w(w)
 
-dash.start(args.http_port, target_cube=args.target_cube)
+dash.start(args.http_port, targetCube=args.target_cube)
 _cam_map = {}
 for nm in ("front", "wrist"):
     try:
@@ -170,22 +170,22 @@ class Buffer:
         self.a = torch.zeros(cap, act_dim, dtype=torch.float32, device=dev)
 
     def add(self, w, f, s, a):
-        B = f.shape[0]
-        idx = (torch.arange(B, device=self.dev) + self.ptr) % self.cap
+        tB = f.shape[0]
+        tIdx = (torch.arange(tB, device=self.dev) + self.ptr) % self.cap
         if self.store_wrist:
-            self.w[idx] = w.to(self.dev)
-        self.f[idx] = f.to(self.dev); self.s[idx] = s.to(self.dev); self.a[idx] = a.to(self.dev)
-        newptr = self.ptr + B
-        if newptr >= self.cap:
+            self.w[tIdx] = w.to(self.dev)
+        self.f[tIdx] = f.to(self.dev); self.s[tIdx] = s.to(self.dev); self.a[tIdx] = a.to(self.dev)
+        tNewptr = self.ptr + tB
+        if tNewptr >= self.cap:
             self.full = True
-        self.ptr = newptr % self.cap
+        self.ptr = tNewptr % self.cap
 
     def sample(self, bs):
-        hi = self.cap if self.full else self.ptr
-        idx = torch.randint(0, hi, (bs,), device=self.dev)
-        g = lambda t: t[idx].to(DEVICE, non_blocking=True)
-        w = g(self.w) if self.store_wrist else None
-        return w, g(self.f), g(self.s), g(self.a)
+        tHi = self.cap if self.full else self.ptr
+        tIdx = torch.randint(0, tHi, (bs,), device=self.dev)
+        tG = lambda t: t[tIdx].to(DEVICE, non_blocking=True)
+        tW = tG(self.w) if self.store_wrist else None
+        return tW, tG(self.f), tG(self.s), tG(self.a)
 
 
 buf = Buffer(args.buffer_size, BUF_DEV, store_wrist=not FRONT_ONLY)
@@ -195,61 +195,61 @@ print(f"[DAG] buffer={args.buffer_size}@{BUF_DEV} batch={args.batch_size} UTD={a
 
 _BG_BANK = None      # (M,R,R,3) uint8 — real-scene photos for the WORLD (upper background) region
 _TABLE_TEX = None    # (T,R,R,1) float[~0.4,1] — surface-texture luminance for the TABLE region (recolored per-env)
-def _load_bg_bank():
+def _loadBgBank():
     """preload (1) real-scene PHOTOS (--bg-dir: people/office/nature) -> _BG_BANK for the WORLD region, and
     (2) surface TEXTURES (--table-tex-dir: wood grain) -> _TABLE_TEX luminance so the TABLE region stays a
     TEXTURED surface whose COLOR is randomized per-env (texture + color), instead of being deleted."""
     global _BG_BANK, _TABLE_TEX
     import glob
     from PIL import Image
-    R = IMG_RENDER
+    tR = IMG_RENDER
     def _load(dir_, mx, gray):
         if not dir_ or not os.path.isdir(dir_):
             return None
-        fs = sorted(glob.glob(os.path.join(dir_, "*.jpg")) + glob.glob(os.path.join(dir_, "*.jpeg")) +
+        tFs = sorted(glob.glob(os.path.join(dir_, "*.jpg")) + glob.glob(os.path.join(dir_, "*.jpeg")) +
                     glob.glob(os.path.join(dir_, "*.png")))[:mx]
-        out = []
-        for f in fs:
+        tOut = []
+        for tF in tFs:
             try:
-                im = Image.open(f).convert("L" if gray else "RGB").resize((R, R))
-                out.append(torch.from_numpy(np.asarray(im, dtype=np.uint8)))
+                tIm = Image.open(tF).convert("L" if gray else "RGB").resize((tR, tR))
+                tOut.append(torch.from_numpy(np.asarray(tIm, dtype=np.uint8)))
             except Exception:
                 pass
-        return torch.stack(out) if out else None
-    bb = _load(args.bg_dir, args.bg_max, False)
-    if bb is not None:
-        _BG_BANK = bb.to(DEVICE)
+        return torch.stack(tOut) if tOut else None
+    tBb = _load(args.bg_dir, args.bg_max, False)
+    if tBb is not None:
+        _BG_BANK = tBb.to(DEVICE)
         print(f"[DAG] bg-bank: {_BG_BANK.shape[0]} photo backgrounds (world) from {args.bg_dir}", flush=True)
     else:
         print(f"[DAG] bg-bank: no photos ({args.bg_dir}) -> synthetic world only", flush=True)
-    tt = _load(args.table_tex_dir, 64, True)
-    if tt is not None:
-        _TABLE_TEX = (tt.float() / 255.0).clamp(0.40, 1.0).unsqueeze(-1).to(DEVICE)   # (T,R,R,1) grain luminance
+    tTt = _load(args.table_tex_dir, 64, True)
+    if tTt is not None:
+        _TABLE_TEX = (tTt.float() / 255.0).clamp(0.40, 1.0).unsqueeze(-1).to(DEVICE)   # (T,R,R,1) grain luminance
         print(f"[DAG] table-tex: {_TABLE_TEX.shape[0]} surface textures from {args.table_tex_dir}", flush=True)
     else:
         print(f"[DAG] table-tex: none ({args.table_tex_dir}) -> flat-color table", flush=True)
 
 
-def _rand_bg(n):
+def _randBg(n):
     """FAR-BACKGROUND = OFFICE-like (matches the real OFFICE inference env): mostly real-scene PHOTOS
     (_BG_BANK = COCO indoor/office/scenes) + some blob clutter + solid color for robustness to the office
     variation. The TABLE is the rendered table (kept by composite_bg) so the cube/arm don't float.
     (If a photo of the ACTUAL real office is provided, point --bg-dir at it for an even closer match.)"""
-    R = IMG_RENDER
-    g = torch.randint(3, 9, (1,)).item()
-    blobs = torch.rand(n, g, g, 3, device=DEVICE)
-    blobs = torch.nn.functional.interpolate(blobs.permute(0, 3, 1, 2), size=(R, R), mode="bilinear",
+    tR = IMG_RENDER
+    tG = torch.randint(3, 9, (1,)).item()
+    tBlobs = torch.rand(n, tG, tG, 3, device=DEVICE)
+    tBlobs = torch.nn.functional.interpolate(tBlobs.permute(0, 3, 1, 2), size=(tR, tR), mode="bilinear",
                                             align_corners=False).permute(0, 2, 3, 1)
-    blobs = (blobs * 255.0 + torch.randn(n, R, R, 3, device=DEVICE) * 18.0).clamp(0, 255)
-    solid = (torch.rand(n, 1, 1, 3, device=DEVICE) * 255.0).expand(n, R, R, 3)
-    wmode = torch.rand(n, 1, 1, 1, device=DEVICE)
+    tBlobs = (tBlobs * 255.0 + torch.randn(n, tR, tR, 3, device=DEVICE) * 18.0).clamp(0, 255)
+    tSolid = (torch.rand(n, 1, 1, 3, device=DEVICE) * 255.0).expand(n, tR, tR, 3)
+    tWmode = torch.rand(n, 1, 1, 1, device=DEVICE)
     if _BG_BANK is not None:                                   # REAL reBot frames ONLY (no synthetic blobs/solids)
-        photo = _BG_BANK[torch.randint(0, _BG_BANK.shape[0], (n,), device=DEVICE)].float()
-        return torch.where(torch.rand(n, 1, 1, 1, device=DEVICE) < 0.5, photo.flip(2), photo)
-    return torch.where(wmode < 0.6, blobs, solid)             # fallback only if no real bg loaded
+        tPhoto = _BG_BANK[torch.randint(0, _BG_BANK.shape[0], (n,), device=DEVICE)].float()
+        return torch.where(torch.rand(n, 1, 1, 1, device=DEVICE) < 0.5, tPhoto.flip(2), tPhoto)
+    return torch.where(tWmode < 0.6, tBlobs, tSolid)             # fallback only if no real bg loaded
 
 
-def _cam_ds(cam, size, is_front=True):
+def _camDs(cam, size, isFront=True):
     """downsampled image for one camera. --dr: KEEP the rendered foreground (robot+cube) + the lower TABLE
     region, replace only the upper FAR-background with _rand_bg (so the arm/cube sit on the real rendered
     table, no floating), then image_dr (ISP color + glare + front-only scale/aspect). keep_lower: front 0.62
@@ -257,62 +257,62 @@ def _cam_ds(cam, size, is_front=True):
     if args.dr:
         # table is semantic-tagged -> composite_bg keeps {robot,cube,table} by SILHOUETTE (no hard horizon);
         # only the true far-background is replaced. keep_lower=0.10 is a thin safety floor if seg lags.
-        full = composite_bg(cam.data.output["rgb"], cam.data.output["semantic_segmentation"],
-                            cam.data.info["semantic_segmentation"], _rand_bg(N_ENVS), keep_lower=0.10)
-        _seg = cam.data.output["semantic_segmentation"]; _info = cam.data.info["semantic_segmentation"]
-        full = recolor_seg_region(full, _seg, _info, ("table",), 0.95, 1.08, 0.0, grain=False, base=0.68)  # WHITE table (gloss via image_dr glare)
-        full = recolor_seg_region(full, _seg, _info, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)  # BLACK gripper (fixed)
+        tFull = compositeBg(cam.data.output["rgb"], cam.data.output["semantic_segmentation"],
+                            cam.data.info["semantic_segmentation"], _randBg(N_ENVS), keep_lower=0.10)
+        tSeg = cam.data.output["semantic_segmentation"]; tInfo = cam.data.info["semantic_segmentation"]
+        tFull = recolorSegRegion(tFull, tSeg, tInfo, ("table",), 0.95, 1.08, 0.0, grain=False, base=0.68)  # WHITE table (gloss via image_dr glare)
+        tFull = recolorSegRegion(tFull, tSeg, tInfo, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)  # BLACK gripper (fixed)
         # NOTE: robot ARM is NOT recolored (left as rendered) per user; cubes never recolored (task cue)
-        full = image_dr(full, scale=is_front)
-        return downsample(full, size)
+        tFull = imageDr(tFull, scale=isFront)
+        return downsample(tFull, size)
     return downsample(cam.data.output["rgb"], size)
 
 
 # per-episode wrist-cam roll + translate DR (redrawn on reset) — robust to real wrist mount roll/offset.
 WRIST_ROLL_MAX, WRIST_TRANS_MAX = 0.35, 0.12     # ±20° roll, ±12% translate
-def _draw_wrist_aug(mask=None):
+def _drawWristAug(mask=None):
     """(re)draw per-env wrist roll/translate; mask=None -> all envs, else only the masked (reset) envs."""
     if mask is None:
         _wa["roll"].uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
         _wa["tx"].uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
         _wa["ty"].uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
     else:
-        k = int(mask.sum())
-        if k:
-            _wa["roll"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
-            _wa["tx"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
-            _wa["ty"][mask] = torch.empty(k, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
+        tK = int(mask.sum())
+        if tK:
+            _wa["roll"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_ROLL_MAX, WRIST_ROLL_MAX)
+            _wa["tx"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
+            _wa["ty"][mask] = torch.empty(tK, device=DEVICE).uniform_(-WRIST_TRANS_MAX, WRIST_TRANS_MAX)
 
 
 _wa = {"roll": torch.zeros(N_ENVS, device=DEVICE), "tx": torch.zeros(N_ENVS, device=DEVICE),
        "ty": torch.zeros(N_ENVS, device=DEVICE)}
 if args.dr:
-    _load_bg_bank()
-    tag_gripper(env)            # separate 'gripper' semantic so only the gripper is painted black
+    _loadBgBank()
+    tagGripper(env)            # separate 'gripper' semantic so only the gripper is painted black
 if args.dr and not FRONT_ONLY:
-    _draw_wrist_aug()
+    _drawWristAug()
 
 
-def read_imgs():
-    f = _cam_ds(env.scene["front"], FRONT_SIZE, is_front=True)
+def readImgs():
+    tF = _camDs(env.scene["front"], FRONT_SIZE, isFront=True)
     if FRONT_ONLY:
-        return None, f
-    w = _cam_ds(env.scene["wrist"], WRIST_SIZE, is_front=False)
+        return None, tF
+    tW = _camDs(env.scene["wrist"], WRIST_SIZE, isFront=False)
     if args.dr:
-        w = wrist_aug(w, _wa["roll"], _wa["tx"], _wa["ty"])   # per-episode roll/pos jitter
-    return w, f
+        tW = wristAug(tW, _wa["roll"], _wa["tx"], _wa["ty"])   # per-episode roll/pos jitter
+    return tW, tF
 
 
 def sanitize(t):
     return torch.nan_to_num(t, nan=0.0, posinf=100.0, neginf=-100.0)
 
 
-def _save_ckpt(path):
-    d = {"enc_f": enc_f.state_dict(), "actor": actor.state_dict(),
+def _saveCkpt(path):
+    tD = {"enc_f": enc_f.state_dict(), "actor": actor.state_dict(),
          "step": global_step, "front_only": FRONT_ONLY}
     if enc_w is not None:
-        d["enc_w"] = enc_w.state_dict()
-    torch.save(d, path)
+        tD["enc_w"] = enc_w.state_dict()
+    torch.save(tD, path)
 
 
 # ── DAgger loop ──
@@ -321,7 +321,7 @@ obs_dict, _ = env.reset()
 for _ in range(3):  # warmup camera buffers
     obs_dict, *_ = env.step(torch.zeros((N_ENVS, act_dim), device=DEVICE))
 full_obs = sanitize(obs_dict["policy"])
-w_img, f_img = read_imgs()
+w_img, f_img = readImgs()
 
 global_step, n_iter = _resume_step, 0
 loss_ema = None
@@ -331,11 +331,11 @@ ep_succ_hist = []
 while global_step < args.total_timesteps:
     beta = max(0.0, 1.0 - global_step / float(args.beta_decay_steps))
     # student sees NOISY proprio (dr); the teacher (below) always acts on the CLEAN 43D obs.
-    s21 = add_proprio_noise(student_state(full_obs)) if args.dr else student_state(full_obs)
+    s21 = addProprioNoise(studentState(full_obs)) if args.dr else studentState(full_obs)
 
-    teacher_act = teacher.act_deterministic(full_obs)                  # (N,7) label — CLEAN obs
+    teacher_act = teacher.actDeterministic(full_obs)                  # (N,7) label — CLEAN obs
     with torch.no_grad():
-        student_act = actor.act_deterministic(WF(w_img), enc_f(f_img), s21)
+        student_act = actor.actDeterministic(WF(w_img), enc_f(f_img), s21)
     # per-env Bernoulli(beta): True -> teacher drives this env this step
     use_teacher = (torch.rand(N_ENVS, device=DEVICE) < beta).unsqueeze(-1)
     rollout_act = torch.where(use_teacher, teacher_act, student_act)
@@ -345,9 +345,9 @@ while global_step < args.total_timesteps:
 
     obs_dict, rew, terminated, truncated, infos = env.step(rollout_act.detach())
     if args.dr and not FRONT_ONLY:                       # reset envs -> redraw per-episode wrist roll/pos
-        _draw_wrist_aug(mask=(terminated | truncated))
+        _drawWristAug(mask=(terminated | truncated))
     full_obs = sanitize(obs_dict["policy"])
-    w_img, f_img = read_imgs()
+    w_img, f_img = readImgs()
     global_step += N_ENVS
     n_iter += 1
 
@@ -356,7 +356,7 @@ while global_step < args.total_timesteps:
     if global_step >= args.learning_starts:
         for _ in range(args.num_updates):
             bw, bf, bs, ba = buf.sample(args.batch_size)
-            pred = actor.mean_action(WF(bw), enc_f(bf), bs)            # tanh(mean), WITH grad
+            pred = actor.meanAction(WF(bw), enc_f(bf), bs)            # tanh(mean), WITH grad
             loss = F.mse_loss(pred, ba)
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -389,14 +389,14 @@ while global_step < args.total_timesteps:
     if _hit_succ or _hit_sr:
         why = f"{succ} successes (target {args.success_target})" if _hit_succ else f"sr={_sr_now:.3f} >= teacher sr {args.success_rate_target} over {len(_rec)} eps"
         print(f"[DONE] student stop: {why} at t={global_step}; stopping.", flush=True)
-        _save_ckpt(os.path.join(args.save_dir, "dagger_final.pt"))
+        _saveCkpt(os.path.join(args.save_dir, "dagger_final.pt"))
         break
 
     # ── dashboard ──
     if n_iter % 5 == 0:
         recent = getattr(MR, "_succ_recent", [])
         sr = (sum(recent) / len(recent)) if recent else 0.0
-        dash.push_stats(
+        dash.pushStats(
             step=global_step, episode=MR._ep_total[0],
             current_reward=float(-last_loss), episode_reward=float(-(loss_ema or 0.0)),
             cumulative_reward=0.0, best_reward=0.0,
@@ -407,9 +407,9 @@ while global_step < args.total_timesteps:
         # show the DR'd STUDENT INPUT (128, greenscreen/photo-bg/glare/color all applied) on the dashboard,
         # not the raw render — so the live cam reflects the actual domain-randomized input the student sees.
         try:
-            dash.set_camera_image("front", f_img[0].detach().cpu().numpy())
+            dash.setCameraImage("front", f_img[0].detach().cpu().numpy())
             if w_img is not None:
-                dash.set_camera_image("wrist", w_img[0].detach().cpu().numpy())
+                dash.setCameraImage("wrist", w_img[0].detach().cpu().numpy())
         except Exception:
             pass
 
@@ -421,7 +421,7 @@ while global_step < args.total_timesteps:
 
     if n_iter % 200 == 0:
         try:
-            _save_ckpt(os.path.join(args.save_dir, f"dagger_ckpt_{global_step}.pt"))
+            _saveCkpt(os.path.join(args.save_dir, f"dagger_ckpt_{global_step}.pt"))
         except Exception:
             pass
 

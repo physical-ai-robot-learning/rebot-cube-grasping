@@ -16,10 +16,10 @@ from isaaclab.sensors import ContactSensorCfg
 from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, TerminationTermCfg as DoneTerm
 import leisaac.tasks.lift_cube  # noqa
 from leisaac.tasks.lift_cube import mdp
-from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configureEnv, applyMotorLimits
 
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device="cuda:0", num_envs=2)
-env_cfg = configure_env(env_cfg, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube")
+env_cfg = configureEnv(env_cfg, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube")
 _t = getattr(env_cfg.scene, "cube"); _cp = _t.prim_path
 env_cfg.scene.gripper_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gripper_left",
     update_period=0.0, history_length=4, filter_prim_paths_expr=[_cp])
@@ -32,7 +32,7 @@ for cam in ["front", "side", "wrist"]:
         setattr(env_cfg.scene, cam, None)
 
 env = ManagerBasedRLEnv(cfg=env_cfg)
-apply_motor_limits(env, {})
+applyMotorLimits(env, {})
 env.reset()
 
 print("\n================ SIM SPEC (copy into rebot_deploy.py) ================")

@@ -47,16 +47,16 @@ from isaaclab.controllers import DifferentialIKController, DifferentialIKControl
 from isaaclab.utils.math import subtract_frame_transforms, quat_from_euler_xyz, quat_apply, quat_mul
 import leisaac.tasks.lift_cube  # noqa
 from leisaac.tasks.lift_cube import mdp
-from rebot_grasp_env.env_config import configure_env, apply_motor_limits, add_dynamics_dr
+from rebot_grasp_env.env_config import configureEnv, applyMotorLimits, addDynamicsDr
 from rebot_grasp_env import visual_obs
-from rebot_grasp_env.visual_obs import (composite_bg, recolor_seg_region, image_dr,
-                                               viewpoint_warp, tag_gripper, IMG_RENDER)
+from rebot_grasp_env.visual_obs import (compositeBg, recolorSegRegion, imageDr,
+                                               viewpointWarp, tagGripper, IMG_RENDER)
 
 from rebot_grasp_rl.nets import DetActor, DetCriticC51, D_DET, D_ORI
-from rebot_grasp_rl.target_projection import project_target   # C51 target projection extracted to tp_net.py (pure fn; used by the TWO_PHASE _upd)
+from rebot_grasp_rl.target_projection import projectTarget   # C51 target projection extracted to tp_net.py (pure fn; used by the TWO_PHASE _upd)
 from rebot_grasp_rl import robot_profile                 # OURS (reBot/SO101) vs OFFICIAL (Seeed reBot-Isaacsim) robot abstraction
 from rebot_grasp_rl.runtime import RT               # shared mutable runtime state (populated after the sim boots)
-profile = robot_profile.select_profile()   # ROBOT_OFFICIAL=1 -> OFFICIAL else OURS; read once here
+profile = robot_profile.selectProfile()   # ROBOT_OFFICIAL=1 -> OFFICIAL else OURS; read once here
 RT.profile = profile
 print(f"[ROBOT] profile={profile.name} arm_joints={profile.arm_joint_names} ee_candidates={profile.ee_link_candidates}", flush=True)
 
@@ -73,7 +73,7 @@ if profile.name != "ours":   # OFFICIAL: swap in the re-imported PhysX reBot USD
         print(f"[ROBOT-OFFICIAL] usd_path OVERRIDE -> {_ousd}", flush=True)
     ec.scene.robot = _off_cfg.replace(prim_path="{ENV_REGEX_NS}/Robot")
     print(f"[ROBOT-OFFICIAL] scene.robot -> REBOT_OFFICIAL_CFG ({ec.scene.robot.spawn.usd_path})", flush=True)
-ec = configure_env(ec, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
+ec = configureEnv(ec, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube=args.target_cube)
 # FOV-SPAWN (user 2026-06-25): restrict the cube spawn to the wrist eye-in-hand FOV at the (high) e110 REST pose so the
 # cube is VISIBLE in the wrist view from episode START -> pure approach RL (descend+align), NO acquisition bootstrap and
 # NO privileged guide. Box = the e110-calibrated in-frame region (4 corners verified in the wrist view at REST); was the
@@ -106,7 +106,7 @@ if profile.name == "ours":
              "wrist_flex": _HIGH_QPOS[3], "wrist_yaw": _HIGH_QPOS[4], "wrist_roll": _HIGH_QPOS[5]}
 else:   # OFFICIAL (or any non-ours profile): HIGH-START keyed by the profile's joint names (TODO(official): re-derive so cube sits in wrist FOV)
     _HIGH = dict(profile.high_start)
-    _HIGH_QPOS = [_HIGH[_j] for _j in profile.arm_joint_names]
+    _HIGH_QPOS = [_HIGH[tJ2] for tJ2 in profile.arm_joint_names]
 try:
     _jp = ec.scene.robot.init_state.joint_pos
     for _k in list(_jp.keys()):
@@ -120,8 +120,8 @@ import rebot_grasp_env.env_config as _envc
 _envc._REST_QPOS = torch.tensor(_HIGH_QPOS)                          # keep dist_to_rest obs consistent with the new start
 print(f"[HIGH-START] _REST_QPOS -> {_HIGH_QPOS}", flush=True)
 if args.dyn_dr:        # P1-identical dynamics DR (gripper stiffness/damping/friction/mass) BEFORE visual+single_cube
-    ec = add_dynamics_dr(ec, SceneEntityCfg, target_cube=args.target_cube)
-ec = visual_obs.configure_visual(ec, target_cube=args.target_cube, dr=args.dr, wrist_only=False)
+    ec = addDynamicsDr(ec, SceneEntityCfg, target_cube=args.target_cube)
+ec = visual_obs.configureVisual(ec, target_cube=args.target_cube, dr=args.dr, wrist_only=False)
 if profile.name != "ours":   # OFFICIAL: EE link is gripper_end, so remap every scene prim_path that hardcodes gripper_link (ee_frame targets, wrist/fp cameras)
     # Phase 2b-iii (2026-08-01) WALL 1: the SimReady USD nests links DEEPLY, so the wrist TiledCamera parent
     # ({ENV_REGEX_NS}/Robot/gripper_link/fp_camera) and the ee_frame FrameTransformer target must resolve to the
@@ -129,9 +129,9 @@ if profile.name != "ours":   # OFFICIAL: EE link is gripper_end, so remap every 
     # verified Geometry/base_link/.../gripper_end path) so the camera's parent prim + the FrameTransformer target exist.
     _oldl = "gripper_link"; _newl = profile.ee_prim_subpath   # OFFICIAL: Geometry/base_link/.../gripper_end (was ee_link_candidates[0]=flat gripper_end -> parent prim not found)
     def _fix_prim(_o):
-        _pp = getattr(_o, "prim_path", None)
-        if isinstance(_pp, str) and _oldl in _pp:
-            _o.prim_path = _pp.replace(_oldl, _newl); print(f"[ROBOT-OFFICIAL] prim {_pp} -> {_o.prim_path}", flush=True)
+        tPp = getattr(_o, "prim_path", None)
+        if isinstance(tPp, str) and _oldl in tPp:
+            _o.prim_path = tPp.replace(_oldl, _newl); print(f"[ROBOT-OFFICIAL] prim {tPp} -> {_o.prim_path}", flush=True)
     for _nm in dir(ec.scene):
         if _nm.startswith("__"): continue
         _o = getattr(ec.scene, _nm, None)
@@ -190,7 +190,7 @@ if _wox.strip():
         from isaaclab.sensors import TiledCameraCfg as _TCCw
         from rebot_grasp_env import visual_obs as _vob
         from isaaclab.utils.math import quat_mul as _qmw, quat_from_euler_xyz as _qeu
-        _wp = tuple(float(v) for v in _wox.split(","))
+        _wp = tuple(float(tV) for tV in _wox.split(","))
         if profile.name == "official":
             # OFFICIAL (user 2026-07-20): PURE-EULER cam orientation (roll,pitch,yaw deg) in the gripper_end LOCAL
             #   frame, opengl convention — EXACT parity with calib_ui_official.py (_eq_quat=quat_from_euler_xyz).
@@ -204,8 +204,8 @@ if _wox.strip():
             print(f"[WRIST-OFF] OFFICIAL pure-euler cam pos={_wp} roll/pitch/yaw=({_wr},{_wpd},{_wyd}) (gripper_end local, opengl; calib_ui parity)", flush=True)
         else:
             _aim = os.environ.get("WRIST_AIM", "")
-            _wat = tuple(float(v) for v in _aim.split(",")) if _aim.strip() else _vob.WRIST_AIM_TARGET
-            _rot = _vob._lookat_quat_opengl(_wp, _wat)
+            _wat = tuple(float(tV) for tV in _aim.split(",")) if _aim.strip() else _vob.WRIST_AIM_TARGET
+            _rot = _vob._lookatQuatOpengl(_wp, _wat)
             if _vob.WRIST_ROLL180:   # re-apply the 180deg optical roll (upright image)
                 _rot = tuple(_qmw(torch.tensor([list(_rot)]), torch.tensor([[0.0, 0.0, 0.0, 1.0]]))[0].tolist())
             _wpd2 = float(os.environ.get("WRIST_PITCH_DEG", "0")); _wyd2 = float(os.environ.get("WRIST_YAW_DEG", "0"))   # bake pitch(+down)/yaw ON TOP -> applies in TRAINING too (CALIB-block bake is skipped when WRIST_OFF is set, see below)
@@ -281,7 +281,7 @@ try:
     print(f"[BASE-MOVE] robot base {_ow} -> {ec.scene.robot.init_state.pos}", flush=True)
 except Exception as _e: print(f"[BASE-MOVE] FAILED: {_e}", flush=True)
 try:
-    from rebot_grasp_env.visual_obs import _lookat_quat_opengl as _laqF
+    from rebot_grasp_env.visual_obs import _lookatQuatOpengl as _laqF
     _feye = (0.35, float(os.environ.get("FRONT_CAM_Y", "0.0")), 0.58)   # opposite (+y) table end, 58cm
     _ftgt = (0.35, _BASE_Y + 0.30, 0.08)                                # look back toward the arm/cube region
     ec.scene.front.offset.pos = _feye
@@ -302,7 +302,7 @@ try:
     print(f"[TABLE-SHIFT] init pos +x {_shx} -> {ec.scene.scene.init_state.pos}", flush=True)
 except Exception as _e:
     print(f"[TABLE-SCALE] FAILED: {_e}", flush=True)
-env = ManagerBasedRLEnv(cfg=ec); apply_motor_limits(env, {}); env.reset()
+env = ManagerBasedRLEnv(cfg=ec); applyMotorLimits(env, {}); env.reset()
 # user 2026-06-28: KILL the table USD's embedded static red cube. leisaac excludes it from SUBASSETS (RigidObject)
 #   but the table USD still spawns it VISUALLY + with collision UNDER /Scene -> both policies were diving for that
 #   sunken "2nd cube". Make it invisible (detector blind) + disable collision (can't be grasped). Handles instances.
@@ -313,11 +313,11 @@ try:
     # DIAGNOSTIC: dump env_0/Scene prim tree so we can SEE every prim (find ANY stray red/cube prim, not just name 'cube')
     _s0 = _stage.GetPrimAtPath("/World/envs/env_0/Scene")
     if _s0 and _s0.IsValid():
-        _names = [f"{_c.GetName()}({_c.GetTypeName()})" for _c in _Usd.PrimRange(_s0)]
+        _names = [f"{tC3.GetName()}({tC3.GetTypeName()})" for tC3 in _Usd.PrimRange(_s0)]
         print(f"[SCENE-DUMP] env_0/Scene ({len(_names)} prims): {_names[:80]}", flush=True)
     # collect first (don't mutate during traversal), then DELETE the embedded cube prims outright
-    _paths = [_p.GetPath().pathString for _p in _stage.TraverseAll()
-              if "/Scene" in _p.GetPath().pathString and "cube" in _p.GetName().lower()]
+    _paths = [tP3.GetPath().pathString for tP3 in _stage.TraverseAll()
+              if "/Scene" in tP3.GetPath().pathString and "cube" in tP3.GetName().lower()]
     _del = 0
     for _pp in _paths:
         _pr = _stage.GetPrimAtPath(_pp)
@@ -344,15 +344,15 @@ except Exception as _e:
 r = env.scene["robot"]
 arm_term = env.action_manager.get_term("arm_action")    # delta accumulates on _target_qpos (PD tracks it)
 if args.dr:
-    tag_gripper(env)                                     # separate 'gripper' semantic -> painted BLACK (real rig)
-def _rand_bg(n):                                         # per-env far background for greenscreen DR composite
-    base = torch.rand(n, 1, 1, 3, device=DEVICE) * 0.6 + 0.2
-    grad = torch.linspace(0.85, 1.15, IMG_RENDER, device=DEVICE).view(1, IMG_RENDER, 1, 1)
-    return ((base * grad).clamp(0, 1).expand(n, IMG_RENDER, IMG_RENDER, 3) * 255).to(torch.uint8)
+    tagGripper(env)                                     # separate 'gripper' semantic -> painted BLACK (real rig)
+def _randBg(n):                                         # per-env far background for greenscreen DR composite
+    tBase = torch.rand(n, 1, 1, 3, device=DEVICE) * 0.6 + 0.2
+    tGrad = torch.linspace(0.85, 1.15, IMG_RENDER, device=DEVICE).view(1, IMG_RENDER, 1, 1)
+    return ((tBase * tGrad).clamp(0, 1).expand(n, IMG_RENDER, IMG_RENDER, 3) * 255).to(torch.uint8)
 
 ARM_JOINTS = list(profile.arm_joint_names)
-joint_ids = [r.joint_names.index(j) for j in ARM_JOINTS]
-EE_NAME = next((b for b in profile.ee_link_candidates if b in r.body_names), r.body_names[-1])
+joint_ids = [r.joint_names.index(tJ) for tJ in ARM_JOINTS]
+EE_NAME = next((tB for tB in profile.ee_link_candidates if tB in r.body_names), r.body_names[-1])
 ee_body_idx = r.body_names.index(EE_NAME)
 ee_jacobi_idx = ee_body_idx + profile.jacobi_offset      # fixed base: jacobian rows offset by profile.jacobi_offset (-1)
 print(f"[DET] profile={profile.name} EE={EE_NAME} body={ee_body_idx} jacobi={ee_jacobi_idx} joints={joint_ids}", flush=True)
@@ -377,11 +377,11 @@ if int(os.environ.get("WRISTCAM_PROBE", "0")):   # numeric wrist-cam aim diagnos
     _aim_local = quat_apply(_qinv(_eeq), (_cube - _eep))   # cube in gripper_end LOCAL frame == the WRIST_AIM look target
     _dot = (_optax * _c2cn).sum(-1)
     _basep = r.data.body_pos_w[:, r.body_names.index("base_link")] if "base_link" in r.body_names else r.data.body_pos_w[:, 0]
-    print(f"[WCAM-PROBE] base_pos(mean)={[round(x,3) for x in _basep.mean(0).tolist()]} cam_pos(mean)={[round(x,3) for x in _camp.mean(0).tolist()]} cube_pos(mean)={[round(x,3) for x in _cube.mean(0).tolist()]} EE_pos(mean)={[round(x,3) for x in _eep.mean(0).tolist()]}", flush=True)
-    print(f"[WCAM-PROBE] cube-base(mean, workspace in base frame)={[round(x,3) for x in (_cube.mean(0)-_basep.mean(0)).tolist()]}", flush=True)
+    print(f"[WCAM-PROBE] base_pos(mean)={[round(tX2,3) for tX2 in _basep.mean(0).tolist()]} cam_pos(mean)={[round(tX2,3) for tX2 in _camp.mean(0).tolist()]} cube_pos(mean)={[round(tX2,3) for tX2 in _cube.mean(0).tolist()]} EE_pos(mean)={[round(tX2,3) for tX2 in _eep.mean(0).tolist()]}", flush=True)
+    print(f"[WCAM-PROBE] cube-base(mean, workspace in base frame)={[round(tX2,3) for tX2 in (_cube.mean(0)-_basep.mean(0)).tolist()]}", flush=True)
     print(f"[WCAM-PROBE] optax.(cam->cube) mean={_dot.mean().item():+.3f} (1=aimed AT cube, <0=looking AWAY)", flush=True)
-    print(f"[WCAM-PROBE] optax_world(mean)={[round(x,3) for x in _optax.mean(0).tolist()]}  optaxZ={_optax.mean(0)[2].item():+.3f} (<0=looking DOWN, >0=looking UP)", flush=True)
-    print(f"[WCAM-PROBE] WRIST_AIM = cube in gripper_end LOCAL (mean)={[round(x,4) for x in _aim_local.mean(0).tolist()]}", flush=True)
+    print(f"[WCAM-PROBE] optax_world(mean)={[round(tX2,3) for tX2 in _optax.mean(0).tolist()]}  optaxZ={_optax.mean(0)[2].item():+.3f} (<0=looking DOWN, >0=looking UP)", flush=True)
+    print(f"[WCAM-PROBE] WRIST_AIM = cube in gripper_end LOCAL (mean)={[round(tX2,4) for tX2 in _aim_local.mean(0).tolist()]}", flush=True)
     print(f"[WCAM-PROBE] aim_local per-axis range x[{_aim_local[:,0].min():.2f},{_aim_local[:,0].max():.2f}] y[{_aim_local[:,1].min():.2f},{_aim_local[:,1].max():.2f}] z[{_aim_local[:,2].min():.2f},{_aim_local[:,2].max():.2f}]", flush=True)
     import os as _oe; _oe._exit(0)
 
@@ -419,46 +419,46 @@ DIRECT_JOINTS = int(os.environ.get("DIRECT_JOINTS", "0"))  # user 2026-06-28: 1 
 ALIGN_DIRECT  = int(os.environ.get("ALIGN_DIRECT", "0"))   # user 2026-07-01: 1 = ALIGN uses DIRECT 6 raw joint-deltas while APPROACH stays IK (mixed: IK-approach + DIRECT-align). n_act(align)=6. (DIRECT_JOINTS=1 makes BOTH direct.)
 
 # ---------------- geometry helpers ----------------
-def cube_z_w():
+def cubeZW():
     return env.scene[args.target_cube].data.root_pos_w[:, 2]
 
-def cube_xyz_from_front(front_cxcy, plane_z):
+def cubeXyzFromFront(frontCxcy, planeZ):
     """Coordinate transform (user 2026-06-29): back-project FRONT detection (cx,cy normalized) through intrinsics +
     front-cam pose, intersect the table plane (z=plane_z, = known cube-center height) -> cube WORLD (x,y,z).
     REAL-measurable: front extrinsic + intrinsic + known cube height. Standard ROS cam frame (+Z optical, x right, y down)."""
-    Cf = env.scene["front"]; cfp = Cf.data.pos_w; cq = Cf.data.quat_w_ros; Kf = Cf.data.intrinsic_matrices
-    Hf = Cf.data.output["rgb"].shape[1]; Wf = Cf.data.output["rgb"].shape[2]
-    u = front_cxcy[:, 0] * Wf; v = front_cxcy[:, 1] * Hf
-    x_c = (u - Kf[:, 0, 2]) / Kf[:, 0, 0]                            # ray dir in cam frame (z=1 forward)
-    y_c = (v - Kf[:, 1, 2]) / Kf[:, 1, 1]
-    z_c = torch.ones_like(x_c)
-    qw, qx, qy, qz = cq[:, 0], cq[:, 1], cq[:, 2], cq[:, 3]          # cam->world rotation R, ray_world = R @ ray_cam
-    rx = (1-2*(qy*qy+qz*qz))*x_c + (2*(qx*qy-qz*qw))*y_c + (2*(qx*qz+qy*qw))*z_c
-    ry = (2*(qx*qy+qz*qw))*x_c + (1-2*(qx*qx+qz*qz))*y_c + (2*(qy*qz-qx*qw))*z_c
-    rz = (2*(qx*qz-qy*qw))*x_c + (2*(qy*qz+qx*qw))*y_c + (1-2*(qx*qx+qy*qy))*z_c
-    pz = plane_z if torch.is_tensor(plane_z) else torch.full_like(cfp[:, 2], float(plane_z))
-    t = (pz - cfp[:, 2]) / torch.where(rz.abs() < 1e-6, torch.full_like(rz, 1e-6), rz)
-    X = cfp[:, 0] + t * rx; Y = cfp[:, 1] + t * ry
-    rz_n = (rz / (torch.sqrt(rx * rx + ry * ry + rz * rz) + 1e-9)).abs()   # |sin(elevation)|: small = grazing = unreliable plane-hit
-    return torch.stack([X, Y, pz], dim=-1), rz_n
+    tCf = env.scene["front"]; tCfp = tCf.data.pos_w; tCq = tCf.data.quat_w_ros; tKf = tCf.data.intrinsic_matrices
+    tHf = tCf.data.output["rgb"].shape[1]; tWf = tCf.data.output["rgb"].shape[2]
+    tU = frontCxcy[:, 0] * tWf; tV = frontCxcy[:, 1] * tHf
+    tXC = (tU - tKf[:, 0, 2]) / tKf[:, 0, 0]                            # ray dir in cam frame (z=1 forward)
+    tYC = (tV - tKf[:, 1, 2]) / tKf[:, 1, 1]
+    tZC = torch.ones_like(tXC)
+    tQw, tQx, tQy, tQz = tCq[:, 0], tCq[:, 1], tCq[:, 2], tCq[:, 3]          # cam->world rotation R, ray_world = R @ ray_cam
+    tRx = (1-2*(tQy*tQy+tQz*tQz))*tXC + (2*(tQx*tQy-tQz*tQw))*tYC + (2*(tQx*tQz+tQy*tQw))*tZC
+    tRy = (2*(tQx*tQy+tQz*tQw))*tXC + (1-2*(tQx*tQx+tQz*tQz))*tYC + (2*(tQy*tQz-tQx*tQw))*tZC
+    tRz = (2*(tQx*tQz-tQy*tQw))*tXC + (2*(tQy*tQz+tQx*tQw))*tYC + (1-2*(tQx*tQx+tQy*tQy))*tZC
+    tPz = planeZ if torch.is_tensor(planeZ) else torch.full_like(tCfp[:, 2], float(planeZ))
+    tT = (tPz - tCfp[:, 2]) / torch.where(tRz.abs() < 1e-6, torch.full_like(tRz, 1e-6), tRz)
+    tX = tCfp[:, 0] + tT * tRx; tY = tCfp[:, 1] + tT * tRy
+    tRzN = (tRz / (torch.sqrt(tRx * tRx + tRy * tRy + tRz * tRz) + 1e-9)).abs()   # |sin(elevation)|: small = grazing = unreliable plane-hit
+    return torch.stack([tX, tY, tPz], dim=-1), tRzN
 
-def cube_xyz_from_wrist(wrist_cxcy, plane_z):
+def cubeXyzFromWrist(wristCxcy, planeZ):
     """user 2026-07-09: same ray∩table-plane unprojection as cube_xyz_from_front, but via the WRIST (eye-in-hand) cam.
     During APPROACH the wrist looks near-vertically down at the cube -> steep ray -> reliable; cam pose is from FK (robust).
     REAL-measurable (wrist extrinsic from FK + intrinsic + known cube height). Returns cube WORLD (x,y,z) + ray reliability."""
-    Cw = env.scene["wrist"]; cwp = Cw.data.pos_w; cq = Cw.data.quat_w_ros; Kw = Cw.data.intrinsic_matrices
-    Hw = Cw.data.output["rgb"].shape[1]; Ww = Cw.data.output["rgb"].shape[2]
-    u = wrist_cxcy[:, 0] * Ww; v = wrist_cxcy[:, 1] * Hw
-    x_c = (u - Kw[:, 0, 2]) / Kw[:, 0, 0]; y_c = (v - Kw[:, 1, 2]) / Kw[:, 1, 1]; z_c = torch.ones_like(x_c)
-    qw, qx, qy, qz = cq[:, 0], cq[:, 1], cq[:, 2], cq[:, 3]
-    rx = (1-2*(qy*qy+qz*qz))*x_c + (2*(qx*qy-qz*qw))*y_c + (2*(qx*qz+qy*qw))*z_c
-    ry = (2*(qx*qy+qz*qw))*x_c + (1-2*(qx*qx+qz*qz))*y_c + (2*(qy*qz-qx*qw))*z_c
-    rz = (2*(qx*qz-qy*qw))*x_c + (2*(qy*qz+qx*qw))*y_c + (1-2*(qx*qx+qy*qy))*z_c
-    pz = plane_z if torch.is_tensor(plane_z) else torch.full_like(cwp[:, 2], float(plane_z))
-    t = (pz - cwp[:, 2]) / torch.where(rz.abs() < 1e-6, torch.full_like(rz, 1e-6), rz)
-    X = cwp[:, 0] + t * rx; Y = cwp[:, 1] + t * ry
-    rz_n = (rz / (torch.sqrt(rx * rx + ry * ry + rz * rz) + 1e-9)).abs()
-    return torch.stack([X, Y, pz], dim=-1), rz_n
+    tCw = env.scene["wrist"]; tCwp = tCw.data.pos_w; tCq = tCw.data.quat_w_ros; tKw = tCw.data.intrinsic_matrices
+    tHw = tCw.data.output["rgb"].shape[1]; tWw = tCw.data.output["rgb"].shape[2]
+    tU = wristCxcy[:, 0] * tWw; tV = wristCxcy[:, 1] * tHw
+    tXC = (tU - tKw[:, 0, 2]) / tKw[:, 0, 0]; tYC = (tV - tKw[:, 1, 2]) / tKw[:, 1, 1]; tZC = torch.ones_like(tXC)
+    tQw, tQx, tQy, tQz = tCq[:, 0], tCq[:, 1], tCq[:, 2], tCq[:, 3]
+    tRx = (1-2*(tQy*tQy+tQz*tQz))*tXC + (2*(tQx*tQy-tQz*tQw))*tYC + (2*(tQx*tQz+tQy*tQw))*tZC
+    tRy = (2*(tQx*tQy+tQz*tQw))*tXC + (1-2*(tQx*tQx+tQz*tQz))*tYC + (2*(tQy*tQz-tQx*tQw))*tZC
+    tRz = (2*(tQx*tQz-tQy*tQw))*tXC + (2*(tQy*tQz+tQx*tQw))*tYC + (1-2*(tQx*tQx+tQy*tQy))*tZC
+    tPz = planeZ if torch.is_tensor(planeZ) else torch.full_like(tCwp[:, 2], float(planeZ))
+    tT = (tPz - tCwp[:, 2]) / torch.where(tRz.abs() < 1e-6, torch.full_like(tRz, 1e-6), tRz)
+    tX = tCwp[:, 0] + tT * tRx; tY = tCwp[:, 1] + tT * tRy
+    tRzN = (tRz / (torch.sqrt(tRx * tRx + tRy * tRy + tRz * tRz) + 1e-9)).abs()
+    return torch.stack([tX, tY, tPz], dim=-1), tRzN
 
 PRIV_UNTIL = int(os.environ.get("PRIV_UNTIL", "0"))   # user 2026-07-19: SAFETY CAP (steps) — if the RSR target is never reached, force the anneal to start here anyway. 0 = no cap (pure RSR-triggered). Requires PRIV_RSR_TARGET>0 to enable privilege at all.
 PRIV_RSR_TARGET = float(os.environ.get("PRIV_RSR_TARGET", "0.0"))   # user 2026-07-19: >0 enables PRIVILEGED bootstrap. Stay 100% privileged until the rolling RSR (n>=500) reaches this (≈mastered w/ perfect perception), THEN linearly anneal privilege->real over PRIV_ANNEAL steps. Watch the live RSR climb to this = "privileged RSR" (auto-measured, same dcube metric).
@@ -480,61 +480,61 @@ _GSTEP = [0]   # current global env-step (updated in the train loop) — read by
 _PH_CUR = [None]   # user 2026-07-19: current per-env phase tensor (0=SEARCH,1=APPROACH,2=ALIGN); set by the train loop right before get_obs -> APPROACH-ONLY privilege (search stays on the real detector + front-guided acquisition reward)
 _ACQ = {"pcx": None, "pcy": None, "pv": None}   # user 2026-07-19: FRONT-GUIDED search acquisition — the FRONT-known cube (recon) projected into the WRIST image (pcx,pcy)+validity; stashed by get_obs, consumed by r_s
 
-def cube_to_cam(cam_name):
+def cubeToCam(camName):
     """user 2026-07-19: PRIVILEGED detection — project the TRUE cube world pose into cam_name -> (cx,cy,frac,vis,yaw,conf),
     same layout as _yolo_det. Inverse of cube_xyz_from_* (ROS optical frame: R^T@(cube-cam_pos), perspective divide).
     frac from a 1/depth² size model (monotonic in depth like the real detector). NOT deployable — bootstrap only."""
-    C = env.scene[cam_name]; p = C.data.pos_w; cq = C.data.quat_w_ros; K = C.data.intrinsic_matrices
-    H = C.data.output["rgb"].shape[1]; W = C.data.output["rgb"].shape[2]
-    cube = env.scene[args.target_cube].data.root_pos_w                              # (N,3) TRUE world
-    dx = cube[:, 0] - p[:, 0]; dy = cube[:, 1] - p[:, 1]; dz = cube[:, 2] - p[:, 2]
-    qw, qx, qy, qz = cq[:, 0], cq[:, 1], cq[:, 2], cq[:, 3]                          # R = cam->world; cube_cam = Rᵀ·d
-    xc = (1-2*(qy*qy+qz*qz))*dx + (2*(qx*qy+qz*qw))*dy + (2*(qx*qz-qy*qw))*dz
-    yc = (2*(qx*qy-qz*qw))*dx + (1-2*(qx*qx+qz*qz))*dy + (2*(qy*qz+qx*qw))*dz
-    zc = (2*(qx*qz+qy*qw))*dx + (2*(qy*qz-qx*qw))*dy + (1-2*(qx*qx+qy*qy))*dz        # forward depth (optical +Z)
-    _zs = torch.where(zc.abs() < 1e-6, torch.full_like(zc, 1e-6), zc)
-    u = (xc / _zs) * K[:, 0, 0] + K[:, 0, 2]; v = (yc / _zs) * K[:, 1, 1] + K[:, 1, 2]
-    cx = u / W; cy = v / H
-    vis = ((zc > 0.02) & (cx >= 0.0) & (cx <= 1.0) & (cy >= 0.0) & (cy <= 1.0)).float()
-    _Kf = FRAC_PRIV_K if FRAC_PRIV_K > 0.0 else (K[:, 0, 0]**2 * (CUBE_EDGE**2) / (W * H))
-    frac = torch.clamp(_Kf / (zc.clamp(min=1e-3)**2), 0.0, 1.0) * vis
-    _cq2 = env.scene[args.target_cube].data.root_quat_w                             # TRUE cube yaw about world-Z
-    cyaw = torch.atan2(2*(_cq2[:, 0]*_cq2[:, 3] + _cq2[:, 1]*_cq2[:, 2]), 1 - 2*(_cq2[:, 2]**2 + _cq2[:, 3]**2))
-    _half = torch.full_like(cx, 0.5)
-    cx = torch.where(vis > 0.5, cx.clamp(0.0, 1.0), _half); cy = torch.where(vis > 0.5, cy.clamp(0.0, 1.0), _half)
-    return torch.stack([cx, cy, frac, vis, cyaw, vis], dim=-1)
+    tC = env.scene[camName]; tP = tC.data.pos_w; tCq = tC.data.quat_w_ros; tK = tC.data.intrinsic_matrices
+    tH = tC.data.output["rgb"].shape[1]; tW = tC.data.output["rgb"].shape[2]
+    tCube = env.scene[args.target_cube].data.root_pos_w                              # (N,3) TRUE world
+    tDx = tCube[:, 0] - tP[:, 0]; tDy = tCube[:, 1] - tP[:, 1]; tDz = tCube[:, 2] - tP[:, 2]
+    tQw, tQx, tQy, tQz = tCq[:, 0], tCq[:, 1], tCq[:, 2], tCq[:, 3]                          # R = cam->world; cube_cam = Rᵀ·d
+    tXc = (1-2*(tQy*tQy+tQz*tQz))*tDx + (2*(tQx*tQy+tQz*tQw))*tDy + (2*(tQx*tQz-tQy*tQw))*tDz
+    tYc = (2*(tQx*tQy-tQz*tQw))*tDx + (1-2*(tQx*tQx+tQz*tQz))*tDy + (2*(tQy*tQz+tQx*tQw))*tDz
+    tZc = (2*(tQx*tQz+tQy*tQw))*tDx + (2*(tQy*tQz-tQx*tQw))*tDy + (1-2*(tQx*tQx+tQy*tQy))*tDz        # forward depth (optical +Z)
+    tZs = torch.where(tZc.abs() < 1e-6, torch.full_like(tZc, 1e-6), tZc)
+    tU = (tXc / tZs) * tK[:, 0, 0] + tK[:, 0, 2]; tV = (tYc / tZs) * tK[:, 1, 1] + tK[:, 1, 2]
+    tCx = tU / tW; tCy = tV / tH
+    tVis = ((tZc > 0.02) & (tCx >= 0.0) & (tCx <= 1.0) & (tCy >= 0.0) & (tCy <= 1.0)).float()
+    tKf2 = FRAC_PRIV_K if FRAC_PRIV_K > 0.0 else (tK[:, 0, 0]**2 * (CUBE_EDGE**2) / (tW * tH))
+    tFrac = torch.clamp(tKf2 / (tZc.clamp(min=1e-3)**2), 0.0, 1.0) * tVis
+    tCq2 = env.scene[args.target_cube].data.root_quat_w                             # TRUE cube yaw about world-Z
+    tCyaw = torch.atan2(2*(tCq2[:, 0]*tCq2[:, 3] + tCq2[:, 1]*tCq2[:, 2]), 1 - 2*(tCq2[:, 2]**2 + tCq2[:, 3]**2))
+    tHalf = torch.full_like(tCx, 0.5)
+    tCx = torch.where(tVis > 0.5, tCx.clamp(0.0, 1.0), tHalf); tCy = torch.where(tVis > 0.5, tCy.clamp(0.0, 1.0), tHalf)
+    return torch.stack([tCx, tCy, tFrac, tVis, tCyaw, tVis], dim=-1)
 
-def _cam_ray(cam, cxcy):
+def _camRay(cam, cxcy):
     """cam sensor + normalized (cx,cy) -> (origin_w (N,3), dir_w unit (N,3)). Standard ROS optical frame."""
-    p = cam.data.pos_w; cq = cam.data.quat_w_ros; K = cam.data.intrinsic_matrices
-    H = cam.data.output["rgb"].shape[1]; W = cam.data.output["rgb"].shape[2]
-    u = cxcy[:, 0] * W; v = cxcy[:, 1] * H
-    xc = (u - K[:, 0, 2]) / K[:, 0, 0]; yc = (v - K[:, 1, 2]) / K[:, 1, 1]; zc = torch.ones_like(xc)
-    qw, qx, qy, qz = cq[:, 0], cq[:, 1], cq[:, 2], cq[:, 3]
-    rx = (1-2*(qy*qy+qz*qz))*xc + (2*(qx*qy-qz*qw))*yc + (2*(qx*qz+qy*qw))*zc
-    ry = (2*(qx*qy+qz*qw))*xc + (1-2*(qx*qx+qz*qz))*yc + (2*(qy*qz-qx*qw))*zc
-    rz = (2*(qx*qz-qy*qw))*xc + (2*(qy*qz+qx*qw))*yc + (1-2*(qx*qx+qy*qy))*zc
-    d = torch.stack([rx, ry, rz], dim=-1)
-    return p, d / (d.norm(dim=-1, keepdim=True) + 1e-9)
+    tP = cam.data.pos_w; tCq = cam.data.quat_w_ros; tK = cam.data.intrinsic_matrices
+    tH = cam.data.output["rgb"].shape[1]; tW = cam.data.output["rgb"].shape[2]
+    tU = cxcy[:, 0] * tW; tV = cxcy[:, 1] * tH
+    tXc = (tU - tK[:, 0, 2]) / tK[:, 0, 0]; tYc = (tV - tK[:, 1, 2]) / tK[:, 1, 1]; tZc = torch.ones_like(tXc)
+    tQw, tQx, tQy, tQz = tCq[:, 0], tCq[:, 1], tCq[:, 2], tCq[:, 3]
+    tRx = (1-2*(tQy*tQy+tQz*tQz))*tXc + (2*(tQx*tQy-tQz*tQw))*tYc + (2*(tQx*tQz+tQy*tQw))*tZc
+    tRy = (2*(tQx*tQy+tQz*tQw))*tXc + (1-2*(tQx*tQx+tQz*tQz))*tYc + (2*(tQy*tQz-tQx*tQw))*tZc
+    tRz = (2*(tQx*tQz-tQy*tQw))*tXc + (2*(tQy*tQz+tQx*tQw))*tYc + (1-2*(tQx*tQx+tQy*tQy))*tZc
+    tD = torch.stack([tRx, tRy, tRz], dim=-1)
+    return tP, tD / (tD.norm(dim=-1, keepdim=True) + 1e-9)
 
-def cube_xyz_triangulate(front_cxcy, wrist_cxcy):
+def cubeXyzTriangulate(frontCxcy, wristCxcy):
     """user 2026-07-10: STEREO triangulate cube 3D from FRONT ray (fixed calib) + WRIST ray (FK pose from joints).
     NO plane assumption — closest point between the two world-space rays. Returns (mid_xyz (N,3), gap (N,)).
     gap = distance between the two rays' closest points (0=rays intersect=reliable; large=inconsistent detection/near-parallel)."""
-    P1, d1 = _cam_ray(env.scene["front"], front_cxcy)
-    P2, d2 = _cam_ray(env.scene["wrist"], wrist_cxcy)
-    r = P1 - P2
-    b = (d1 * d2).sum(-1)                                            # d1·d2 (both unit) ; |b|->1 = parallel = ill-conditioned
-    d = (d1 * r).sum(-1); e = (d2 * r).sum(-1)
-    denom = (1.0 - b * b).clamp(min=1e-6)
-    t1 = (b * e - d) / denom; t2 = (e - b * d) / denom
-    c1 = P1 + t1.unsqueeze(-1) * d1; c2 = P2 + t2.unsqueeze(-1) * d2
-    mid = 0.5 * (c1 + c2); gap = (c1 - c2).norm(dim=-1)
-    return mid, gap
+    tP1, tD1 = _camRay(env.scene["front"], frontCxcy)
+    tP2, tD2 = _camRay(env.scene["wrist"], wristCxcy)
+    tR = tP1 - tP2
+    tB = (tD1 * tD2).sum(-1)                                            # d1·d2 (both unit) ; |b|->1 = parallel = ill-conditioned
+    tD = (tD1 * tR).sum(-1); tE = (tD2 * tR).sum(-1)
+    tDenom = (1.0 - tB * tB).clamp(min=1e-6)
+    tT1 = (tB * tE - tD) / tDenom; tT2 = (tE - tB * tD) / tDenom
+    tC1 = tP1 + tT1.unsqueeze(-1) * tD1; tC2 = tP2 + tT2.unsqueeze(-1) * tD2
+    tMid = 0.5 * (tC1 + tC2); tGap = (tC1 - tC2).norm(dim=-1)
+    return tMid, tGap
 
 # ---------------- learned detector (YOLO-OBB red cube) -> (N,5): cx,cy,frac,vis,yaw ----------------
 _YOLO = None
-def _load_yolo():
+def _loadYolo():
     global _YOLO
     if _YOLO is None:
         from ultralytics import YOLO
@@ -544,32 +544,32 @@ def _load_yolo():
     return _YOLO
 
 @torch.no_grad()
-def _yolo_det(rgb_uint8):
+def _yoloDet(rgbUint8):
     """rgb (N,H,W,3) uint8 -> (N,5): cx,cy in [0,1], area_frac, visible, yaw(rad). Learned red-cube OBB.
     Real-measurable ONLY (image pixels) — NO privileged cube world pose. Keeps the HSV interface so the
     net + cross-attention are unchanged; just a better, sim2real-robust front-end."""
-    model = _load_yolo()
-    Nn, H, W = rgb_uint8.shape[0], rgb_uint8.shape[1], rgb_uint8.shape[2]
-    x = rgb_uint8.permute(0, 3, 1, 2).float() / 255.0                 # (N,3,H,W) RGB, GPU (matches training)
-    res = model.predict(x, imgsz=H, conf=args.det_conf, max_det=1, verbose=False, device=DEVICE)
+    tModel = _loadYolo()
+    tNn, tH, tW = rgbUint8.shape[0], rgbUint8.shape[1], rgbUint8.shape[2]
+    tX2 = rgbUint8.permute(0, 3, 1, 2).float() / 255.0                 # (N,3,H,W) RGB, GPU (matches training)
+    tRes = tModel.predict(tX2, imgsz=tH, conf=args.det_conf, max_det=1, verbose=False, device=DEVICE)
     # user 2026-07-18 (perf B): assemble the per-image Results into GPU tensors (NO per-item .item()/float() sync),
     #   then do ALL the arithmetic vectorized ONCE. Loop only pulls tensor slices (GPU->GPU). was: python arithmetic + float() per env = 256-512 CPU syncs/step.
-    _xywhr = torch.zeros(Nn, 5, device=DEVICE); _cf = torch.zeros(Nn, device=DEVICE); _val = torch.zeros(Nn, dtype=torch.bool, device=DEVICE)
-    for i, rr in enumerate(res):
-        ob = rr.obb
-        if ob is not None and ob.xywhr is not None and len(ob.xywhr) > 0:
-            _xywhr[i] = ob.xywhr[0]; _val[i] = True
-            if ob.conf is not None and len(ob.conf) > 0: _cf[i] = ob.conf[0]
-    _half = torch.full((Nn,), 0.5, device=DEVICE); _zero = torch.zeros(Nn, device=DEVICE)
-    cx  = torch.where(_val, (_xywhr[:, 0] / W).clamp(0, 1), _half)
-    cy  = torch.where(_val, (_xywhr[:, 1] / H).clamp(0, 1), _half)
-    frac = torch.where(_val, ((_xywhr[:, 2] * _xywhr[:, 3]) / (W * H)).clamp(0, 1), _zero)
-    vis = _val.float()
-    yaw = torch.where(_val, _xywhr[:, 4], _zero)                       # OBB angle (rad); sin/cos used downstream
-    return torch.stack([cx, cy, frac, vis, yaw, _cf], dim=-1)          # conf = YOLO box conf (col 5) for det-rate-vs-distance diagnostic
+    tXywhr = torch.zeros(tNn, 5, device=DEVICE); tCf2 = torch.zeros(tNn, device=DEVICE); tVal = torch.zeros(tNn, dtype=torch.bool, device=DEVICE)
+    for tI, tRr in enumerate(tRes):
+        tOb = tRr.obb
+        if tOb is not None and tOb.xywhr is not None and len(tOb.xywhr) > 0:
+            tXywhr[tI] = tOb.xywhr[0]; tVal[tI] = True
+            if tOb.conf is not None and len(tOb.conf) > 0: tCf2[tI] = tOb.conf[0]
+    tHalf = torch.full((tNn,), 0.5, device=DEVICE); tZero = torch.zeros(tNn, device=DEVICE)
+    tCx  = torch.where(tVal, (tXywhr[:, 0] / tW).clamp(0, 1), tHalf)
+    tCy  = torch.where(tVal, (tXywhr[:, 1] / tH).clamp(0, 1), tHalf)
+    tFrac = torch.where(tVal, ((tXywhr[:, 2] * tXywhr[:, 3]) / (tW * tH)).clamp(0, 1), tZero)
+    tVis = tVal.float()
+    tYaw = torch.where(tVal, tXywhr[:, 4], tZero)                       # OBB angle (rad); sin/cos used downstream
+    return torch.stack([tCx, tCy, tFrac, tVis, tYaw, tCf2], dim=-1)          # conf = YOLO box conf (col 5) for det-rate-vs-distance diagnostic
 
-def detect(rgb_uint8):
-    return _yolo_det(rgb_uint8)   # jobs ALWAYS pass --detector -> learned YOLO-OBB (HSV _red_det fallback removed)
+def detect(rgbUint8):
+    return _yoloDet(rgbUint8)   # jobs ALWAYS pass --detector -> learned YOLO-OBB (HSV _red_det fallback removed)
 
 _LAST_IMG = {"front": None, "wrist": None}
 _SEG_DBG = False   # one-time [SEG-LABELS] dump (verify recolor class names match the table/gripper semantic labels)
@@ -580,64 +580,64 @@ _WARP_SCALE = float(os.environ.get("WARP_SCALE", "0.06")); _WARP_ROT = float(os.
 _WARP_SHIFT = float(os.environ.get("WARP_SHIFT", "0.03")); _WARP_SHEAR = float(os.environ.get("WARP_SHEAR", "0.03"))   # user 2026-07-08: WARP_SHIFT env-tunable — big per-episode cx+cy image shift (≈ wrist-cam extrinsic DR) breaks the wflex↔cy shortcut, forces visual servo
 MASK_PROPRIO = int(os.environ.get("MASK_PROPRIO", "0"))   # user 2026-07-08: 1 = zero the ENTIRE proprio block (state idx 0:21 = qpos,arm_target,grip,d2r), keep cube_rel(21,22) + detection tokens -> policy is PURELY perception-driven (no proprio shortcut anywhere) -> forced visual servo. search+approach.
 PROPRIO_KEEP = os.environ.get("PROPRIO_KEEP", "")         # user 2026-07-08: WHITELIST — keep ONLY these state[0:21] indices, zero the rest (overrides MASK_PROPRIO). e.g. "15,18" = d2r pan+wflex ONLY (minimal camera-orientation feedback for IK search velocity loop, without full proprio shortcut). Needs PROPRIO_OFF=0 (state_proj MLP alive to consume the kept dims).
-_PKEEP_IDX = [int(i) for i in PROPRIO_KEEP.split(",") if i.strip() != ""]
+_PKEEP_IDX = [int(tI) for tI in PROPRIO_KEEP.split(",") if tI.strip() != ""]
 _SWDR_LO = float(os.environ.get("START_WRIST_LO", "0")); _SWDR_HI = float(os.environ.get("START_WRIST_HI", "0"))   # user 2026-07-08: >0 both -> per-episode START_WRIST DR in [LO,HI] (start-pose variation; policy can't assume fixed start wflex)
 _warp_p = torch.zeros(N, 5, device=DEVICE)   # per-env [s, th, sh, tx, ty], held for the whole episode
-def resample_warp(ids=None):
-    _sl = slice(None) if ids is None else ids
-    _n = N if ids is None else (len(ids) if not torch.is_tensor(ids) else ids.numel())
-    _r = torch.rand(_n, 5, device=DEVICE) - 0.5
-    _warp_p[_sl, 0] = 1.0 + _r[:, 0] * 2 * _WARP_SCALE
-    _warp_p[_sl, 1] = _r[:, 1] * 2 * _WARP_ROT
-    _warp_p[_sl, 2] = _r[:, 2] * 2 * _WARP_SHEAR
-    _warp_p[_sl, 3] = _r[:, 3] * 2 * _WARP_SHIFT
-    _warp_p[_sl, 4] = _r[:, 4] * 2 * _WARP_SHIFT
-    _ep_bg[_sl] = _rand_bg(_n)        # user 2026-06-28: greenscreen bg ALSO per-episode (was per-frame -> flickered every step)
-_ep_bg = _rand_bg(N)                  # per-episode background, resampled on reset
-resample_warp()
-def _apply_warp(img):
+def resampleWarp(ids=None):
+    tSl = slice(None) if ids is None else ids
+    tN = N if ids is None else (len(ids) if not torch.is_tensor(ids) else ids.numel())
+    tR2 = torch.rand(tN, 5, device=DEVICE) - 0.5
+    _warp_p[tSl, 0] = 1.0 + tR2[:, 0] * 2 * _WARP_SCALE
+    _warp_p[tSl, 1] = tR2[:, 1] * 2 * _WARP_ROT
+    _warp_p[tSl, 2] = tR2[:, 2] * 2 * _WARP_SHEAR
+    _warp_p[tSl, 3] = tR2[:, 3] * 2 * _WARP_SHIFT
+    _warp_p[tSl, 4] = tR2[:, 4] * 2 * _WARP_SHIFT
+    _ep_bg[tSl] = _randBg(tN)        # user 2026-06-28: greenscreen bg ALSO per-episode (was per-frame -> flickered every step)
+_ep_bg = _randBg(N)                  # per-episode background, resampled on reset
+resampleWarp()
+def _applyWarp(img):
     import torch.nn.functional as _Fw
-    _n2, _h, _w, _ = img.shape
-    x = img.permute(0, 3, 1, 2).float()
-    s, th, sh, tx, ty = _warp_p[:, 0], _warp_p[:, 1], _warp_p[:, 2], _warp_p[:, 3], _warp_p[:, 4]
-    cos, sin = torch.cos(th), torch.sin(th)
-    theta = torch.zeros(_n2, 2, 3, device=img.device)
-    theta[:, 0, 0] = (cos + sh * sin) * s; theta[:, 0, 1] = (-sin + sh * cos) * s; theta[:, 0, 2] = tx
-    theta[:, 1, 0] = sin * s; theta[:, 1, 1] = cos * s; theta[:, 1, 2] = ty
-    grid = _Fw.affine_grid(theta, x.shape, align_corners=False)
-    out = _Fw.grid_sample(x, grid, mode="bilinear", padding_mode="border", align_corners=False)
-    return out.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
-def render_cams():
+    tN2, tH2, tW2, _ = img.shape
+    tX2 = img.permute(0, 3, 1, 2).float()
+    tS, tTh, tSh, tTx, tTy = _warp_p[:, 0], _warp_p[:, 1], _warp_p[:, 2], _warp_p[:, 3], _warp_p[:, 4]
+    tCos, tSin = torch.cos(tTh), torch.sin(tTh)
+    tTheta = torch.zeros(tN2, 2, 3, device=img.device)
+    tTheta[:, 0, 0] = (tCos + tSh * tSin) * tS; tTheta[:, 0, 1] = (-tSin + tSh * tCos) * tS; tTheta[:, 0, 2] = tTx
+    tTheta[:, 1, 0] = tSin * tS; tTheta[:, 1, 1] = tCos * tS; tTheta[:, 1, 2] = tTy
+    tGrid = _Fw.affine_grid(tTheta, tX2.shape, align_corners=False)
+    tOut = _Fw.grid_sample(tX2, tGrid, mode="bilinear", padding_mode="border", align_corners=False)
+    return tOut.permute(0, 2, 3, 1).round().clamp(0, 255).to(torch.uint8)
+def renderCams():
     """P1-identical _cam_ds pipeline (--dr): greenscreen bg + table LIGHT-GRAY + gripper BLACK + image_dr +
     viewpoint_warp -> matches the real rig, and HSV detection runs on the SAME sim2real-matched image."""
-    out = {}
-    for nm in ("front", "wrist"):
-        rgb = env.scene[nm].data.output["rgb"][..., :3]               # (N,H,W,3) uint8
+    tOut = {}
+    for tNm in ("front", "wrist"):
+        tRgb = env.scene[tNm].data.output["rgb"][..., :3]               # (N,H,W,3) uint8
         if args.dr:
-            seg = env.scene[nm].data.output["semantic_segmentation"]
-            info = env.scene[nm].data.info["semantic_segmentation"]
+            tSeg = env.scene[tNm].data.output["semantic_segmentation"]
+            tInfo = env.scene[tNm].data.info["semantic_segmentation"]
             global _SEG_DBG
             if not _SEG_DBG:
-                try: print(f"[SEG-LABELS] {nm} idToLabels = {info.get('idToLabels', info)}", flush=True)
-                except Exception as _e: print(f"[SEG-LABELS] {nm} info={info} ({_e})", flush=True)
-                if nm == "wrist": _SEG_DBG = True
-            rgb = composite_bg(rgb, seg, info, _ep_bg, keep_lower=0.10)   # per-EPISODE bg (resampled on reset) — was _rand_bg(N) per frame
-            rgb = recolor_seg_region(rgb, seg, info, ("table",), 0.88, 1.05, 0.0, grain=False, base=0.50)   # gray table
-            rgb = recolor_seg_region(rgb, seg, info, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)  # black gripper
-            rgb = image_dr(rgb, scale=False)   # user 2026-06-28: scale=False kills image_dr's PER-FRAME affine (zoom/shift) — the per-episode _apply_warp handles geometric DR now (was scale=(nm=="front") -> per-frame angle jitter)
-            rgb = _apply_warp(rgb)   # PER-EPISODE warp (params in _warp_p, resampled on reset) — was per-frame viewpoint_warp
-        if nm == "wrist" and WRIST_ROT90:   # user 2026-07-20: un-rotate the OFFICIAL wrist cam (mounted 90° off) by an IMAGE rotation (convention-free, unlike the quat roll). k*90° CCW. Detector + net + reward all see the SAME upright image. OURS: WRIST_ROT90=0 (unchanged).
-            rgb = torch.rot90(rgb, int(WRIST_ROT90), dims=(1, 2)).contiguous()
-        out[nm] = rgb
-    _LAST_IMG["front"] = out["front"]; _LAST_IMG["wrist"] = out["wrist"]
-    return out
+                try: print(f"[SEG-LABELS] {tNm} idToLabels = {tInfo.get('idToLabels', tInfo)}", flush=True)
+                except Exception as tE2: print(f"[SEG-LABELS] {tNm} info={tInfo} ({tE2})", flush=True)
+                if tNm == "wrist": _SEG_DBG = True
+            tRgb = compositeBg(tRgb, tSeg, tInfo, _ep_bg, keep_lower=0.10)   # per-EPISODE bg (resampled on reset) — was _rand_bg(N) per frame
+            tRgb = recolorSegRegion(tRgb, tSeg, tInfo, ("table",), 0.88, 1.05, 0.0, grain=False, base=0.50)   # gray table
+            tRgb = recolorSegRegion(tRgb, tSeg, tInfo, ("gripper",), 0.02, 0.12, 0.0, grain=False, base=0.0)  # black gripper
+            tRgb = imageDr(tRgb, scale=False)   # user 2026-06-28: scale=False kills image_dr's PER-FRAME affine (zoom/shift) — the per-episode _apply_warp handles geometric DR now (was scale=(nm=="front") -> per-frame angle jitter)
+            tRgb = _applyWarp(tRgb)   # PER-EPISODE warp (params in _warp_p, resampled on reset) — was per-frame viewpoint_warp
+        if tNm == "wrist" and WRIST_ROT90:   # user 2026-07-20: un-rotate the OFFICIAL wrist cam (mounted 90° off) by an IMAGE rotation (convention-free, unlike the quat roll). k*90° CCW. Detector + net + reward all see the SAME upright image. OURS: WRIST_ROT90=0 (unchanged).
+            tRgb = torch.rot90(tRgb, int(WRIST_ROT90), dims=(1, 2)).contiguous()
+        tOut[tNm] = tRgb
+    _LAST_IMG["front"] = tOut["front"]; _LAST_IMG["wrist"] = tOut["wrist"]
+    return tOut
 
-def proprio_state():
-    qpos = r.data.joint_pos[:, :8]                                    # 8
-    tq = arm_term._target_qpos                                        # 6 arm PD targets (commanded)
-    grip_t = r.data.joint_pos[:, 6:7]                                 # 1 gripper qpos (proxy for grip target)
-    d2r = (r.data.joint_pos[:, joint_ids] - REST_QPOS)               # 6
-    return torch.cat([qpos, tq, grip_t, d2r], dim=-1)                # 8+6+1+6 = 21
+def proprioState():
+    tQpos = r.data.joint_pos[:, :8]                                    # 8
+    tTq = arm_term._target_qpos                                        # 6 arm PD targets (commanded)
+    tGripT = r.data.joint_pos[:, 6:7]                                 # 1 gripper qpos (proxy for grip target)
+    tD2r = (r.data.joint_pos[:, joint_ids] - REST_QPOS)               # 6
+    return torch.cat([tQpos, tTq, tGripT, tD2r], dim=-1)                # 8+6+1+6 = 21
 
 _cube_plane_z = None   # cached known cube-CENTER world height (constant; deployable = table_top + cube_half)
 CUBE_REL_CLAMP = float(os.environ.get("CUBE_REL_CLAMP", "1.0"))   # clamp front-derived cube-rel offset (m); kills grazing-angle garbage
@@ -655,187 +655,187 @@ _PROF = {"step": 0.0, "render": 0.0, "detect": 0.0, "upd": 0.0, "n": 0}
 def _psync():
     if _PROF_ON: torch.cuda.synchronize(DEVICE)
 
-def get_obs():
-    _tpr = time.perf_counter() if _PROF_ON else 0.0
-    cams = render_cams()
-    if _PROF_ON: _psync(); _PROF["render"] += time.perf_counter() - _tpr; _tpd = time.perf_counter()
-    _pw = 0.0 if _SWEEPING[0] else (_PRIV_W[0] if PRIV_RSR_TARGET > 0.0 else 0.0)   # user 2026-07-19: privilege weight (1=full priv, 0=full real). APPROACH-ONLY now: search learns w/ the real detector + front-guided acquisition reward; privilege only removes YOLO noise on the already-framed cube during APPROACH (where the weak wrist-frac signal is the real bottleneck). sweeps ALWAYS real.
-    _phv = _PH_CUR[0]
-    _priv_env = None                                                 # user 2026-07-19: per-env bool of which envs are PRIVILEGED this step (reused for FRONT_DROP skip + PRIV_POS true cube_rel)
-    _keepon = (PRIV_KEEP_FAIL and PRIV_RSR_TARGET > 0.0 and not _SWEEPING[0] and _phv is not None and _CELL_KEEPPRIV[0] is not None and _ENV_CELL[0] is not None)   # region-selective privilege active (post-anneal, keep priv in failing cells)
-    if (_pw <= 1e-9 and not _keepon) or _phv is None:               # FULL real detector (deployable) — all envs (no anneal weight AND no failing-cell keep)
-        fdf = detect(cams["front"]); wdf = detect(cams["wrist"])       # user 2026-07-18: kept as 2 calls — batching front+wrist into one 512-img yolo11x predict OOM'd (peak +3GB). vectorized postproc (in _yolo_det) is the retained perf-B win.
+def getObs():
+    tTpr = time.perf_counter() if _PROF_ON else 0.0
+    tCams = renderCams()
+    if _PROF_ON: _psync(); _PROF["render"] += time.perf_counter() - tTpr; tTpd = time.perf_counter()
+    tPw = 0.0 if _SWEEPING[0] else (_PRIV_W[0] if PRIV_RSR_TARGET > 0.0 else 0.0)   # user 2026-07-19: privilege weight (1=full priv, 0=full real). APPROACH-ONLY now: search learns w/ the real detector + front-guided acquisition reward; privilege only removes YOLO noise on the already-framed cube during APPROACH (where the weak wrist-frac signal is the real bottleneck). sweeps ALWAYS real.
+    tPhv = _PH_CUR[0]
+    tPrivEnv = None                                                 # user 2026-07-19: per-env bool of which envs are PRIVILEGED this step (reused for FRONT_DROP skip + PRIV_POS true cube_rel)
+    tKeepon = (PRIV_KEEP_FAIL and PRIV_RSR_TARGET > 0.0 and not _SWEEPING[0] and tPhv is not None and _CELL_KEEPPRIV[0] is not None and _ENV_CELL[0] is not None)   # region-selective privilege active (post-anneal, keep priv in failing cells)
+    if (tPw <= 1e-9 and not tKeepon) or tPhv is None:               # FULL real detector (deployable) — all envs (no anneal weight AND no failing-cell keep)
+        tFdf = detect(tCams["front"]); tWdf = detect(tCams["wrist"])       # user 2026-07-18: kept as 2 calls — batching front+wrist into one 512-img yolo11x predict OOM'd (peak +3GB). vectorized postproc (in _yolo_det) is the retained perf-B win.
     else:                                                            # per-phase: SEARCH always real, APPROACH privileged (weight _pw, per-env). YOLO runs for everyone (search needs it) — no more full-priv YOLO-skip.
-        fdf = detect(cams["front"]); wdf = detect(cams["wrist"])
-        _appr = (_phv >= 0) if PRIV_SEARCH else (_phv == 1)            # PRIV_SEARCH=1 -> privilege BOTH phases (whole-pipeline); 0 -> APPROACH envs only
-        _priv_env = _appr & (torch.rand(_appr.shape[0], device=DEVICE) < _pw)   # _pw=1 -> all eligible envs priv; anneal(0<_pw<1) -> per-env prob; SEARCH envs (PRIV_SEARCH=0) always real
-        if _keepon:                                                   # user 2026-07-19: ALSO keep privilege for envs spawned in FAILING curric cells (region-selective; survives the global anneal)
-            _kp = _appr & (_ENV_CELL[0] >= 0) & _CELL_KEEPPRIV[0][_ENV_CELL[0].clamp(min=0)]
-            _priv_env = _priv_env | _kp
-        if bool(_priv_env.any()):
-            _fp = cube_to_cam("front"); _wp = cube_to_cam("wrist")
-            _m = _priv_env.float().unsqueeze(-1)
-            fdf = _m * _fp + (1.0 - _m) * fdf; wdf = _m * _wp + (1.0 - _m) * wdf
-    if _PROF_ON: _psync(); _PROF["detect"] += time.perf_counter() - _tpd
-    fd = fdf[:, :4]; wd = wdf[:, :4]                                 # 4D detection vectors for the net (cx,cy,frac,vis)
-    yaw = wdf[:, 4]                                                  # detection cube yaw (REAL: wrist blob principal axis)
-    ori = torch.stack([torch.sin(yaw), torch.cos(yaw)], dim=-1)
-    st = proprio_state()
+        tFdf = detect(tCams["front"]); tWdf = detect(tCams["wrist"])
+        tAppr = (tPhv >= 0) if PRIV_SEARCH else (tPhv == 1)            # PRIV_SEARCH=1 -> privilege BOTH phases (whole-pipeline); 0 -> APPROACH envs only
+        tPrivEnv = tAppr & (torch.rand(tAppr.shape[0], device=DEVICE) < tPw)   # _pw=1 -> all eligible envs priv; anneal(0<_pw<1) -> per-env prob; SEARCH envs (PRIV_SEARCH=0) always real
+        if tKeepon:                                                   # user 2026-07-19: ALSO keep privilege for envs spawned in FAILING curric cells (region-selective; survives the global anneal)
+            tKp = tAppr & (_ENV_CELL[0] >= 0) & _CELL_KEEPPRIV[0][_ENV_CELL[0].clamp(min=0)]
+            tPrivEnv = tPrivEnv | tKp
+        if bool(tPrivEnv.any()):
+            tFp = cubeToCam("front"); tWp = cubeToCam("wrist")
+            tM = tPrivEnv.float().unsqueeze(-1)
+            tFdf = tM * tFp + (1.0 - tM) * tFdf; tWdf = tM * tWp + (1.0 - tM) * tWdf
+    if _PROF_ON: _psync(); _PROF["detect"] += time.perf_counter() - tTpd
+    tFd = tFdf[:, :4]; tWd = tWdf[:, :4]                                 # 4D detection vectors for the net (cx,cy,frac,vis)
+    tYaw = tWdf[:, 4]                                                  # detection cube yaw (REAL: wrist blob principal axis)
+    tOri = torch.stack([torch.sin(tYaw), torch.cos(tYaw)], dim=-1)
+    tSt = proprioState()
     # COORDINATE TRANSFORM (user 2026-06-29): front-cam detection -> cube WORLD 3D (ray∩table plane) -> rel-to-gripper.
     #   gives the policy a NON-blind approach signal (front sees the cube even when the wrist can't). all real-measurable.
     global _cube_plane_z, _unproj_n, _front_drop
     if _cube_plane_z is None:
         _cube_plane_z = float(env.scene[args.target_cube].data.root_pos_w[:, 2].mean().item())   # const cube-center height (deploy = table+half)
         try:   # user 2026-07-10: ONE-TIME front-cam FOV footprint on the table plane (env-local) -> spawn should live INSIDE this (front must SEE the cube to start approach)
-            _Cf = env.scene["front"]; _cfp0 = _Cf.data.pos_w[0]; _cq0 = _Cf.data.quat_w_ros[0]; _Kf0 = _Cf.data.intrinsic_matrices[0]
-            _Hf = _Cf.data.output["rgb"].shape[1]; _Wf = _Cf.data.output["rgb"].shape[2]
-            _gx, _gy = torch.meshgrid(torch.linspace(0.03, 0.97, 16, device=DEVICE), torch.linspace(0.03, 0.97, 16, device=DEVICE), indexing="ij")
-            _uu = _gx.reshape(-1) * _Wf; _vv = _gy.reshape(-1) * _Hf
-            _xc = (_uu - _Kf0[0, 2]) / _Kf0[0, 0]; _yc = (_vv - _Kf0[1, 2]) / _Kf0[1, 1]; _zc = torch.ones_like(_xc)
-            _qw, _qx, _qy, _qz = _cq0[0], _cq0[1], _cq0[2], _cq0[3]
-            _rx = (1-2*(_qy*_qy+_qz*_qz))*_xc + (2*(_qx*_qy-_qz*_qw))*_yc + (2*(_qx*_qz+_qy*_qw))*_zc
-            _ry = (2*(_qx*_qy+_qz*_qw))*_xc + (1-2*(_qx*_qx+_qz*_qz))*_yc + (2*(_qy*_qz-_qx*_qw))*_zc
-            _rz = (2*(_qx*_qz-_qy*_qw))*_xc + (2*(_qy*_qz+_qx*_qw))*_yc + (1-2*(_qx*_qx+_qy*_qy))*_zc
-            _t = (_cube_plane_z - _cfp0[2]) / torch.where(_rz.abs() < 1e-6, torch.full_like(_rz, 1e-6), _rz)
-            _org = env.scene.env_origins[0]
-            _Xl = (_cfp0[0] + _t*_rx) - _org[0]; _Yl = (_cfp0[1] + _t*_ry) - _org[1]
-            _ok = (_t > 0) & (_Xl.abs() < 3.0) & (_Yl.abs() < 3.0)   # in front of cam + drop near-horizon blowups
-            if bool(_ok.any()):
-                print(f"[FRONT-FOV] env-local  X[{float(_Xl[_ok].min()):.3f}, {float(_Xl[_ok].max()):.3f}]  Y[{float(_Yl[_ok].min()):.3f}, {float(_Yl[_ok].max()):.3f}]  (fwd-dist Y+1.15 -> [{float(_Yl[_ok].min())+1.15:.3f}, {float(_Yl[_ok].max())+1.15:.3f}])  cam-local({float(_cfp0[0]-_org[0]):.2f},{float(_cfp0[1]-_org[1]):.2f},{float(_cfp0[2]-_org[2]):.2f}) plane_z={_cube_plane_z:.3f}  hits {int(_ok.sum())}/{_ok.numel()}", flush=True)
+            tCf3 = env.scene["front"]; tCfp0 = tCf3.data.pos_w[0]; tCq0 = tCf3.data.quat_w_ros[0]; tKf0 = tCf3.data.intrinsic_matrices[0]
+            tHf2 = tCf3.data.output["rgb"].shape[1]; tWf2 = tCf3.data.output["rgb"].shape[2]
+            tGx, tGy = torch.meshgrid(torch.linspace(0.03, 0.97, 16, device=DEVICE), torch.linspace(0.03, 0.97, 16, device=DEVICE), indexing="ij")
+            tUu = tGx.reshape(-1) * tWf2; tVv = tGy.reshape(-1) * tHf2
+            tXc2 = (tUu - tKf0[0, 2]) / tKf0[0, 0]; tYc2 = (tVv - tKf0[1, 2]) / tKf0[1, 1]; tZc2 = torch.ones_like(tXc2)
+            tQw2, tQx2, tQy2, tQz2 = tCq0[0], tCq0[1], tCq0[2], tCq0[3]
+            tRx2 = (1-2*(tQy2*tQy2+tQz2*tQz2))*tXc2 + (2*(tQx2*tQy2-tQz2*tQw2))*tYc2 + (2*(tQx2*tQz2+tQy2*tQw2))*tZc2
+            tRy2 = (2*(tQx2*tQy2+tQz2*tQw2))*tXc2 + (1-2*(tQx2*tQx2+tQz2*tQz2))*tYc2 + (2*(tQy2*tQz2-tQx2*tQw2))*tZc2
+            tRz2 = (2*(tQx2*tQz2-tQy2*tQw2))*tXc2 + (2*(tQy2*tQz2+tQx2*tQw2))*tYc2 + (1-2*(tQx2*tQx2+tQy2*tQy2))*tZc2
+            tT3 = (_cube_plane_z - tCfp0[2]) / torch.where(tRz2.abs() < 1e-6, torch.full_like(tRz2, 1e-6), tRz2)
+            tOrg = env.scene.env_origins[0]
+            tXl = (tCfp0[0] + tT3*tRx2) - tOrg[0]; tYl = (tCfp0[1] + tT3*tRy2) - tOrg[1]
+            tOk = (tT3 > 0) & (tXl.abs() < 3.0) & (tYl.abs() < 3.0)   # in front of cam + drop near-horizon blowups
+            if bool(tOk.any()):
+                print(f"[FRONT-FOV] env-local  X[{float(tXl[tOk].min()):.3f}, {float(tXl[tOk].max()):.3f}]  Y[{float(tYl[tOk].min()):.3f}, {float(tYl[tOk].max()):.3f}]  (fwd-dist Y+1.15 -> [{float(tYl[tOk].min())+1.15:.3f}, {float(tYl[tOk].max())+1.15:.3f}])  cam-local({float(tCfp0[0]-tOrg[0]):.2f},{float(tCfp0[1]-tOrg[1]):.2f},{float(tCfp0[2]-tOrg[2]):.2f}) plane_z={_cube_plane_z:.3f}  hits {int(tOk.sum())}/{tOk.numel()}", flush=True)
             else:
                 print("[FRONT-FOV] no valid plane hits (cam not looking at table?)", flush=True)
-        except Exception as _fe:
-            print(f"[FRONT-FOV] footprint calc failed: {_fe}", flush=True)
+        except Exception as tFe:
+            print(f"[FRONT-FOV] footprint calc failed: {tFe}", flush=True)
     if FRONT_DROP_P > 0.0:                                          # FRONT DROPOUT (user 2026-07-01): hide front det for masked envs -> "front not visible"; cube_rel auto-zeros via the vis gate below
-        if _front_drop is None or _front_drop.shape[0] != fd.shape[0]:
-            _front_drop = (torch.rand(fd.shape[0], device=DEVICE) < FRONT_DROP_P)
-        _fdrop = _front_drop if (not PRIV_POS or _priv_env is None) else (_front_drop & ~_priv_env)   # user 2026-07-19: don't hide front for PRIVILEGED envs (front is the position source during bootstrap; hiding it defeats privilege)
-        _dm = _fdrop.float().unsqueeze(-1)
-        fd = fd * (1.0 - _dm) + _dm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=fd.device, dtype=fd.dtype)
-    if FRONT_WEIGHT != 1.0 and (_phv is not None) and (not TP_EVAL) and not (_curric_on and _sweeping[0]):   # user 2026-07-31: in SEARCH training, blend front det(cx,cy) toward neutral (0.5) -> keeps direction, weakens magnitude ("front gives direction only"). Prevents over-reliance on precise front (robust to real-robot calibration error). eval/sweep stay clean. weight=0.5=halved.
-        _fwm = (_phv == 0).float().unsqueeze(-1); _fw = 1.0 - _fwm * (1.0 - FRONT_WEIGHT)
-        fd = fd.clone(); fd[:, :2] = 0.5 + _fw * (fd[:, :2] - 0.5)
-    recon, rz_n = cube_xyz_from_front(fd[:, :2], _cube_plane_z)      # (N,3) world (deployable) + ray reliability
-    ee = r.data.body_pos_w[:, ee_body_idx]                          # gripper world (FK, real)
-    gate = fd[:, 3:4] * (rz_n > RZ_MIN).float().unsqueeze(-1)        # 0 unless front sees cube AND ray steep enough (reliable)
-    _crel = torch.clamp(recon[:, :2] - ee[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)               # clamp FIRST -> finite even for a grazing/degenerate ray
-    cube_rel = torch.where(gate > 0, _crel, torch.zeros_like(_crel))                             # ROOT FIX: gate via where, NOT *gate (NaN*0=NaN would leak a diverged-env FK)
-    if PRIV_POS and _priv_env is not None and bool(_priv_env.any()):   # user 2026-07-19: PRIVILEGED envs get the TRUE gripper->cube offset (ungated) as cube_rel -> policy always knows the position during bootstrap; anneals to the front-derived value as privilege->0
-        _true_rel = torch.clamp(env.scene[args.target_cube].data.root_pos_w[:, :2] - ee[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)
-        _pm = _priv_env.float().unsqueeze(-1)
-        cube_rel = _pm * _true_rel + (1.0 - _pm) * cube_rel
-    if FRONT_SEARCH_ONLY and _phv is not None:   # user 2026-07-22: FRONT cube_rel is SEARCH-only. In APPROACH/ALIGN (ph>=1) the policy must TRACK with the WRIST (cube_rel_w via RZ_MIN_W + wrist detection cx/cy), NOT lean on the external front cam. Zero the front slot off-search.
-        cube_rel = torch.where((_phv == 0).unsqueeze(-1), cube_rel, torch.zeros_like(cube_rel))
-    st = torch.cat([st, cube_rel], dim=-1)                          # 21 + 2 = 23
+        if _front_drop is None or _front_drop.shape[0] != tFd.shape[0]:
+            _front_drop = (torch.rand(tFd.shape[0], device=DEVICE) < FRONT_DROP_P)
+        tFdrop = _front_drop if (not PRIV_POS or tPrivEnv is None) else (_front_drop & ~tPrivEnv)   # user 2026-07-19: don't hide front for PRIVILEGED envs (front is the position source during bootstrap; hiding it defeats privilege)
+        tDm = tFdrop.float().unsqueeze(-1)
+        tFd = tFd * (1.0 - tDm) + tDm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=tFd.device, dtype=tFd.dtype)
+    if FRONT_WEIGHT != 1.0 and (tPhv is not None) and (not TP_EVAL) and not (_curric_on and _sweeping[0]):   # user 2026-07-31: in SEARCH training, blend front det(cx,cy) toward neutral (0.5) -> keeps direction, weakens magnitude ("front gives direction only"). Prevents over-reliance on precise front (robust to real-robot calibration error). eval/sweep stay clean. weight=0.5=halved.
+        tFwm = (tPhv == 0).float().unsqueeze(-1); tFw = 1.0 - tFwm * (1.0 - FRONT_WEIGHT)
+        tFd = tFd.clone(); tFd[:, :2] = 0.5 + tFw * (tFd[:, :2] - 0.5)
+    tRecon, tRzN = cubeXyzFromFront(tFd[:, :2], _cube_plane_z)      # (N,3) world (deployable) + ray reliability
+    tEe = r.data.body_pos_w[:, ee_body_idx]                          # gripper world (FK, real)
+    tGate = tFd[:, 3:4] * (tRzN > RZ_MIN).float().unsqueeze(-1)        # 0 unless front sees cube AND ray steep enough (reliable)
+    tCrel = torch.clamp(tRecon[:, :2] - tEe[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)               # clamp FIRST -> finite even for a grazing/degenerate ray
+    tCubeRel = torch.where(tGate > 0, tCrel, torch.zeros_like(tCrel))                             # ROOT FIX: gate via where, NOT *gate (NaN*0=NaN would leak a diverged-env FK)
+    if PRIV_POS and tPrivEnv is not None and bool(tPrivEnv.any()):   # user 2026-07-19: PRIVILEGED envs get the TRUE gripper->cube offset (ungated) as cube_rel -> policy always knows the position during bootstrap; anneals to the front-derived value as privilege->0
+        tTrueRel = torch.clamp(env.scene[args.target_cube].data.root_pos_w[:, :2] - tEe[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)
+        tPm = tPrivEnv.float().unsqueeze(-1)
+        tCubeRel = tPm * tTrueRel + (1.0 - tPm) * tCubeRel
+    if FRONT_SEARCH_ONLY and tPhv is not None:   # user 2026-07-22: FRONT cube_rel is SEARCH-only. In APPROACH/ALIGN (ph>=1) the policy must TRACK with the WRIST (cube_rel_w via RZ_MIN_W + wrist detection cx/cy), NOT lean on the external front cam. Zero the front slot off-search.
+        tCubeRel = torch.where((tPhv == 0).unsqueeze(-1), tCubeRel, torch.zeros_like(tCubeRel))
+    tSt = torch.cat([tSt, tCubeRel], dim=-1)                          # 21 + 2 = 23
     if _D_CUBE >= 4:                                                # user 2026-07-09: append cube_rel_WRIST (eye-in-hand unproj) as extra cube-token dims -> 25
-        recon_w, rz_w = cube_xyz_from_wrist(wd[:, :2], _cube_plane_z)
-        gate_w = wd[:, 3:4] * (rz_w > RZ_MIN_W).float().unsqueeze(-1)  # 0 unless wrist sees cube AND ray STEEP (RZ_MIN_W; shallow=garbage)
-        _crelw = torch.clamp(recon_w[:, :2] - ee[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)
-        cube_rel_w = torch.where(gate_w > 0, _crelw, torch.zeros_like(_crelw))                   # ROOT FIX: gate via where, NOT *gate (NaN*0=NaN leak)
-        st = torch.cat([st, cube_rel_w], dim=-1)                    # 23 + 2 = 25
+        tReconW, tRzW = cubeXyzFromWrist(tWd[:, :2], _cube_plane_z)
+        tGateW = tWd[:, 3:4] * (tRzW > RZ_MIN_W).float().unsqueeze(-1)  # 0 unless wrist sees cube AND ray STEEP (RZ_MIN_W; shallow=garbage)
+        tCrelw = torch.clamp(tReconW[:, :2] - tEe[:, :2], -CUBE_REL_CLAMP, CUBE_REL_CLAMP)
+        tCubeRelW = torch.where(tGateW > 0, tCrelw, torch.zeros_like(tCrelw))                   # ROOT FIX: gate via where, NOT *gate (NaN*0=NaN leak)
+        tSt = torch.cat([tSt, tCubeRelW], dim=-1)                    # 23 + 2 = 25
     # user 2026-07-19: FRONT-GUIDED SEARCH acquisition — project the FRONT-known cube (recon world xyz) into the WRIST image.
     #   gives r_s a dense "swing the wrist toward where FRONT sees the cube" gradient BEFORE the wrist itself acquires it.
     #   fully deployable (front-homography recon + wrist FK projection = inverse of cube_xyz_from_wrist). valid = front reliable AND point in front of the wrist optical plane. pcx/pcy are UNCLAMPED so an off-frame cube gives a large err -> strong pull toward frame.
     try:
-        _Cw2 = env.scene["wrist"]; _pw2 = _Cw2.data.pos_w; _cqw = _Cw2.data.quat_w_ros; _Kw2 = _Cw2.data.intrinsic_matrices
-        _Hw2 = _Cw2.data.output["rgb"].shape[1]; _Ww2 = _Cw2.data.output["rgb"].shape[2]
-        _dxw = recon[:, 0] - _pw2[:, 0]; _dyw = recon[:, 1] - _pw2[:, 1]; _dzw = recon[:, 2] - _pw2[:, 2]
-        _qww, _qxw, _qyw, _qzw = _cqw[:, 0], _cqw[:, 1], _cqw[:, 2], _cqw[:, 3]      # R = cam->world; cube_cam = Rᵀ·d (ROS optical)
-        _xcw = (1-2*(_qyw*_qyw+_qzw*_qzw))*_dxw + (2*(_qxw*_qyw+_qzw*_qww))*_dyw + (2*(_qxw*_qzw-_qyw*_qww))*_dzw
-        _ycw = (2*(_qxw*_qyw-_qzw*_qww))*_dxw + (1-2*(_qxw*_qxw+_qzw*_qzw))*_dyw + (2*(_qyw*_qzw+_qxw*_qww))*_dzw
-        _zcw = (2*(_qxw*_qzw+_qyw*_qww))*_dxw + (2*(_qyw*_qzw-_qxw*_qww))*_dyw + (1-2*(_qxw*_qxw+_qyw*_qyw))*_dzw
-        _zsw = torch.where(_zcw.abs() < 1e-6, torch.full_like(_zcw, 1e-6), _zcw)
-        _ACQ["pcx"] = ((_xcw / _zsw) * _Kw2[:, 0, 0] + _Kw2[:, 0, 2]) / _Ww2
-        _ACQ["pcy"] = ((_ycw / _zsw) * _Kw2[:, 1, 1] + _Kw2[:, 1, 2]) / _Hw2
-        _ACQ["pv"]  = (fd[:, 3] > 0.5) & (rz_n > RZ_MIN) & (_zcw > 0.02)             # front reliable + cube in front of the wrist
+        tCw2 = env.scene["wrist"]; tPw2 = tCw2.data.pos_w; tCqw = tCw2.data.quat_w_ros; tKw2 = tCw2.data.intrinsic_matrices
+        tHw2 = tCw2.data.output["rgb"].shape[1]; tWw2 = tCw2.data.output["rgb"].shape[2]
+        tDxw = tRecon[:, 0] - tPw2[:, 0]; tDyw = tRecon[:, 1] - tPw2[:, 1]; tDzw = tRecon[:, 2] - tPw2[:, 2]
+        tQww, tQxw, tQyw, tQzw = tCqw[:, 0], tCqw[:, 1], tCqw[:, 2], tCqw[:, 3]      # R = cam->world; cube_cam = Rᵀ·d (ROS optical)
+        tXcw = (1-2*(tQyw*tQyw+tQzw*tQzw))*tDxw + (2*(tQxw*tQyw+tQzw*tQww))*tDyw + (2*(tQxw*tQzw-tQyw*tQww))*tDzw
+        tYcw = (2*(tQxw*tQyw-tQzw*tQww))*tDxw + (1-2*(tQxw*tQxw+tQzw*tQzw))*tDyw + (2*(tQyw*tQzw+tQxw*tQww))*tDzw
+        tZcw = (2*(tQxw*tQzw+tQyw*tQww))*tDxw + (2*(tQyw*tQzw-tQxw*tQww))*tDyw + (1-2*(tQxw*tQxw+tQyw*tQyw))*tDzw
+        tZsw = torch.where(tZcw.abs() < 1e-6, torch.full_like(tZcw, 1e-6), tZcw)
+        _ACQ["pcx"] = ((tXcw / tZsw) * tKw2[:, 0, 0] + tKw2[:, 0, 2]) / tWw2
+        _ACQ["pcy"] = ((tYcw / tZsw) * tKw2[:, 1, 1] + tKw2[:, 1, 2]) / tHw2
+        _ACQ["pv"]  = (tFd[:, 3] > 0.5) & (tRzN > RZ_MIN) & (tZcw > 0.02)             # front reliable + cube in front of the wrist
     except Exception:
         _ACQ["pcx"] = None; _ACQ["pcy"] = None; _ACQ["pv"] = None
     # [UNPROJ] diagnostic vs TRUE cube (sim GT only): error distribution AMONG the reliability-gated (kept) set
     _unproj_n = (globals().get("_unproj_n", -1) + 1)
     if (_unproj_n % 500 == 0 or _unproj_n < 6) and PRIV_RSR_TARGET > 0.0:   # user 2026-07-19: PRIV wiring check (also first 6 calls for fast boot confirmation) — col5 mean ~1.0 when privileged (cube_to_cam conf=vis=1), ~0.9 if real YOLO. phv_none=True means _PH_CUR not set -> privilege skipped.
-        _fcol5 = float(fdf[fdf[:, 3] > 0.5, 5].mean()) if bool((fdf[:, 3] > 0.5).any()) else -1.0
-        print(f"[PRIV-DBG] _pw={_pw:.2f} phv_none={_phv is None} PRIV_SEARCH={PRIV_SEARCH} sweeping={_SWEEPING[0]} fdf_conf_mean={_fcol5:.3f} (priv->~1.0 / real->~0.9)", flush=True)
+        tFcol5 = float(tFdf[tFdf[:, 3] > 0.5, 5].mean()) if bool((tFdf[:, 3] > 0.5).any()) else -1.0
+        print(f"[PRIV-DBG] _pw={tPw:.2f} phv_none={tPhv is None} PRIV_SEARCH={PRIV_SEARCH} sweeping={_SWEEPING[0]} fdf_conf_mean={tFcol5:.3f} (priv->~1.0 / real->~0.9)", flush=True)
     if _unproj_n % 500 == 0:
-        ctrue = env.scene[args.target_cube].data.root_pos_w
-        rr, rz_d = cube_xyz_from_front(fd[:, :2], ctrue[:, 2])
-        seen = fd[:, 3] > 0.5; keep = seen & (rz_d > RZ_MIN)
-        if bool(seen.any()):
-            ek = (rr[keep, :2] - ctrue[keep, :2]).norm(dim=-1) if bool(keep.any()) else torch.zeros(1, device=DEVICE)
-            kp = float(keep.float().sum()) / max(1.0, float(seen.float().sum())) * 100
-            print(f"[UNPROJ] GATED err_xy med={float(ek.median()):.3f} p90={float(ek.quantile(0.9)):.3f} max={float(ek.max()):.3f} "
-                  f"<5cm={float((ek<0.05).float().mean())*100:.0f}% | kept {kp:.0f}% of seen (rz>{RZ_MIN}) n_keep={int(keep.sum())}", flush=True)
-        _cl = env.scene[args.target_cube].data.root_pos_w - env.scene.env_origins     # user 2026-07-10: front/wrist DETECTION RATE + front conf by cube FORWARD distance (does front actually catch it?)
-        _cd = _cl[:, 1] + 1.15                                                          # forward distance from base (= env-local y + 1.15)
-        _dm = []
-        for _lo, _hi in [(0.0,0.15),(0.15,0.30),(0.30,0.45),(0.45,0.60),(0.60,0.90)]:
-            _mb = (_cd >= _lo) & (_cd < _hi); _nb = int(_mb.sum())
-            if _nb > 0:
-                _fsel = _mb & (fdf[:, 3] > 0.5)
-                _fcf = float(fdf[_fsel, 5].mean()) if bool(_fsel.any()) else 0.0
-                _dm.append(f"{_lo:.2f}-{_hi:.2f}(n{_nb}):F{float((fdf[_mb,3]>0.5).float().mean()):.2f}/W{float((wdf[_mb,3]>0.5).float().mean()):.2f}/cf{_fcf:.2f}")
-        print("[DET-DIST fwd] " + " | ".join(_dm) + "  (F=front detection rate W=wrist detection rate cf=front mean conf)", flush=True)
-        _wcamp = env.scene["wrist"].data.pos_w                                       # user 2026-07-09: FRAC-vs-distance — does wrist frac grow as cube gets closer?
-        _dtc = (ctrue - _wcamp).norm(dim=-1)                                         # true wrist-cam <-> cube dist
-        _sw = wd[:, 3] > 0.5
-        for _lo, _hi in [(0.0,0.15),(0.15,0.25),(0.25,0.4),(0.4,0.7),(0.7,9.0)]:
-            _b = _sw & (_dtc >= _lo) & (_dtc < _hi)
-            if bool(_b.any()): print(f"[FRACDBG] dist[{_lo:.2f},{_hi:.2f}) frac_med={float(wd[_b,2].median()):.4f} n={int(_b.sum())}", flush=True)
-        rrw, rzw_d = cube_xyz_from_wrist(wd[:, :2], ctrue[:, 2])                     # user 2026-07-09: WRIST unproj vs TRUE cube — validate the wrist calc
-        seenw = wd[:, 3] > 0.5; keepw = seenw & (rzw_d > RZ_MIN)
-        if bool(seenw.any()):
-            ekw = (rrw[keepw, :2] - ctrue[keepw, :2]).norm(dim=-1) if bool(keepw.any()) else torch.zeros(1, device=DEVICE)
-            print(f"[UNPROJ-W] WRIST err_xy med={float(ekw.median()):.3f} p90={float(ekw.quantile(0.9)):.3f} max={float(ekw.max()):.3f} "
-                  f"<5cm={float((ekw<0.05).float().mean())*100:.0f}% n_seen={int(seenw.sum())} n_keep={int(keepw.sum())}", flush=True)
-            _steep = seenw & (rzw_d > 0.4)                                          # user 2026-07-09: wrist looking DOWN (steep = approach-like) -> unproj should be accurate here
-            rrf, _ = cube_xyz_from_wrist(1.0 - wd[:, :2], ctrue[:, 2])               # hypothesis: 180deg image roll -> flip cx,cy
-            rry, _ = cube_xyz_from_wrist(torch.stack([wd[:,0], 1.0-wd[:,1]], -1), ctrue[:, 2])  # flip cy only
-            rrx, _ = cube_xyz_from_wrist(torch.stack([1.0-wd[:,0], wd[:,1]], -1), ctrue[:, 2])  # flip cx only
-            if bool(_steep.any()):
-                _m = _steep
-                e0 = (rrw[_m, :2] - ctrue[_m, :2]).norm(dim=-1).median()
-                ef = (rrf[_m, :2] - ctrue[_m, :2]).norm(dim=-1).median()
-                ey = (rry[_m, :2] - ctrue[_m, :2]).norm(dim=-1).median()
-                ex = (rrx[_m, :2] - ctrue[_m, :2]).norm(dim=-1).median()
-                print(f"[UNPROJ-W-STEEP] n={int(_m.sum())} err(raw)={float(e0):.3f} err(flipXY)={float(ef):.3f} err(flipY)={float(ey):.3f} err(flipX)={float(ex):.3f}  <- smallest = fix", flush=True)
+        tCtrue = env.scene[args.target_cube].data.root_pos_w
+        tRr, tRzD = cubeXyzFromFront(tFd[:, :2], tCtrue[:, 2])
+        tSeen = tFd[:, 3] > 0.5; tKeep = tSeen & (tRzD > RZ_MIN)
+        if bool(tSeen.any()):
+            tEk = (tRr[tKeep, :2] - tCtrue[tKeep, :2]).norm(dim=-1) if bool(tKeep.any()) else torch.zeros(1, device=DEVICE)
+            tKp2 = float(tKeep.float().sum()) / max(1.0, float(tSeen.float().sum())) * 100
+            print(f"[UNPROJ] GATED err_xy med={float(tEk.median()):.3f} p90={float(tEk.quantile(0.9)):.3f} max={float(tEk.max()):.3f} "
+                  f"<5cm={float((tEk<0.05).float().mean())*100:.0f}% | kept {tKp2:.0f}% of seen (rz>{RZ_MIN}) n_keep={int(tKeep.sum())}", flush=True)
+        tCl = env.scene[args.target_cube].data.root_pos_w - env.scene.env_origins     # user 2026-07-10: front/wrist DETECTION RATE + front conf by cube FORWARD distance (does front actually catch it?)
+        tCd = tCl[:, 1] + 1.15                                                          # forward distance from base (= env-local y + 1.15)
+        tDm = []
+        for tLo, tHi in [(0.0,0.15),(0.15,0.30),(0.30,0.45),(0.45,0.60),(0.60,0.90)]:
+            tMb = (tCd >= tLo) & (tCd < tHi); tNb = int(tMb.sum())
+            if tNb > 0:
+                tFsel = tMb & (tFdf[:, 3] > 0.5)
+                tFcf = float(tFdf[tFsel, 5].mean()) if bool(tFsel.any()) else 0.0
+                tDm.append(f"{tLo:.2f}-{tHi:.2f}(n{tNb}):F{float((tFdf[tMb,3]>0.5).float().mean()):.2f}/W{float((tWdf[tMb,3]>0.5).float().mean()):.2f}/cf{tFcf:.2f}")
+        print("[DET-DIST fwd] " + " | ".join(tDm) + "  (F=front detection rate W=wrist detection rate cf=front mean conf)", flush=True)
+        tWcamp = env.scene["wrist"].data.pos_w                                       # user 2026-07-09: FRAC-vs-distance — does wrist frac grow as cube gets closer?
+        tDtc = (tCtrue - tWcamp).norm(dim=-1)                                         # true wrist-cam <-> cube dist
+        tSw = tWd[:, 3] > 0.5
+        for tLo, tHi in [(0.0,0.15),(0.15,0.25),(0.25,0.4),(0.4,0.7),(0.7,9.0)]:
+            tB2 = tSw & (tDtc >= tLo) & (tDtc < tHi)
+            if bool(tB2.any()): print(f"[FRACDBG] dist[{tLo:.2f},{tHi:.2f}) frac_med={float(tWd[tB2,2].median()):.4f} n={int(tB2.sum())}", flush=True)
+        tRrw, tRzwD = cubeXyzFromWrist(tWd[:, :2], tCtrue[:, 2])                     # user 2026-07-09: WRIST unproj vs TRUE cube — validate the wrist calc
+        tSeenw = tWd[:, 3] > 0.5; tKeepw = tSeenw & (tRzwD > RZ_MIN)
+        if bool(tSeenw.any()):
+            tEkw = (tRrw[tKeepw, :2] - tCtrue[tKeepw, :2]).norm(dim=-1) if bool(tKeepw.any()) else torch.zeros(1, device=DEVICE)
+            print(f"[UNPROJ-W] WRIST err_xy med={float(tEkw.median()):.3f} p90={float(tEkw.quantile(0.9)):.3f} max={float(tEkw.max()):.3f} "
+                  f"<5cm={float((tEkw<0.05).float().mean())*100:.0f}% n_seen={int(tSeenw.sum())} n_keep={int(tKeepw.sum())}", flush=True)
+            tSteep = tSeenw & (tRzwD > 0.4)                                          # user 2026-07-09: wrist looking DOWN (steep = approach-like) -> unproj should be accurate here
+            tRrf, _ = cubeXyzFromWrist(1.0 - tWd[:, :2], tCtrue[:, 2])               # hypothesis: 180deg image roll -> flip cx,cy
+            tRry, _ = cubeXyzFromWrist(torch.stack([tWd[:,0], 1.0-tWd[:,1]], -1), tCtrue[:, 2])  # flip cy only
+            tRrx, _ = cubeXyzFromWrist(torch.stack([1.0-tWd[:,0], tWd[:,1]], -1), tCtrue[:, 2])  # flip cx only
+            if bool(tSteep.any()):
+                tM = tSteep
+                tE0 = (tRrw[tM, :2] - tCtrue[tM, :2]).norm(dim=-1).median()
+                tEf = (tRrf[tM, :2] - tCtrue[tM, :2]).norm(dim=-1).median()
+                tEy = (tRry[tM, :2] - tCtrue[tM, :2]).norm(dim=-1).median()
+                tEx = (tRrx[tM, :2] - tCtrue[tM, :2]).norm(dim=-1).median()
+                print(f"[UNPROJ-W-STEEP] n={int(tM.sum())} err(raw)={float(tE0):.3f} err(flipXY)={float(tEf):.3f} err(flipY)={float(tEy):.3f} err(flipX)={float(tEx):.3f}  <- smallest = fix", flush=True)
             else:
                 print(f"[UNPROJ-W-STEEP] no steep(rz>0.4) wrist rays yet", flush=True)
-            Cwd = env.scene["wrist"]; Cfd = env.scene["front"]
-            _Kw = Cwd.data.intrinsic_matrices; _Kf = Cfd.data.intrinsic_matrices
-            print(f"[CAMDBG] WRIST pos={Cwd.data.pos_w[0].tolist()} quat_ros={Cwd.data.quat_w_ros[0].tolist()} "
-                  f"K[fx,fy,cx,cy]=[{float(_Kw[0,0,0]):.1f},{float(_Kw[0,1,1]):.1f},{float(_Kw[0,0,2]):.1f},{float(_Kw[0,1,2]):.1f}] HW={Cwd.data.output['rgb'].shape[1]}x{Cwd.data.output['rgb'].shape[2]}", flush=True)
-            print(f"[CAMDBG] FRONT pos={Cfd.data.pos_w[0].tolist()} quat_ros={Cfd.data.quat_w_ros[0].tolist()} "
-                  f"K[fx,fy,cx,cy]=[{float(_Kf[0,0,0]):.1f},{float(_Kf[0,1,1]):.1f},{float(_Kf[0,0,2]):.1f},{float(_Kf[0,1,2]):.1f}] HW={Cfd.data.output['rgb'].shape[1]}x{Cfd.data.output['rgb'].shape[2]}", flush=True)
+            tCwd = env.scene["wrist"]; tCfd = env.scene["front"]
+            tKw3 = tCwd.data.intrinsic_matrices; tKf2 = tCfd.data.intrinsic_matrices
+            print(f"[CAMDBG] WRIST pos={tCwd.data.pos_w[0].tolist()} quat_ros={tCwd.data.quat_w_ros[0].tolist()} "
+                  f"K[fx,fy,cx,cy]=[{float(tKw3[0,0,0]):.1f},{float(tKw3[0,1,1]):.1f},{float(tKw3[0,0,2]):.1f},{float(tKw3[0,1,2]):.1f}] HW={tCwd.data.output['rgb'].shape[1]}x{tCwd.data.output['rgb'].shape[2]}", flush=True)
+            print(f"[CAMDBG] FRONT pos={tCfd.data.pos_w[0].tolist()} quat_ros={tCfd.data.quat_w_ros[0].tolist()} "
+                  f"K[fx,fy,cx,cy]=[{float(tKf2[0,0,0]):.1f},{float(tKf2[0,1,1]):.1f},{float(tKf2[0,0,2]):.1f},{float(tKf2[0,1,2]):.1f}] HW={tCfd.data.output['rgb'].shape[1]}x{tCfd.data.output['rgb'].shape[2]}", flush=True)
     if _PKEEP_IDX:                                                   # WHITELIST: keep ONLY chosen proprio idx (e.g. d2r pan+wflex 15,18), zero the rest -> minimal orientation feedback
-        st = st.clone(); _m = torch.zeros(21, device=st.device); _m[_PKEEP_IDX] = 1.0; st[:, :21] = st[:, :21] * _m
+        tSt = tSt.clone(); tM = torch.zeros(21, device=tSt.device); tM[_PKEEP_IDX] = 1.0; tSt[:, :21] = tSt[:, :21] * tM
     elif MASK_PROPRIO:                                              # zero ENTIRE proprio block (0:21), keep cube_rel(21:) -> purely perception-driven policy, no proprio shortcut
-        st = st.clone(); st[:, :21] = 0.0
+        tSt = tSt.clone(); tSt[:, :21] = 0.0
     # user 2026-07-21: NaN GUARD — a degenerate unproj ray (rz->0 in cube_xyz_from_front/wrist) can emit inf/NaN in
     #   cube_rel -> propagates through the net -> actor loc NaN -> crash (official9 died @38.4k). Sanitize obs so no
     #   NaN/inf reaches the net. nan->0, inf-> large finite (no-op when clean). All obs already in bounded ranges.
-    fd = torch.nan_to_num(fd, nan=0.0, posinf=0.0, neginf=0.0); wd = torch.nan_to_num(wd, nan=0.0, posinf=0.0, neginf=0.0)
-    ori = torch.nan_to_num(ori, nan=0.0, posinf=0.0, neginf=0.0); st = torch.nan_to_num(st, nan=0.0, posinf=0.0, neginf=0.0)
-    if FRONT_APP_OFF and _phv is not None:   # user 2026-07-22: WRIST-ONLY approach — zero the FRONT detection TOKEN for APPROACH/ALIGN (ph>=1). neutral=[0.5,0.5,0,0] (FRONT_DROP no-detect). SEARCH (ph==0) keeps front.
-        _apm = (_phv >= 1).unsqueeze(-1).float()
-        fd = fd * (1.0 - _apm) + _apm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=fd.device, dtype=fd.dtype)
-    if FRONT_OFF_WHEN_WRIST and _phv is not None:   # user 2026-07-30: in SEARCH, if the WRIST sees the cube, FRONT OFF (token fd + front cube_rel st[21:23]) -> force wrist-led centering. If the wrist is blind, keep front (acquisition). Parity with deploy.
-        _wsm = ((_phv == 0) & (wd[:, 3] > 0.5)).unsqueeze(-1).float()
-        fd = fd * (1.0 - _wsm) + _wsm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=fd.device, dtype=fd.dtype)
-        st = st.clone(); st[:, 21:23] = st[:, 21:23] * (1.0 - _wsm)   # front cube_rel = state dims 21,22 (line ~707 cat order)
+    tFd = torch.nan_to_num(tFd, nan=0.0, posinf=0.0, neginf=0.0); tWd = torch.nan_to_num(tWd, nan=0.0, posinf=0.0, neginf=0.0)
+    tOri = torch.nan_to_num(tOri, nan=0.0, posinf=0.0, neginf=0.0); tSt = torch.nan_to_num(tSt, nan=0.0, posinf=0.0, neginf=0.0)
+    if FRONT_APP_OFF and tPhv is not None:   # user 2026-07-22: WRIST-ONLY approach — zero the FRONT detection TOKEN for APPROACH/ALIGN (ph>=1). neutral=[0.5,0.5,0,0] (FRONT_DROP no-detect). SEARCH (ph==0) keeps front.
+        tApm = (tPhv >= 1).unsqueeze(-1).float()
+        tFd = tFd * (1.0 - tApm) + tApm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=tFd.device, dtype=tFd.dtype)
+    if FRONT_OFF_WHEN_WRIST and tPhv is not None:   # user 2026-07-30: in SEARCH, if the WRIST sees the cube, FRONT OFF (token fd + front cube_rel st[21:23]) -> force wrist-led centering. If the wrist is blind, keep front (acquisition). Parity with deploy.
+        tWsm = ((tPhv == 0) & (tWd[:, 3] > 0.5)).unsqueeze(-1).float()
+        tFd = tFd * (1.0 - tWsm) + tWsm * torch.tensor([0.5, 0.5, 0.0, 0.0], device=tFd.device, dtype=tFd.dtype)
+        tSt = tSt.clone(); tSt[:, 21:23] = tSt[:, 21:23] * (1.0 - tWsm)   # front cube_rel = state dims 21,22 (line ~707 cat order)
     if _D_ACQ > 0:   # user 2026-08-01: FRONT-guided AIM vector [pcx,pcy,pv] (front cube projected into WRIST image) as the 5th net token. SEARCH-only (approach uses wrist). deploy MUST replicate: same clamp(-3,3)+pv gate + off-search/wrist-sees zeroing.
         if _ACQ.get("pv") is not None:
-            _apv = _ACQ["pv"].float()
-            _apcx = torch.nan_to_num(_ACQ["pcx"], nan=0.0, posinf=0.0, neginf=0.0).clamp(-3.0, 3.0) * _apv   # zero pcx/pcy when front unreliable (pv=0)
-            _apcy = torch.nan_to_num(_ACQ["pcy"], nan=0.0, posinf=0.0, neginf=0.0).clamp(-3.0, 3.0) * _apv
-            _acq3 = torch.stack([_apcx, _apcy, _apv], dim=-1)
+            tApv = _ACQ["pv"].float()
+            tApcx = torch.nan_to_num(_ACQ["pcx"], nan=0.0, posinf=0.0, neginf=0.0).clamp(-3.0, 3.0) * tApv   # zero pcx/pcy when front unreliable (pv=0)
+            tApcy = torch.nan_to_num(_ACQ["pcy"], nan=0.0, posinf=0.0, neginf=0.0).clamp(-3.0, 3.0) * tApv
+            tAcq3 = torch.stack([tApcx, tApcy, tApv], dim=-1)
         else:
-            _acq3 = torch.zeros(st.shape[0], 3, device=st.device, dtype=st.dtype)
-        if _phv is not None:   # SEARCH-only: zero the aim token off-search (ph>=1 uses wrist)
-            _acq3 = torch.where((_phv == 0).unsqueeze(-1), _acq3, torch.zeros_like(_acq3))
-        if FRONT_OFF_WHEN_WRIST and _phv is not None:   # if the wrist sees the cube, the aim token is also OFF (front-guide unnecessary; parity with the (1-nvis) gate in _rt_acq)
-            _acq3 = _acq3 * (1.0 - ((_phv == 0) & (wd[:, 3] > 0.5)).unsqueeze(-1).float())
-        st = torch.nan_to_num(st, nan=0.0, posinf=0.0, neginf=0.0)
-        st = torch.cat([st, _acq3], dim=-1)
-    return fd, wd, ori, st
+            tAcq3 = torch.zeros(tSt.shape[0], 3, device=tSt.device, dtype=tSt.dtype)
+        if tPhv is not None:   # SEARCH-only: zero the aim token off-search (ph>=1 uses wrist)
+            tAcq3 = torch.where((tPhv == 0).unsqueeze(-1), tAcq3, torch.zeros_like(tAcq3))
+        if FRONT_OFF_WHEN_WRIST and tPhv is not None:   # if the wrist sees the cube, the aim token is also OFF (front-guide unnecessary; parity with the (1-nvis) gate in _rt_acq)
+            tAcq3 = tAcq3 * (1.0 - ((tPhv == 0) & (tWd[:, 3] > 0.5)).unsqueeze(-1).float())
+        tSt = torch.nan_to_num(tSt, nan=0.0, posinf=0.0, neginf=0.0)
+        tSt = torch.cat([tSt, tAcq3], dim=-1)
+    return tFd, tWd, tOri, tSt
 
 # ---- reward/phase thresholds still referenced by the LIVE TWO_PHASE block (rest of the old
 #      single-agent rule-executor + reward constants were DELETED as dead) ----
@@ -886,14 +886,14 @@ cap = args.buffer_size   # kept solely for the [DET] start banner below
 # own UI (_TPUI/_TPHND/_tpg). The remaining helpers (_png/_spark/_card/_draw_det) are shared.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import imageio
-from rebot_grasp_rl.dashboard_render import _png, _spark, _trimmean, _card, _draw_det, _quat_rpy, _draw_arrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
+from rebot_grasp_rl.dashboard_render import _png, _spark, _trimmean, _card, _drawDet, _quatRpy, _drawArrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
 
 # update_ui() and the MLflow logging block were DELETED: both were driven only by the removed
 # single-agent loop (update_ui wrote the dead _UI dict; MLflow's _MLF was logged only there).
 
 # ---------------- main loop ----------------
 print(f"[DET] start num_envs={N} act={ACT_DIM} state={STATE_DIM} buffer={cap}@{BUF_DEV} UTD={args.num_updates}", flush=True)
-fd, wd, ori, s = get_obs()
+fd, wd, ori, s = getObs()
 # ---- CALIBRATION (user 2026-06-28): place a cube AT the gripper gap, detect its (cx,cy,frac) = the centering + grasp-size target.
 #   PURE DETECTION (no camera projection calib). eye-in-hand -> the gap is at a FIXED wrist-image spot, so one measurement holds
 #   for all poses. Real-robot equivalent: put a cube in the gripper, run the detector, read (cx,cy,frac). ----
@@ -901,7 +901,7 @@ _GOFF = torch.tensor([float(os.environ.get("GOFF_X", "0.0")), float(os.environ.g
 _CTGT = torch.tensor([float(os.environ.get("CTGT_X", "0.5")), float(os.environ.get("CTGT_Y", "0.5"))], device=DEVICE)   # centering target (SNAP cx,cy or fallback image center)
 _FRAC_TGT = float(os.environ.get("FRAC_TGT", "0.30"))
 _SNAP_SET = bool(os.environ.get("CTGT_X"))
-if _SNAP_SET: print(f"[CALIB] SNAP targets: CTGT=({float(_CTGT[0]):.3f},{float(_CTGT[1]):.3f}) FRAC={_FRAC_TGT:.3f} GOFF={[round(float(x),4) for x in _GOFF.tolist()]}", flush=True)
+if _SNAP_SET: print(f"[CALIB] SNAP targets: CTGT=({float(_CTGT[0]):.3f},{float(_CTGT[1]):.3f}) FRAC={_FRAC_TGT:.3f} GOFF={[round(float(tX2),4) for tX2 in _GOFF.tolist()]}", flush=True)
 try:
     if _SNAP_SET: raise StopIteration("snap-calibrated -> skip auto-calib")
     _cube = env.scene[args.target_cube]
@@ -912,7 +912,7 @@ try:
     _opos = _cube.data.root_pos_w.clone(); _oquat = _cube.data.root_quat_w.clone()
     _cube.write_root_pose_to_sim(torch.cat([_gapw, _oquat], dim=-1))                        # move cube -> gap
     for _ in range(3): env.sim.render()
-    _fc, _wc, _, _ = get_obs()
+    _fc, _wc, _, _ = getObs()
     _sc = _wc[:, 3] > 0.5
     if int(_sc.sum().item()) >= max(4, N // 8):
         _CTGT = _wc[_sc, 0:2].mean(0); _FRAC_TGT = float(_wc[_sc, 2].mean())
@@ -920,7 +920,7 @@ try:
     else:
         print(f"[CALIB] FAIL: cube@gap seen only {int(_sc.sum().item())}/{N} -> fallback CENTER=(0.5,0.5) FRAC=0.30", flush=True)
     _cube.write_root_pose_to_sim(torch.cat([_opos, _oquat], dim=-1)); env.sim.render()      # restore cube
-    fd, wd, ori, s = get_obs()
+    fd, wd, ori, s = getObs()
 except Exception as _e:
     if not _SNAP_SET: print(f"[CALIB] EXCEPTION {_e} -> fallback CENTER=(0.5,0.5) FRAC=0.30", flush=True)
 if os.environ.get("YOLO_PROBE"):   # user 2026-07-15: FORCED sweep — place cube ON the wrist optical axis at fixed distances, render, run YOLO. Isolates detector capability from policy orientation. Exits after.
@@ -944,7 +944,7 @@ if os.environ.get("YOLO_PROBE"):   # user 2026-07-15: FORCED sweep — place cub
                 except Exception:
                     try: env.scene[_s].update(0.0)
                     except Exception: pass
-        _f2, _w2, _, _ = get_obs()
+        _f2, _w2, _, _ = getObs()
         _wv = _w2[:, 3] > 0.5; _fv = _f2[:, 3] > 0.5
         _wfr = float(_w2[_wv, 2].median()) if bool(_wv.any()) else 0.0
         _wcx = float(_w2[_wv, 0].median()) if bool(_wv.any()) else 0.0
@@ -967,7 +967,7 @@ if os.environ.get("YOLO_PROBE"):   # user 2026-07-15: FORCED sweep — place cub
                     except Exception:
                         try: env.scene[_s].update(0.0)
                         except Exception: pass
-            _f2, _w2, _, _ = get_obs()
+            _f2, _w2, _, _ = getObs()
             _wv = _w2[:, 3] > 0.5
             _wfr = float(_w2[_wv, 2].median()) if bool(_wv.any()) else 0.0
             _wcx = float(_w2[_wv, 0].median()) if bool(_wv.any()) else 0.0
@@ -978,7 +978,7 @@ if os.environ.get("YOLO_PROBE"):   # user 2026-07-15: FORCED sweep — place cub
                 import imageio as _iio
                 _wrgb = env.scene["wrist"].data.output["rgb"][..., :3]                      # (N,H,W,3) uint8
                 _H0, _W0 = int(_wrgb.shape[1]), int(_wrgb.shape[2])
-                _mdl = _load_yolo(); _rr = _mdl.predict(_wrgb.permute(0,3,1,2).float()/255.0, imgsz=_H0, conf=args.det_conf, max_det=1, verbose=False, device=DEVICE)
+                _mdl = _loadYolo(); _rr = _mdl.predict(_wrgb.permute(0,3,1,2).float()/255.0, imgsz=_H0, conf=args.det_conf, max_det=1, verbose=False, device=DEVICE)
                 for _e0 in range(min(3, N)):
                     _ob = _rr[_e0].obb
                     if _ob is not None and _ob.xywhr is not None and len(_ob.xywhr) > 0:
@@ -1103,49 +1103,49 @@ if TWO_PHASE:
     class _TPBuf:
         def __init__(self, cap, na):
             self.cap = cap; self.ptr = 0; self.full = False
-            z = lambda *sh: torch.zeros(*sh, device=BUF_DEV)
-            self.fd=z(cap,D_DET); self.wd=z(cap,D_DET); self.ori=z(cap,D_ORI); self.s=z(cap,STATE_DIM)
-            self.a=z(cap,na); self.r=z(cap,1); self.nfd=z(cap,D_DET); self.nwd=z(cap,D_DET); self.nori=z(cap,D_ORI); self.ns=z(cap,STATE_DIM); self.d=z(cap,1)
+            tZ2 = lambda *sh: torch.zeros(*sh, device=BUF_DEV)
+            self.fd=tZ2(cap,D_DET); self.wd=tZ2(cap,D_DET); self.ori=tZ2(cap,D_ORI); self.s=tZ2(cap,STATE_DIM)
+            self.a=tZ2(cap,na); self.r=tZ2(cap,1); self.nfd=tZ2(cap,D_DET); self.nwd=tZ2(cap,D_DET); self.nori=tZ2(cap,D_ORI); self.ns=tZ2(cap,STATE_DIM); self.d=tZ2(cap,1)
         def store(self, fd,wd,ori,s,a,r,nfd,nwd,nori,ns,d):
-            n = fd.shape[0]
-            if n == 0: return
-            idx = (torch.arange(n, device=BUF_DEV) + self.ptr) % self.cap
-            self.fd[idx]=fd.to(BUF_DEV); self.wd[idx]=wd.to(BUF_DEV); self.ori[idx]=ori.to(BUF_DEV); self.s[idx]=s.to(BUF_DEV)
-            self.a[idx]=a.to(BUF_DEV); self.r[idx]=r.to(BUF_DEV); self.nfd[idx]=nfd.to(BUF_DEV); self.nwd[idx]=nwd.to(BUF_DEV); self.nori[idx]=nori.to(BUF_DEV); self.ns[idx]=ns.to(BUF_DEV); self.d[idx]=d.to(BUF_DEV)
-            self.ptr=(self.ptr+n)%self.cap; self.full=self.full or (self.ptr<n)
+            tN3 = fd.shape[0]
+            if tN3 == 0: return
+            tIdx = (torch.arange(tN3, device=BUF_DEV) + self.ptr) % self.cap
+            self.fd[tIdx]=fd.to(BUF_DEV); self.wd[tIdx]=wd.to(BUF_DEV); self.ori[tIdx]=ori.to(BUF_DEV); self.s[tIdx]=s.to(BUF_DEV)
+            self.a[tIdx]=a.to(BUF_DEV); self.r[tIdx]=r.to(BUF_DEV); self.nfd[tIdx]=nfd.to(BUF_DEV); self.nwd[tIdx]=nwd.to(BUF_DEV); self.nori[tIdx]=nori.to(BUF_DEV); self.ns[tIdx]=ns.to(BUF_DEV); self.d[tIdx]=d.to(BUF_DEV)
+            self.ptr=(self.ptr+tN3)%self.cap; self.full=self.full or (self.ptr<tN3)
         def size(self): return self.cap if self.full else self.ptr
         def sample(self, bs):
-            hi = self.size(); idx = torch.randint(0, hi, (bs,), device=BUF_DEV); g = lambda B: B[idx].to(DEVICE)
-            return (g(self.fd),g(self.wd),g(self.ori),g(self.s),g(self.a),g(self.r),g(self.nfd),g(self.nwd),g(self.nori),g(self.ns),g(self.d))
+            tHi2 = self.size(); tIdx = torch.randint(0, tHi2, (bs,), device=BUF_DEV); tG = lambda B: B[tIdx].to(DEVICE)
+            return (tG(self.fd),tG(self.wd),tG(self.ori),tG(self.s),tG(self.a),tG(self.r),tG(self.nfd),tG(self.nwd),tG(self.nori),tG(self.ns),tG(self.d))
     def _mk_agent(na):
-        ac = DetActor(STATE_DIM, na).to(DEVICE)
-        cr = DetCriticC51(STATE_DIM, na, args.num_atoms, args.v_min, args.v_max, args.num_q).to(DEVICE)
-        ct = DetCriticC51(STATE_DIM, na, args.num_atoms, args.v_min, args.v_max, args.num_q).to(DEVICE); ct.load_state_dict(cr.state_dict())
+        tAc = DetActor(STATE_DIM, na).to(DEVICE)
+        tCr = DetCriticC51(STATE_DIM, na, args.num_atoms, args.v_min, args.v_max, args.num_q).to(DEVICE)
+        tCt = DetCriticC51(STATE_DIM, na, args.num_atoms, args.v_min, args.v_max, args.num_q).to(DEVICE); tCt.load_state_dict(tCr.state_dict())
         if _COMPILE:   # user 2026-07-28: torch.compile the CRITIC only (cr+ct). Critic runs ONLY in _upd at fixed batch 512 (logits/q_values/project_target) -> no recompile, and C51(num_q x atoms) is the heaviest update compute. Actor stays eager (rollout calls it with VARIABLE per-phase batch -> would recompile-thrash). dynamic=False (static batch). Compiling .forward covers all methods that route through it. COMPILE=0 to disable.
-            cr.forward = torch.compile(cr.forward, dynamic=False)
-            ct.forward = torch.compile(ct.forward, dynamic=False)
+            tCr.forward = torch.compile(tCr.forward, dynamic=False)
+            tCt.forward = torch.compile(tCt.forward, dynamic=False)
             print(f"[COMPILE] critic cr+ct forward compiled (dynamic=False) na={na}", flush=True)
-        la = torch.zeros(1, device=DEVICE, requires_grad=True)
-        return {"ac":ac, "cr":cr, "ct":ct, "na":na, "te":-float(na),
-                "aopt":torch.optim.Adam(ac.parameters(), lr=args.lr), "copt":torch.optim.Adam(cr.parameters(), lr=args.lr),
-                "la":la, "alopt":torch.optim.Adam([la], lr=(args.alpha_lr if args.alpha_lr>0 else args.lr)),
-                "alpha":la.exp().clamp(min=args.alpha_floor).detach(), "buf":_TPBuf(_TPCAP, na)}
+        tLa = torch.zeros(1, device=DEVICE, requires_grad=True)
+        return {"ac":tAc, "cr":tCr, "ct":tCt, "na":na, "te":-float(na),
+                "aopt":torch.optim.Adam(tAc.parameters(), lr=args.lr), "copt":torch.optim.Adam(tCr.parameters(), lr=args.lr),
+                "la":tLa, "alopt":torch.optim.Adam([tLa], lr=(args.alpha_lr if args.alpha_lr>0 else args.lr)),
+                "alpha":tLa.exp().clamp(min=args.alpha_floor).detach(), "buf":_TPBuf(_TPCAP, na)}
     def _upd(ag):
-        fd_,wd_,ori_,s_,a_,r_,nfd_,nwd_,nori_,ns_,d_ = ag["buf"].sample(args.batch_size)
+        tFd2,tWd2,tOri2,tS2,tA,tR3,tNfd,tNwd,tNori,tNs,tD3 = ag["buf"].sample(args.batch_size)
         with torch.no_grad():
-            na_, nlp_ = ag["ac"].get_action(nfd_,nwd_,nori_,ns_); boot=(1.0-d_.squeeze(-1))
-            rent_ = r_.squeeze(-1) - boot*args.gamma*(ag["alpha"].squeeze()*nlp_.squeeze(-1))
-            td_ = project_target(ag["ct"], nfd_,nwd_,nori_,ns_, na_, rent_, boot, args.gamma)
-        lg_ = ag["cr"].logits(fd_,wd_,ori_,s_,a_); lp_ = F.log_softmax(lg_, dim=-1)
-        cl_ = (-(td_*lp_).sum(-1).mean(-1)).sum()
-        ag["copt"].zero_grad(set_to_none=True); cl_.backward(); torch.nn.utils.clip_grad_norm_(ag["cr"].parameters(),10.0); ag["copt"].step()
-        api_, lpi_ = ag["ac"].get_action(fd_,wd_,ori_,s_); qv_ = ag["cr"].q_values(fd_,wd_,ori_,s_,api_).mean(0)
-        al_ = (ag["alpha"].squeeze()*lpi_.squeeze(-1) - qv_).mean()
-        ag["aopt"].zero_grad(set_to_none=True); al_.backward(); torch.nn.utils.clip_grad_norm_(ag["ac"].parameters(),10.0); ag["aopt"].step()
-        with torch.no_grad(): _, lp2_ = ag["ac"].get_action(fd_,wd_,ori_,s_)
-        ale_ = -(ag["la"].exp()*(lp2_+ag["te"])).mean(); ag["alopt"].zero_grad(set_to_none=True); ale_.backward(); ag["alopt"].step()
+            tNa, tNlp = ag["ac"].getAction(tNfd,tNwd,tNori,tNs); tBoot=(1.0-tD3.squeeze(-1))
+            tRent = tR3.squeeze(-1) - tBoot*args.gamma*(ag["alpha"].squeeze()*tNlp.squeeze(-1))
+            tTd = projectTarget(ag["ct"], tNfd,tNwd,tNori,tNs, tNa, tRent, tBoot, args.gamma)
+        tLg = ag["cr"].logits(tFd2,tWd2,tOri2,tS2,tA); tLp = F.log_softmax(tLg, dim=-1)
+        tCl2 = (-(tTd*tLp).sum(-1).mean(-1)).sum()
+        ag["copt"].zero_grad(set_to_none=True); tCl2.backward(); torch.nn.utils.clip_grad_norm_(ag["cr"].parameters(),10.0); ag["copt"].step()
+        tApi, tLpi = ag["ac"].getAction(tFd2,tWd2,tOri2,tS2); tQv = ag["cr"].qValues(tFd2,tWd2,tOri2,tS2,tApi).mean(0)
+        tAl = (ag["alpha"].squeeze()*tLpi.squeeze(-1) - tQv).mean()
+        ag["aopt"].zero_grad(set_to_none=True); tAl.backward(); torch.nn.utils.clip_grad_norm_(ag["ac"].parameters(),10.0); ag["aopt"].step()
+        with torch.no_grad(): _, tLp2 = ag["ac"].getAction(tFd2,tWd2,tOri2,tS2)
+        tAle = -(ag["la"].exp()*(tLp2+ag["te"])).mean(); ag["alopt"].zero_grad(set_to_none=True); tAle.backward(); ag["alopt"].step()
         ag["alpha"] = ag["la"].exp().clamp(min=args.alpha_floor).detach()
-        for tp,pp in zip(ag["ct"].parameters(), ag["cr"].parameters()): tp.data.mul_(1-args.tau).add_(args.tau*pp.data)
+        for tTp,tPp2 in zip(ag["ct"].parameters(), ag["cr"].parameters()): tTp.data.mul_(1-args.tau).add_(args.tau*tPp2.data)
     srch = _mk_agent(N_ACT_S); appr = _mk_agent(N_ACT_A)   # search: pan+wrist_flex(+elbow if SEARCH_ELBOW). approach: dx,dy,descend servo (APP_SERVO=1) or descend-only (=0, overnight arch)
     algn = _mk_agent(6 if (DIRECT_JOINTS or ALIGN_DIRECT) else 4) if THREE_PHASE else None   # ALIGN: DIRECT(_JOINTS or ALIGN_DIRECT) -> 6 raw joint-deltas (incl roll); else dx,dy,roll,descend (4-DOF) via IK
     import time as _tm_eval
@@ -1216,9 +1216,9 @@ if TWO_PHASE:
                 if _TPUI.get("clip"): self.wfile.write(_TPUI["clip"]); return
             if self.path.startswith("/set"):     # eval: cube x/y/z sliders
                 from urllib.parse import urlparse as _upe, parse_qs as _pqe
-                _qe = _pqe(_upe(self.path).query)
-                for _k, _i in (("cx",0),("cy",1),("cz",2)):
-                    if _k in _qe: _TPUI["cube"][_i] = float(_qe[_k][0])
+                tQe = _pqe(_upe(self.path).query)
+                for tK2, tI2 in (("cx",0),("cy",1),("cz",2)):
+                    if tK2 in tQe: _TPUI["cube"][tI2] = float(tQe[tK2][0])
                 self.send_response(200); self.end_headers(); self.wfile.write(b"ok"); return
             if self.path.startswith("/step"):     # eval: advance ONE FSM control step
                 _TPUI["stepreq"] = _TPUI.get("stepreq",0) + 1; _TPUI["play"] = False
@@ -1237,159 +1237,159 @@ if TWO_PHASE:
                 self.send_response(200); self.end_headers(); self.wfile.write(b"ok"); return
             if self.path.startswith("/setss"):    # eval: live per-STEP motion scale (granularity)
                 from urllib.parse import urlparse as _up2, parse_qs as _pq2
-                _q2 = _pq2(_up2(self.path).query)
-                if "v" in _q2: _TPUI["essc"] = max(0.02, min(1.0, float(_q2["v"][0])))
+                tQ2 = _pq2(_up2(self.path).query)
+                if "v" in tQ2: _TPUI["essc"] = max(0.02, min(1.0, float(tQ2["v"][0])))
                 self.send_response(200); self.end_headers(); self.wfile.write(b"ok"); return
-            u = _TPUI
-            cards = (_card("STEP", f"{u['step']:,}", "#4fc3f7")
-                     + _card("RSR", f"{u['rsr']*100:.1f}%", "#ffca28", f"n={u['n']} · approach success (unified center+frac+height condition)")
-                     + _card("RSR DCUBE (priv)", f"{u.get('rsr_old',0.0)*100:.1f}%", "#9575cd", f"n={u.get('n_old',0)} · PRIVILEGED reference (actual jaw↔cube<{RSR_DCUBE}m, not used for reward/termination)")
-                     + _card("SEARCH success rate", f"{u.get('wr_s',0.0)*100:.1f}%", "#42a5f5", f"{int(round(u.get('wr_s',0.0)*u.get('wn_s',0)))}/{u.get('wn_s',0)} episodes · found cube and handed off within {SEARCH_MAX_S:.0f}s (1 vote per episode, counted on reset)")
-                     + _card("approach→search re-handoff rate", f"{u.get('wr_resrch',0.0)*100:.1f}%", "#ef5350", f"{int(round(u.get('wr_resrch',0.0)*u.get('wn_resrch',0)))}/{u.get('wn_resrch',0)} approach-reaching episodes with full cube loss→re-search (lower = approach keeps/looks at the cube better)")
-                     + _card("centering reach rate", f"{u.get('cenrate',0.0)*100:.0f}%", "#42a5f5", f"fraction currently in SEARCH with ncen&lt;{SEARCH_CENTER} · 256env · leading indicator of handoff")
-                     + _card("head angle (search)", f"{u.get('head_deg_s',0.0):+.0f}°", "#ffa726", "SEARCH mean nose angle · +tilt down (down=dive direction)/−tilt back (up)/0 level · wflex divergence watch (ramping to the 128° limit = dive)")
-                     + _card("→APPROACH transition rate", f"{u.get('apprate',0.0)*100:.0f}%", "#66bb6a", f"fraction of all envs reaching APPROACH · handoff throughput")
-                     + _card("APPROACH centering", f"{u.get('appr_cen',0.0)*100:.0f}%", "#ab47bc", f"fraction in APPROACH with ncen&lt;{APP_CEN} · actual approach centering (for NO_RESRCH)")
-                     + _card("wrist frac (search)", f"{u.get('frac_s',0.0):.3f}", "#4dd0e1", "SEARCH-phase mean wrist frac (visible env) · cube size")
-                     + _card("wrist frac (approach)", f"{u.get('frac_a',0.0):.3f}", "#ffa726", f"APPROACH-phase mean wrist frac (visible env) · success gate frac&gt;{FRAC_GRASP}")
-                     + _card("head angle", f"{u.get('head_deg',0.0):+.0f}°", "#ffa726", f"APPROACH mean nose angle · +tilt down (down)/−tilt back (up)/0 level · |value|↑=more bent (suppressed by W_WPITCH expo)")
-                     + _card("APPROACH success rate", f"{u.get('wr_a',0.0)*100:.0f}%", "#66bb6a", f"last {u.get('wn_a',0)} runs · " + ("ALIGN reached" if u.get('three') else "grasp height reached"))
-                     + (_card("ALIGN handoff rate", f"{u.get('wr_h',0.0)*100:.0f}%", "#26c6da", f"last {u.get('wn_h',0)} runs · approach→ALIGN transition") if u.get('three') else "")
-                     + (_card("ALIGN success rate", f"{u.get('wr_l',0.0)*100:.0f}%", "#ab47bc", f"last {u.get('wn_l',0)} runs · aligned in mouth (in-mouth)") if u.get('three') else "")
-                     + _card("SEARCH envs", f"{u['phs']}", "#42a5f5", f"buf {u['sbuf']:,} · α{u['als']:.2f}")
-                     + _card("APPROACH envs", f"{u['pha']}", "#66bb6a", f"buf {u['abuf']:,} · α{u['ala']:.2f}")
-                     + (_card("ALIGN envs", f"{u.get('pla',0)}", "#ab47bc", f"buf {u.get('labuf',0):,} · α{u.get('all',0.0):.2f}") if u.get('three') else "")
-                     + _card("wrist vis", f"{u['vis']*100:.0f}%", "#26c6da", "search leading indicator")
-                     + _card("gripper z", f"{u['gz']:.3f}", "#ef5350", "FK (m)")
-                     + _card("gripper orientation RPY", (lambda _r: f"{_r[0]:.0f},{_r[1]:.0f},{_r[2]:.0f}°")(u.get('rpy',(0,0,0))), "#26c6da", "roll,pitch,yaw · quat "+str(u.get('quat',[])))
-                     + _card("r_search", f"{u['rs']:+.2f}", "#42a5f5", f"Σcum {u.get('crs',0.0):+.0f}")
-                     + _card("r_approach", f"{u['ra']:+.2f}", "#66bb6a", f"Σcum {u.get('cra',0.0):+.0f}")
-                     + _card("wrist frac (abs)", f"{u.get('frac',0.0):.3f}", "#ffa726", "ABSOLUTE wrist frac = YOLO bbox area/img area (median, APPROACH envs, larger cube↑)")                     + _card("search ncen", f"{u.get('ncen_s',0.0):.3f}", "#42a5f5", f"0=dead center · handoff&lt;{SEARCH_CENTER}")
-                     + _card("approach ncen", f"{u.get('ncen_a',0.0):.3f}", "#66bb6a", f"0=dead center · env0 {u.get('ncen0',0.0):.3f} · success&lt;{APP_CEN}")
-                     + _card("search sweep", f"{u.get('sweep',0.0):.2f}", "#7e57c2", "mean |a_s| — anti-stall: should rise while blind")
-                     + _card("search acq(front)", f"{u.get('acqr',0.0):+.2f}", "#26a69a", f"FRONT-guided acquisition reward (W_ACQ_F) mean · fraction of blind SEARCH envs with a front guide {u.get('acqcov',0.0)*100:.0f}% · steers aiming via front when the wrist cannot see")
-                     + _card("descend depth", f"{u.get('dmin',0.0):.3f}", "#ef5350", f"live avg gz (APPROACH, →0.055 grasp) · reach&lt;0.12 {u.get('reachz',0.0)*100:.0f}%")
-                     + _card("cube dist (SEARCH)", f"{u.get('dcube_s',0.0):.3f}", "#26c6da", "live median gripper↔cube (SEARCH envs, m)")
-                     + _card("cube dist (APPROACH)", f"{u.get('dcube_a',u.get('dcube',0.0)):.3f}", "#26a69a", "live median gripper↔cube (APPROACH envs, m →0)")
-                     + _card("cube_dist_front", f"{u.get('cdf',0.0):.3f}", "#8d6e63", "front back-projected horizontal distance (m, APPROACH)")
-                     + _card("cube_dist_wrist", f"{u.get('cdw',0.0):.3f}", "#8d6e63", "wrist back-projected horizontal distance (m, wrist-valid envs)")
-                     + _card("cube_dist_front_3d", f"{u.get('cdf3',0.0):.3f}", "#5c6bc0", "front back-projected 3D distance (m) — deployable dcube approximation. Compare with the privileged 'cube dist' (dcube_v) next to it to verify back-projection accuracy")
-                     + _card("dcube (front-valid)", f"{u.get('dcube_v',0.0):.3f}", "#26a69a", "privileged 3D distance, same front-valid envs — for apples-to-apples comparison with cube_dist_front_3d")
-                     + _card("cube_dist_wrist_3d", f"{u.get('cdw3',0.0):.3f}", "#5c6bc0", "wrist back-projected 3D distance (m) — deployable. Accurate in the close (steep) range")
-                     + _card("cube_dist_tri_3d", f"{u.get('cdtri',0.0):.3f}", "#7e57c2", f"STEREO triangulated 3D distance (m, front+wrist ray intersection, no plane assumption) · ray gap {u.get('tgap',0.0):.3f}(smaller = more reliable) — compare with dcube above")
-                     + _card("F/W matched", f"{u.get('cdfm',0.0):.3f} / {u.get('cdwm',0.0):.3f}", "#4db6ac", f"front/wrist distance on the same both-valid envs (n={u.get('cdnm',0)}) · similar = computation OK")
+            tU = _TPUI
+            tCards = (_card("STEP", f"{tU['step']:,}", "#4fc3f7")
+                     + _card("RSR", f"{tU['rsr']*100:.1f}%", "#ffca28", f"n={tU['n']} · approach success (unified center+frac+height condition)")
+                     + _card("RSR DCUBE (priv)", f"{tU.get('rsr_old',0.0)*100:.1f}%", "#9575cd", f"n={tU.get('n_old',0)} · PRIVILEGED reference (actual jaw↔cube<{RSR_DCUBE}m, not used for reward/termination)")
+                     + _card("SEARCH success rate", f"{tU.get('wr_s',0.0)*100:.1f}%", "#42a5f5", f"{int(round(tU.get('wr_s',0.0)*tU.get('wn_s',0)))}/{tU.get('wn_s',0)} episodes · found cube and handed off within {SEARCH_MAX_S:.0f}s (1 vote per episode, counted on reset)")
+                     + _card("approach→search re-handoff rate", f"{tU.get('wr_resrch',0.0)*100:.1f}%", "#ef5350", f"{int(round(tU.get('wr_resrch',0.0)*tU.get('wn_resrch',0)))}/{tU.get('wn_resrch',0)} approach-reaching episodes with full cube loss→re-search (lower = approach keeps/looks at the cube better)")
+                     + _card("centering reach rate", f"{tU.get('cenrate',0.0)*100:.0f}%", "#42a5f5", f"fraction currently in SEARCH with ncen&lt;{SEARCH_CENTER} · 256env · leading indicator of handoff")
+                     + _card("head angle (search)", f"{tU.get('head_deg_s',0.0):+.0f}°", "#ffa726", "SEARCH mean nose angle · +tilt down (down=dive direction)/−tilt back (up)/0 level · wflex divergence watch (ramping to the 128° limit = dive)")
+                     + _card("→APPROACH transition rate", f"{tU.get('apprate',0.0)*100:.0f}%", "#66bb6a", f"fraction of all envs reaching APPROACH · handoff throughput")
+                     + _card("APPROACH centering", f"{tU.get('appr_cen',0.0)*100:.0f}%", "#ab47bc", f"fraction in APPROACH with ncen&lt;{APP_CEN} · actual approach centering (for NO_RESRCH)")
+                     + _card("wrist frac (search)", f"{tU.get('frac_s',0.0):.3f}", "#4dd0e1", "SEARCH-phase mean wrist frac (visible env) · cube size")
+                     + _card("wrist frac (approach)", f"{tU.get('frac_a',0.0):.3f}", "#ffa726", f"APPROACH-phase mean wrist frac (visible env) · success gate frac&gt;{FRAC_GRASP}")
+                     + _card("head angle", f"{tU.get('head_deg',0.0):+.0f}°", "#ffa726", f"APPROACH mean nose angle · +tilt down (down)/−tilt back (up)/0 level · |value|↑=more bent (suppressed by W_WPITCH expo)")
+                     + _card("APPROACH success rate", f"{tU.get('wr_a',0.0)*100:.0f}%", "#66bb6a", f"last {tU.get('wn_a',0)} runs · " + ("ALIGN reached" if tU.get('three') else "grasp height reached"))
+                     + (_card("ALIGN handoff rate", f"{tU.get('wr_h',0.0)*100:.0f}%", "#26c6da", f"last {tU.get('wn_h',0)} runs · approach→ALIGN transition") if tU.get('three') else "")
+                     + (_card("ALIGN success rate", f"{tU.get('wr_l',0.0)*100:.0f}%", "#ab47bc", f"last {tU.get('wn_l',0)} runs · aligned in mouth (in-mouth)") if tU.get('three') else "")
+                     + _card("SEARCH envs", f"{tU['phs']}", "#42a5f5", f"buf {tU['sbuf']:,} · α{tU['als']:.2f}")
+                     + _card("APPROACH envs", f"{tU['pha']}", "#66bb6a", f"buf {tU['abuf']:,} · α{tU['ala']:.2f}")
+                     + (_card("ALIGN envs", f"{tU.get('pla',0)}", "#ab47bc", f"buf {tU.get('labuf',0):,} · α{tU.get('all',0.0):.2f}") if tU.get('three') else "")
+                     + _card("wrist vis", f"{tU['vis']*100:.0f}%", "#26c6da", "search leading indicator")
+                     + _card("gripper z", f"{tU['gz']:.3f}", "#ef5350", "FK (m)")
+                     + _card("gripper orientation RPY", (lambda _r: f"{_r[0]:.0f},{_r[1]:.0f},{_r[2]:.0f}°")(tU.get('rpy',(0,0,0))), "#26c6da", "roll,pitch,yaw · quat "+str(tU.get('quat',[])))
+                     + _card("r_search", f"{tU['rs']:+.2f}", "#42a5f5", f"Σcum {tU.get('crs',0.0):+.0f}")
+                     + _card("r_approach", f"{tU['ra']:+.2f}", "#66bb6a", f"Σcum {tU.get('cra',0.0):+.0f}")
+                     + _card("wrist frac (abs)", f"{tU.get('frac',0.0):.3f}", "#ffa726", "ABSOLUTE wrist frac = YOLO bbox area/img area (median, APPROACH envs, larger cube↑)")                     + _card("search ncen", f"{tU.get('ncen_s',0.0):.3f}", "#42a5f5", f"0=dead center · handoff&lt;{SEARCH_CENTER}")
+                     + _card("approach ncen", f"{tU.get('ncen_a',0.0):.3f}", "#66bb6a", f"0=dead center · env0 {tU.get('ncen0',0.0):.3f} · success&lt;{APP_CEN}")
+                     + _card("search sweep", f"{tU.get('sweep',0.0):.2f}", "#7e57c2", "mean |a_s| — anti-stall: should rise while blind")
+                     + _card("search acq(front)", f"{tU.get('acqr',0.0):+.2f}", "#26a69a", f"FRONT-guided acquisition reward (W_ACQ_F) mean · fraction of blind SEARCH envs with a front guide {tU.get('acqcov',0.0)*100:.0f}% · steers aiming via front when the wrist cannot see")
+                     + _card("descend depth", f"{tU.get('dmin',0.0):.3f}", "#ef5350", f"live avg gz (APPROACH, →0.055 grasp) · reach&lt;0.12 {tU.get('reachz',0.0)*100:.0f}%")
+                     + _card("cube dist (SEARCH)", f"{tU.get('dcube_s',0.0):.3f}", "#26c6da", "live median gripper↔cube (SEARCH envs, m)")
+                     + _card("cube dist (APPROACH)", f"{tU.get('dcube_a',tU.get('dcube',0.0)):.3f}", "#26a69a", "live median gripper↔cube (APPROACH envs, m →0)")
+                     + _card("cube_dist_front", f"{tU.get('cdf',0.0):.3f}", "#8d6e63", "front back-projected horizontal distance (m, APPROACH)")
+                     + _card("cube_dist_wrist", f"{tU.get('cdw',0.0):.3f}", "#8d6e63", "wrist back-projected horizontal distance (m, wrist-valid envs)")
+                     + _card("cube_dist_front_3d", f"{tU.get('cdf3',0.0):.3f}", "#5c6bc0", "front back-projected 3D distance (m) — deployable dcube approximation. Compare with the privileged 'cube dist' (dcube_v) next to it to verify back-projection accuracy")
+                     + _card("dcube (front-valid)", f"{tU.get('dcube_v',0.0):.3f}", "#26a69a", "privileged 3D distance, same front-valid envs — for apples-to-apples comparison with cube_dist_front_3d")
+                     + _card("cube_dist_wrist_3d", f"{tU.get('cdw3',0.0):.3f}", "#5c6bc0", "wrist back-projected 3D distance (m) — deployable. Accurate in the close (steep) range")
+                     + _card("cube_dist_tri_3d", f"{tU.get('cdtri',0.0):.3f}", "#7e57c2", f"STEREO triangulated 3D distance (m, front+wrist ray intersection, no plane assumption) · ray gap {tU.get('tgap',0.0):.3f}(smaller = more reliable) — compare with dcube above")
+                     + _card("F/W matched", f"{tU.get('cdfm',0.0):.3f} / {tU.get('cdwm',0.0):.3f}", "#4db6ac", f"front/wrist distance on the same both-valid envs (n={tU.get('cdnm',0)}) · similar = computation OK")
                      + "<div style='width:100%;height:0'></div><div style='color:#888;font-size:11px;margin:6px 0 0 6px'>▼ trimmed-mean (mean after removing 4 from each end = 8 outliers)</div>"
-                     + _card("cube dist (tm)", f"{u.get('dcube_tm',0.0):.3f}", "#00897b", "trimmed-mean gripper↔cube (APPROACH, 8 outliers removed, flown-away cubes excluded)")
-                     + _card("cube flew away", f"{u.get('cube_gone',0)}", "#ef5350", "number of envs whose cube flew away due to physics (forced reset/fail, excluded from metrics)")
-                     + _card("front_3d (tm)", f"{u.get('cdf3_tm',0.0):.3f}", "#3949ab", "trimmed-mean front-3D distance")
-                     + _card("approach ncen (tm)", f"{u.get('ncen_a_tm',0.0):.3f}", "#43a047", "trimmed-mean centering err (visible APPROACH)")
-                     + _card("descend z (tm)", f"{u.get('dmin_tm',0.0):.3f}", "#e53935", "trimmed-mean gz (APPROACH)")
-                     + _card("wrist frac (tm)", f"{u.get('frac_tm',0.0):.3f}", "#fb8c00", "trimmed-mean wrist frac (APPROACH)")
+                     + _card("cube dist (tm)", f"{tU.get('dcube_tm',0.0):.3f}", "#00897b", "trimmed-mean gripper↔cube (APPROACH, 8 outliers removed, flown-away cubes excluded)")
+                     + _card("cube flew away", f"{tU.get('cube_gone',0)}", "#ef5350", "number of envs whose cube flew away due to physics (forced reset/fail, excluded from metrics)")
+                     + _card("front_3d (tm)", f"{tU.get('cdf3_tm',0.0):.3f}", "#3949ab", "trimmed-mean front-3D distance")
+                     + _card("approach ncen (tm)", f"{tU.get('ncen_a_tm',0.0):.3f}", "#43a047", "trimmed-mean centering err (visible APPROACH)")
+                     + _card("descend z (tm)", f"{tU.get('dmin_tm',0.0):.3f}", "#e53935", "trimmed-mean gz (APPROACH)")
+                     + _card("wrist frac (tm)", f"{tU.get('frac_tm',0.0):.3f}", "#fb8c00", "trimmed-mean wrist frac (APPROACH)")
                      + "<div style='width:100%;height:0'></div><div style='color:#888;font-size:11px;margin:6px 0 0 6px'>▼ r_approach per-term breakdown (APPROACH env mean · +reward/−penalty). A large + while ncen/dist are bad means farming</div>"
-                     + _card("rb: descend", f"{u.get('rb_desc',0):+.2f}", "#26a69a", "descend (W_DEPTH·center gate)")
-                     + _card("rb: frac", f"{u.get('rb_frac',0):+.2f}", "#ffa726", "frac LEVEL(W_AF, ungated)")
-                     + _card("rb: novis", f"{u.get('rb_novis',0):+.2f}", "#ef5350", "not-visible penalty (−W_NOVIS_A)")
-                     + _card("rb: gone", f"{u.get('rb_gone',0):+.2f}", "#ef5350", "cube-flung penalty (−W_GONE)")
-                     + _card("rb: table", f"{u.get('rb_tab',0):+.2f}", "#ef5350", "table penalty (−)")
-                     + (_card("r_align", f"{u.get('rl',0.0):+.2f}", "#ab47bc", f"Σcum {u.get('crl',0.0):+.0f}") if u.get('three') else ""))
-            _chist = u.get('curric_hist') or []                              # user 2026-07-15: in-training EVAL history (curriculum self-eval sweeps) — sparkline in the training UI
-            if _chist:
-                _cmax = max(1.0, max(r for _, r in _chist))
-                _bars = "".join(
-                    f"<div title='step {s:,} · RSR {r:.1f}%' style='flex:1;min-width:3px;height:{4+56*r/_cmax:.0f}px;"
-                    f"background:{'#66bb6a' if (i==len(_chist)-1) else '#2e7d32'};border-radius:2px 2px 0 0'></div>"
-                    for i, (s, r) in enumerate(_chist))
-                _clast = _chist[-1]
-                _hm_cur = u.get('curric_heat',''); _hm_prev = u.get('curric_heat_prev',''); _hm_srch = u.get('curric_heat_srch','')
-                _heat = ("<div style='width:100%;display:flex;gap:16px;margin:4px 6px 6px;flex-wrap:wrap'>"
-                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px'><div style='color:#66bb6a;font-size:11px;font-weight:700'>latest RSR heatmap</div>{_hm_cur}</div>" if _hm_cur else "")
-                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px'><div style='color:#42a5f5;font-size:11px;font-weight:700'>latest SEARCH heatmap</div>{_hm_srch}</div>" if _hm_srch else "")
-                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px;opacity:0.75'><div style='color:#888;font-size:11px'>previous RSR sweep</div>{_hm_prev}</div>" if _hm_prev else "")
-                         + "</div>") if _hm_cur else ""
-                _shist = u.get('curric_hist_srch') or []                         # user 2026-07-18: SEARCH-success(reach) history per sweep -> histogram
-                _sbars = "".join(
-                    f"<div title='step {s:,} · SEARCH {r:.1f}%' style='flex:1;min-width:3px;height:{4+56*r/100.0:.0f}px;"
-                    f"background:{'#42a5f5' if (i==len(_shist)-1) else '#1565c0'};border-radius:2px 2px 0 0'></div>"
-                    for i, (s, r) in enumerate(_shist))
-                _sblock = ((f"<div style='width:100%;font-size:13px;font-weight:700;color:#42a5f5;margin:8px 6px 2px'>■ in-training SEARCH success (reach) history</div>"
+                     + _card("rb: descend", f"{tU.get('rb_desc',0):+.2f}", "#26a69a", "descend (W_DEPTH·center gate)")
+                     + _card("rb: frac", f"{tU.get('rb_frac',0):+.2f}", "#ffa726", "frac LEVEL(W_AF, ungated)")
+                     + _card("rb: novis", f"{tU.get('rb_novis',0):+.2f}", "#ef5350", "not-visible penalty (−W_NOVIS_A)")
+                     + _card("rb: gone", f"{tU.get('rb_gone',0):+.2f}", "#ef5350", "cube-flung penalty (−W_GONE)")
+                     + _card("rb: table", f"{tU.get('rb_tab',0):+.2f}", "#ef5350", "table penalty (−)")
+                     + (_card("r_align", f"{tU.get('rl',0.0):+.2f}", "#ab47bc", f"Σcum {tU.get('crl',0.0):+.0f}") if tU.get('three') else ""))
+            tChist = tU.get('curric_hist') or []                              # user 2026-07-15: in-training EVAL history (curriculum self-eval sweeps) — sparkline in the training UI
+            if tChist:
+                tCmax = max(1.0, max(tR for _, tR in tChist))
+                tBars = "".join(
+                    f"<div title='step {tS:,} · RSR {tR:.1f}%' style='flex:1;min-width:3px;height:{4+56*tR/tCmax:.0f}px;"
+                    f"background:{'#66bb6a' if (tI==len(tChist)-1) else '#2e7d32'};border-radius:2px 2px 0 0'></div>"
+                    for tI, (tS, tR) in enumerate(tChist))
+                tClast = tChist[-1]
+                tHmCur = tU.get('curric_heat',''); tHmPrev = tU.get('curric_heat_prev',''); tHmSrch = tU.get('curric_heat_srch','')
+                tHeat = ("<div style='width:100%;display:flex;gap:16px;margin:4px 6px 6px;flex-wrap:wrap'>"
+                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px'><div style='color:#66bb6a;font-size:11px;font-weight:700'>latest RSR heatmap</div>{tHmCur}</div>" if tHmCur else "")
+                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px'><div style='color:#42a5f5;font-size:11px;font-weight:700'>latest SEARCH heatmap</div>{tHmSrch}</div>" if tHmSrch else "")
+                         + (f"<div style='background:#181818;border-radius:8px;padding:8px 10px;opacity:0.75'><div style='color:#888;font-size:11px'>previous RSR sweep</div>{tHmPrev}</div>" if tHmPrev else "")
+                         + "</div>") if tHmCur else ""
+                tShist = tU.get('curric_hist_srch') or []                         # user 2026-07-18: SEARCH-success(reach) history per sweep -> histogram
+                tSbars = "".join(
+                    f"<div title='step {tS:,} · SEARCH {tR:.1f}%' style='flex:1;min-width:3px;height:{4+56*tR/100.0:.0f}px;"
+                    f"background:{'#42a5f5' if (tI==len(tShist)-1) else '#1565c0'};border-radius:2px 2px 0 0'></div>"
+                    for tI, (tS, tR) in enumerate(tShist))
+                tSblock = ((f"<div style='width:100%;font-size:13px;font-weight:700;color:#42a5f5;margin:8px 6px 2px'>■ in-training SEARCH success (reach) history</div>"
                             + "<div style='width:560px;display:flex;align-items:flex-end;gap:2px;height:64px;margin:6px 6px;padding:4px 6px;background:#111;border-radius:6px'>"
-                            + _sbars + "</div>"
-                            + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ SEARCH success rate (0-100%) · bright blue=latest ({_shist[-1][1]:.1f}%)</div>") if _shist else "")
-                _spark = (f"<div style='width:100%;font-size:15px;font-weight:700;color:#66bb6a;margin:6px 6px 2px'>■ in-training EVAL history (curriculum self-eval, every {CURRIC_EVERY:,} steps)</div>"
-                          + _card("★ latest EVAL RSR", f"{_clast[1]:.1f}%", "#66bb6a", f"@ step {_clast[0]:,} · {len(_chist)} sweeps · grid {CURRIC_NX}×{CURRIC_NY}")
+                            + tSbars + "</div>"
+                            + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ SEARCH success rate (0-100%) · bright blue=latest ({tShist[-1][1]:.1f}%)</div>") if tShist else "")
+                tSpark = (f"<div style='width:100%;font-size:15px;font-weight:700;color:#66bb6a;margin:6px 6px 2px'>■ in-training EVAL history (curriculum self-eval, every {CURRIC_EVERY:,} steps)</div>"
+                          + _card("★ latest EVAL RSR", f"{tClast[1]:.1f}%", "#66bb6a", f"@ step {tClast[0]:,} · {len(tChist)} sweeps · grid {CURRIC_NX}×{CURRIC_NY}")
                           + "<div style='width:560px;display:flex;align-items:flex-end;gap:2px;height:64px;margin:6px 6px;padding:4px 6px;background:#111;border-radius:6px'>"
-                          + _bars + "</div>"
-                          + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ EVAL RSR (peak {_cmax:.1f}%) · bright green=latest</div>"
-                          + _sblock
-                          + _heat
+                          + tBars + "</div>"
+                          + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ EVAL RSR (peak {tCmax:.1f}%) · bright green=latest</div>"
+                          + tSblock
+                          + tHeat
                           + "<div style='width:100%;height:1px;background:#333;margin:8px 0'></div>")
-                cards = _spark + cards
-            if u.get('eval_M'):                                              # user 2026-07-14: FIXED eval-set benchmark panel at the TOP (RSR + coverage + success heatmap)
-                _covpct = 100*u.get('eval_cov',0)/max(1,u.get('eval_M',1))
-                cards = ("<div style='width:100%;font-size:15px;font-weight:700;color:#ffca28;margin:6px 6px 2px'>■ fixed EVAL benchmark (reproducible)</div>"
-                         + _card("★ EVAL RSR", f"{u.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {u.get('eval_M',0):,} cases · deployable proxy success rate")
-                         + _card("★ RSR DCUBE (actual reach)", f"{u.get('eval_rsr_old',0.0):.1f}%", "#26a69a", "privileged true 3D distance<RSR_DCUBE · true reach rate (gap vs RSR = overestimate)")
-                         + _card("SEARCH reached", f"{u.get('eval_srch',0.0):.1f}%", "#42a5f5", "fraction where SEARCH handed off to APPROACH (search success rate)")
-                         + _card("coverage", f"{u.get('eval_cov',0):,}", "#4fc3f7", f"/{u.get('eval_M',0):,} ({_covpct:.1f}%) · full sweeps {u.get('eval_sweeps',0)}")
-                         + u.get('eval_heat','')
-                         + u.get('eval_heat_old','')
-                         + u.get('eval_heat_srch','')
+                tCards = tSpark + tCards
+            if tU.get('eval_M'):                                              # user 2026-07-14: FIXED eval-set benchmark panel at the TOP (RSR + coverage + success heatmap)
+                tCovpct = 100*tU.get('eval_cov',0)/max(1,tU.get('eval_M',1))
+                tCards = ("<div style='width:100%;font-size:15px;font-weight:700;color:#ffca28;margin:6px 6px 2px'>■ fixed EVAL benchmark (reproducible)</div>"
+                         + _card("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy success rate")
+                         + _card("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", "privileged true 3D distance<RSR_DCUBE · true reach rate (gap vs RSR = overestimate)")
+                         + _card("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "fraction where SEARCH handed off to APPROACH (search success rate)")
+                         + _card("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct:.1f}%) · full sweeps {tU.get('eval_sweeps',0)}")
+                         + tU.get('eval_heat','')
+                         + tU.get('eval_heat_old','')
+                         + tU.get('eval_heat_srch','')
                          + "<div style='width:100%;height:1px;background:#333;margin:8px 0'></div>"
                          + "<div style='width:100%;font-size:12px;color:#888;margin:2px 6px'>▼ live diagnostics (below)</div>"
-                         + cards)
-            bar = (f"<div style='display:flex;width:560px;border-radius:6px;overflow:hidden;margin:10px 0'>"
-                   f"<div style='flex:{max(u['phs'],0.001)};background:#42a5f5;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>SEARCH {u['phs']}</div>"
-                   f"<div style='flex:{max(u['pha'],0.001)};background:#66bb6a;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>APPROACH {u['pha']}</div>"
-                   + (f"<div style='flex:{max(u.get('pla',0),0.001)};background:#ab47bc;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>ALIGN {u.get('pla',0)}</div>" if u.get('three') else "")
+                         + tCards)
+            tBar = (f"<div style='display:flex;width:560px;border-radius:6px;overflow:hidden;margin:10px 0'>"
+                   f"<div style='flex:{max(tU['phs'],0.001)};background:#42a5f5;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>SEARCH {tU['phs']}</div>"
+                   f"<div style='flex:{max(tU['pha'],0.001)};background:#66bb6a;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>APPROACH {tU['pha']}</div>"
+                   + (f"<div style='flex:{max(tU.get('pla',0),0.001)};background:#ab47bc;height:32px;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px;font-weight:700'>ALIGN {tU.get('pla',0)}</div>" if tU.get('three') else "")
                    + "</div>")
-            graphs = _tpg("RSR (approach success)","rsr","#ffca28") + _tpg("RSR DCUBE (privileged ref)","rsr_old","#ffa726") + _tpg("wrist vis (search progress)","vis","#26c6da") + _tpg("search ncen (→0)","ncen_s","#42a5f5") + _tpg("approach ncen (→0)","ncen_a","#66bb6a") + _tpg("r_search","rs","#42a5f5") + _tpg("r_approach","ra","#66bb6a") + _tpg("descend realtime avg z","dmin","#ef5350") + _tpg("cube dist (SEARCH)","dcube_s","#26c6da") + _tpg("cube dist (APPROACH)","dcube","#26a69a")
-            if u.get('three'):
-                graphs += (_tpg("r_align","rl","#ab47bc") + _tpg("Σcum search","crs","#42a5f5") + _tpg("Σcum approach","cra","#66bb6a") + _tpg("Σcum ALIGN","crl","#ab47bc"))
-            _evalctl = ""
+            tGraphs = _tpg("RSR (approach success)","rsr","#ffca28") + _tpg("RSR DCUBE (privileged ref)","rsr_old","#ffa726") + _tpg("wrist vis (search progress)","vis","#26c6da") + _tpg("search ncen (→0)","ncen_s","#42a5f5") + _tpg("approach ncen (→0)","ncen_a","#66bb6a") + _tpg("r_search","rs","#42a5f5") + _tpg("r_approach","ra","#66bb6a") + _tpg("descend realtime avg z","dmin","#ef5350") + _tpg("cube dist (SEARCH)","dcube_s","#26c6da") + _tpg("cube dist (APPROACH)","dcube","#26a69a")
+            if tU.get('three'):
+                tGraphs += (_tpg("r_align","rl","#ab47bc") + _tpg("Σcum search","crs","#42a5f5") + _tpg("Σcum approach","cra","#66bb6a") + _tpg("Σcum ALIGN","crl","#ab47bc"))
+            tEvalctl = ""
             if TP_EVAL:
-                _cb = u["cube"]
-                _sl = "".join(f"<div>cube {_n} <input type=range min={_v-0.4:.3f} max={_v+0.4:.3f} step=0.01 value={_cb[_i]:.3f} oninput=\"fetch('/set?{_c}='+this.value)\"> <span>{_cb[_i]:.3f}</span></div>" for _n,_c,_i,_v in (("x(fwd)","cx",0,_cube0[0]),("y(side)","cy",1,_cube0[1]),("z","cz",2,_cube0[2])))
-                _phn = "APPROACH" if u.get("phase0") else "SEARCH"
-                _nc=u.get('ncen0',0.0); _ch=u.get('chold0',0); _lh=u.get('lhold0',0); _fr=u.get('frac0',0.0); _vs=u.get('vis0',0.0)
+                tCb = tU["cube"]
+                tSl = "".join(f"<div>cube {tN} <input type=range min={tV2-0.4:.3f} max={tV2+0.4:.3f} step=0.01 value={tCb[tI2]:.3f} oninput=\"fetch('/set?{tC3}='+this.value)\"> <span>{tCb[tI2]:.3f}</span></div>" for tN,tC3,tI2,tV2 in (("x(fwd)","cx",0,_cube0[0]),("y(side)","cy",1,_cube0[1]),("z","cz",2,_cube0[2])))
+                tPhn = "APPROACH" if tU.get("phase0") else "SEARCH"
+                tNc=tU.get('ncen0',0.0); tCh=tU.get('chold0',0); tLh=tU.get('lhold0',0); tFr=tU.get('frac0',0.0); tVs=tU.get('vis0',0.0)
                 def _chk(ok): return "<span style='color:#66bb6a'>✓</span>" if ok else "<span style='color:#ef5350'>✗</span>"
-                _cen_ok=(_nc<SEARCH_CENTER and _vs>0.5)
+                tCenOk=(tNc<SEARCH_CENTER and tVs>0.5)
                 # phase-transition gates, exactly as the FSM computes them
-                _gate=(f"<div style='font-size:12px;color:#ccc;margin-top:8px;line-height:1.7'>"
-                       f"<b style='color:#42a5f5'>SEARCH→APPROACH</b>: centered {_chk(_cen_ok)} (ncen <b>{_nc:.3f}</b> &lt; {SEARCH_CENTER}, vis {_vs:.0f}) → held <b>{_ch}/{SEARCH_HOLD}</b> {_chk(_ch>=SEARCH_HOLD)}<br>"
-                       f"<b style='color:#66bb6a'>APPROACH→SUCCESS</b>: frac <b>{_fr:.3f}</b> &gt; {FRAC_GRASP} {_chk(_fr>FRAC_GRASP)} &nbsp;&amp;&nbsp; centered {_chk(_cen_ok)}<br>"
-                       f"<b style='color:#ef5350'>APPROACH→SEARCH (lost)</b>: lost {_chk((_vs<0.5) or (_nc>LOSE_TOL))} (vis {_vs:.0f} / ncen {_nc:.3f} &gt; {LOSE_TOL}) → held <b>{_lh}/{LOSE_HOLD}</b> {_chk(_lh>=LOSE_HOLD)}</div>")
-                _plog=u.get('plog',[])
-                _logh=("<div style='font-size:12px;color:#888;margin-top:8px;border-top:1px solid #333;padding-top:6px'><b style='color:#ffca28'>phase transitions:</b><br>"
-                       + ("<br>".join(reversed(_plog)) if _plog else "<i>none yet — STEP to advance</i>") + "</div>")
-                _evalctl = (f"<div style='background:#161616;border-radius:8px;padding:12px;margin:8px 0;border:1px solid #333'>"
-                            f"<b style='color:#ffca28'>STEP-EVAL</b> &nbsp; env0 phase = <b style='color:{'#66bb6a' if u.get('phase0') else '#42a5f5'};font-size:16px'>{_phn}</b> &nbsp;&nbsp;"
+                tGate2=(f"<div style='font-size:12px;color:#ccc;margin-top:8px;line-height:1.7'>"
+                       f"<b style='color:#42a5f5'>SEARCH→APPROACH</b>: centered {_chk(tCenOk)} (ncen <b>{tNc:.3f}</b> &lt; {SEARCH_CENTER}, vis {tVs:.0f}) → held <b>{tCh}/{SEARCH_HOLD}</b> {_chk(tCh>=SEARCH_HOLD)}<br>"
+                       f"<b style='color:#66bb6a'>APPROACH→SUCCESS</b>: frac <b>{tFr:.3f}</b> &gt; {FRAC_GRASP} {_chk(tFr>FRAC_GRASP)} &nbsp;&amp;&nbsp; centered {_chk(tCenOk)}<br>"
+                       f"<b style='color:#ef5350'>APPROACH→SEARCH (lost)</b>: lost {_chk((tVs<0.5) or (tNc>LOSE_TOL))} (vis {tVs:.0f} / ncen {tNc:.3f} &gt; {LOSE_TOL}) → held <b>{tLh}/{LOSE_HOLD}</b> {_chk(tLh>=LOSE_HOLD)}</div>")
+                tPlog=tU.get('plog',[])
+                tLogh=("<div style='font-size:12px;color:#888;margin-top:8px;border-top:1px solid #333;padding-top:6px'><b style='color:#ffca28'>phase transitions:</b><br>"
+                       + ("<br>".join(reversed(tPlog)) if tPlog else "<i>none yet — STEP to advance</i>") + "</div>")
+                tEvalctl = (f"<div style='background:#161616;border-radius:8px;padding:12px;margin:8px 0;border:1px solid #333'>"
+                            f"<b style='color:#ffca28'>STEP-EVAL</b> &nbsp; env0 phase = <b style='color:{'#66bb6a' if tU.get('phase0') else '#42a5f5'};font-size:16px'>{tPhn}</b> &nbsp;&nbsp;"
                             f"<button onclick=\"fetch('/back')\" style='font-size:15px;padding:6px 14px'>⏮ BACK</button> "
                             f"<button onclick=\"fetch('/step')\" style='font-size:15px;padding:6px 18px;font-weight:700'>⏭ STEP</button> "
                             f"<button onclick=\"fetch('/play')\" style='font-size:15px;padding:6px 18px'>▶ PLAY / ⏸</button> "
                             f"<button onclick=\"fetch('/reset')\" style='font-size:15px;padding:6px 16px;background:#7e57c2;color:#fff;font-weight:700;border-radius:4px'>🔄 NEW ENV</button> "
                             f"<button onclick=\"fetch('/force')\" style='font-size:15px;padding:6px 14px;background:#ef6c00;color:#fff;font-weight:700;border-radius:4px'>⚙ FORCE S⇄A</button>"
-                            f"<div style='margin-top:8px;color:#bbb'>STEP size <input type=range min=0.05 max=1.0 step=0.05 value={u.get('essc',0.25):.2f} oninput=\"fetch('/setss?v='+this.value)\"> <b style='color:#ffca28'>{u.get('essc',0.25):.2f}×</b> <span style='color:#777'>(smaller=precise, larger=fast — for checking wrist range)</span></div>"
-                            f"{_gate}{_logh}"
-                            f"<div style='margin-top:8px;color:#bbb'>drag to place the cube LIVE (paused) · actual world pos = <b style='color:#26c6da'>{u.get('cubew','?')}</b>:</div>{_sl}</div>")
-            if TP_EVAL and u.get('eval_M'):   # user 2026-08-01: BENCH UI = key EVAL metrics + heatmaps only (graphs/diagnostic cards removed, clean)
-                _covpct2 = 100*u.get('eval_cov',0)/max(1,u.get('eval_M',1))
-                _frag = ("<div style='width:100%;font-size:16px;font-weight:700;color:#ffca28;margin:6px 6px 8px'>■ fixed EVAL benchmark</div>"
-                         + _card("★ EVAL RSR", f"{u.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {u.get('eval_M',0):,} cases · deployable proxy")
-                         + _card("★ RSR DCUBE (actual reach)", f"{u.get('eval_rsr_old',0.0):.1f}%", "#26a69a", f"true 3D distance<{RSR_DCUBE}m · true reach rate")
-                         + _card("SEARCH reached", f"{u.get('eval_srch',0.0):.1f}%", "#42a5f5", "handoff success rate")
-                         + _card("coverage", f"{u.get('eval_cov',0):,}", "#4fc3f7", f"/{u.get('eval_M',0):,} ({_covpct2:.1f}%) · sweeps {u.get('eval_sweeps',0)}")
+                            f"<div style='margin-top:8px;color:#bbb'>STEP size <input type=range min=0.05 max=1.0 step=0.05 value={tU.get('essc',0.25):.2f} oninput=\"fetch('/setss?v='+this.value)\"> <b style='color:#ffca28'>{tU.get('essc',0.25):.2f}×</b> <span style='color:#777'>(smaller=precise, larger=fast — for checking wrist range)</span></div>"
+                            f"{tGate2}{tLogh}"
+                            f"<div style='margin-top:8px;color:#bbb'>drag to place the cube LIVE (paused) · actual world pos = <b style='color:#26c6da'>{tU.get('cubew','?')}</b>:</div>{tSl}</div>")
+            if TP_EVAL and tU.get('eval_M'):   # user 2026-08-01: BENCH UI = key EVAL metrics + heatmaps only (graphs/diagnostic cards removed, clean)
+                tCovpct2 = 100*tU.get('eval_cov',0)/max(1,tU.get('eval_M',1))
+                tFrag = ("<div style='width:100%;font-size:16px;font-weight:700;color:#ffca28;margin:6px 6px 8px'>■ fixed EVAL benchmark</div>"
+                         + _card("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy")
+                         + _card("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", f"true 3D distance<{RSR_DCUBE}m · true reach rate")
+                         + _card("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "handoff success rate")
+                         + _card("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct2:.1f}%) · sweeps {tU.get('eval_sweeps',0)}")
                          + "<div style='display:flex;gap:14px;flex-wrap:wrap;margin-top:10px'>"
-                         + u.get('eval_heat','') + u.get('eval_heat_old','') + u.get('eval_heat_srch','')
+                         + tU.get('eval_heat','') + tU.get('eval_heat_old','') + tU.get('eval_heat_srch','')
                          + "</div>")
             else:
-                _frag = f"<div>{cards}</div><div>{bar}</div><div>{graphs}</div>"
+                tFrag = f"<div>{tCards}</div><div>{tBar}</div><div>{tGraphs}</div>"
             if "frag=1" in self.path:                                     # user 2026-07-03: metrics-only fragment for JS polling — NO full-page reload -> smooth video (was meta-refresh content=2 = 2s hard reload + flicker)
-                self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.end_headers(); self.wfile.write(_frag.encode()); return
-            page = ("<html><head><meta charset=utf-8><title>reBot 8896 two-phase</title></head>"
+                self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.end_headers(); self.wfile.write(tFrag.encode()); return
+            tPage = ("<html><head><meta charset=utf-8><title>reBot 8896 two-phase</title></head>"
                     "<body style='font-family:monospace;background:#0e0e0e;color:#eee;padding:16px'>"
                     f"<h2 style='color:#ddd'>8896 — TWO-PHASE {'STEP-EVAL' if TP_EVAL else '(search &#9654; approach)'}</h2>"
-                    f"{_evalctl}"
-                    f"<div id=frag>{_frag}</div>"
+                    f"{tEvalctl}"
+                    f"<div id=frag>{tFrag}</div>"
                     "<div style='display:flex;gap:10px;margin:10px 0'>"
                     "<div><div style='color:#aaa;font-size:11px'>FRONT (env0, DR = what the detector sees)</div><img id=imF src=/front.png width=256 style='background:#000;border-radius:6px'></div>"
                     "<div><div style='color:#aaa;font-size:11px'>WRIST (env0, DR)</div><img id=imW src=/wrist.png width=256 style='background:#000;border-radius:6px'></div>"
@@ -1402,7 +1402,7 @@ if TWO_PHASE:
                     "setInterval(function(){fetch('/?frag=1').then(function(r){return r.text();}).then(function(h){var d=document.getElementById('frag');if(d)d.innerHTML=h;}).catch(function(){});},1000);"
                     "</script>"
                     "</body></html>")
-            self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.end_headers(); self.wfile.write(page.encode())
+            self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.end_headers(); self.wfile.write(tPage.encode())
     _TPHS.allow_reuse_address = True                              # SIMPLE bind (no retry — retry made dying zombies re-grab the port). mirrors the working single-policy _H server.
     try:
         _tpsrv = _TPHS(("0.0.0.0", args.http_port), _TPHND)
@@ -1420,9 +1420,9 @@ if TWO_PHASE:
             # OFFSET=[-1.5673,0.0369,0.0519,0.8861,-0.0768,-0.3286]. BUG FIX: raw was applied WITHOUT offset before ->
             # wrist capped at sim2.24 = raw1.35 (78deg) instead of raw2.24 (128deg). Now wrist max = sim3.126 = raw2.24.
             _jl = dict(profile.joint_limits_sim)   # real range in SIM joint frame (OURS: raw_calib+OFFSET 2026-06-30; profile-sourced)
-            _lim = torch.tensor([[_jl[_n] for _n in ARM_JOINTS]], device=DEVICE).expand(N, -1, -1).clone()  # (N, 6, 2)
+            _lim = torch.tensor([[_jl[tN] for tN in ARM_JOINTS]], device=DEVICE).expand(N, -1, -1).clone()  # (N, 6, 2)
             r.write_joint_position_limit_to_sim(_lim, joint_ids=joint_ids)
-            print(f"[REAL-JLIM] B601-DM SIM-FRAME joint limits applied: {[(_n, _jl[_n]) for _n in ARM_JOINTS]}", flush=True)
+            print(f"[REAL-JLIM] B601-DM SIM-FRAME joint limits applied: {[(tN, _jl[tN]) for tN in ARM_JOINTS]}", flush=True)
             # user 2026-07-01: NOW that the wrist limit is widened to 3.126, set the TRUE start/rest wrist (_START_WRIST,
             #   e.g. 2.77) that the USD build-cap (1.57) blocked at init. Overwrite default_joint_pos -> every episode reset
             #   starts the wrist at the real-robot down pose. joint_ids[WFLEX_I] = wrist_flex index in the full joint array.
@@ -1434,20 +1434,20 @@ if TWO_PHASE:
         except Exception as _je: print(f"[REAL-JLIM] failed: {_je}", flush=True)
     if int(os.environ.get("GRIP_JLIM", "0")):                     # user 2026-07-02: DM shares the RS URDF -> finger stroke 0-0.045m. Match sim gripper joint limit so the RULE grasp closes faithfully. Gated (fresh only).
         try:
-            _gids = [jj for jj in range(r.data.joint_pos.shape[1]) if jj not in set(int(x) for x in joint_ids)]   # gripper (non-arm) joint indices
+            _gids = [tJj for tJj in range(r.data.joint_pos.shape[1]) if tJj not in set(int(tX2) for tX2 in joint_ids)]   # gripper (non-arm) joint indices
             _glo = float(os.environ.get("GRIP_LO", "0.0")); _ghi = float(os.environ.get("GRIP_HI", "0.045"))
             for _gj in _gids:                                     # PRINT current USD limit + default pos FIRST so we can verify zero/sign before trusting the clamp
-                try: _clim = tuple(round(float(x), 4) for x in r.data.joint_pos_limits[0, _gj])
+                try: _clim = tuple(round(float(tX2), 4) for tX2 in r.data.joint_pos_limits[0, _gj])
                 except Exception: _clim = "?"
                 print(f"[GRIP-JLIM] '{r.joint_names[_gj]}' idx{_gj} USD-limit={_clim} default={float(r.data.default_joint_pos[0, _gj]):.4f}", flush=True)
             if _gids:
                 _glim = torch.tensor([[(_glo, _ghi)] * len(_gids)], device=DEVICE).expand(N, -1, -1).clone()   # (N, n_grip, 2)
                 r.write_joint_position_limit_to_sim(_glim, joint_ids=_gids)
-                print(f"[GRIP-JLIM] applied stroke [{_glo},{_ghi}]m to {[r.joint_names[g] for g in _gids]} (DM=RS URDF); adjust via GRIP_LO/GRIP_HI if the printed zero differs", flush=True)
+                print(f"[GRIP-JLIM] applied stroke [{_glo},{_ghi}]m to {[r.joint_names[tG] for tG in _gids]} (DM=RS URDF); adjust via GRIP_LO/GRIP_HI if the printed zero differs", flush=True)
         except Exception as _je: print(f"[GRIP-JLIM] failed: {_je}", flush=True)
     if int(os.environ.get("EXPORT_YOLO", "0")):                   # user 2026-07-08: sim -> YOLO-OBB cube dataset (seg-mask labels). Runs then exits. NEEDS --dr(seg) + WARP_*=0 (RGB/seg aligned). single-cube.
         import cv2, sys as _sys, random as _rnd
-        from rebot_grasp_env.visual_obs import build_fg_ids
+        from rebot_grasp_env.visual_obs import buildFgIds
         _OUT   = os.environ.get("EXPORT_DIR", os.path.expanduser("~/yolo_cube"))
         _NR    = int(os.environ.get("EXPORT_RESETS", "16"))       # frames ≈ NR*N*2cams (16*256*2 ≈ 8k)
         _MINPX = int(os.environ.get("EXPORT_MIN_PX", "5"))        # cube px < this -> negative (no label)
@@ -1458,7 +1458,7 @@ if TWO_PHASE:
         _cube = env.scene[args.target_cube]; _fid = 0
         print(f"[EXPORT] -> {_OUT} resets={_NR} minpx={_MINPX} y[{_YLO},{_YHI}] (seg-mask OBB labels)", flush=True)
         for _ri in range(_NR):
-            env.reset(); resample_warp()
+            env.reset(); resampleWarp()
             _org = env.scene.env_origins
             _cp = _cube.data.root_pos_w.clone()
             _cp[:,0] = _org[:,0] + (_XLO + (_XHI-_XLO)*torch.rand(N, device=DEVICE))
@@ -1467,10 +1467,10 @@ if TWO_PHASE:
             _q = torch.stack([torch.cos(_yaw/2), torch.zeros_like(_yaw), torch.zeros_like(_yaw), torch.sin(_yaw/2)], -1)
             _cube.write_root_pose_to_sim(torch.cat([_cp,_q],-1))
             _ao = torch.zeros(N, ACT_DIM, device=DEVICE); _ao[:,6]=1.0; env.step(_ao)   # render update (gripper open)
-            _out = render_cams()
+            _out = renderCams()
             for _nm in ("front","wrist"):
                 _seg = env.scene[_nm].data.output["semantic_segmentation"]; _info = env.scene[_nm].data.info["semantic_segmentation"]
-                _ids = build_fg_ids(_info, (args.target_cube,)); _idt = torch.tensor(_ids, device=_seg.device) if _ids else None
+                _ids = buildFgIds(_info, (args.target_cube,)); _idt = torch.tensor(_ids, device=_seg.device) if _ids else None
                 _rgb = _out[_nm]; _H = _rgb.shape[1]; _W = _rgb.shape[2]
                 for _i in range(N):
                     _spl = "val" if _rnd.random() < _VAL else "train"; _name = f"{_nm}_{_fid:06d}"
@@ -1482,7 +1482,7 @@ if TWO_PHASE:
                         if _xs.size >= _MINPX:
                             _rect = cv2.minAreaRect(np.stack([_xs,_ys],1).astype(np.float32)); _box = cv2.boxPoints(_rect)
                             _bn = _box.copy(); _bn[:,0] /= _W; _bn[:,1] /= _H; _bn = _bn.clip(0,1)
-                            _lbl = "0 " + " ".join(f"{v:.6f}" for v in _bn.reshape(-1))
+                            _lbl = "0 " + " ".join(f"{tV:.6f}" for tV in _bn.reshape(-1))
                             if _fid % 400 == 0:
                                 _dbg = cv2.cvtColor(_img, cv2.COLOR_RGB2BGR).copy(); cv2.polylines(_dbg, [_box.astype(int)], True, (0,255,0), 1)
                                 cv2.imwrite(os.path.join(_OUT, f"debug/{_name}.png"), _dbg)
@@ -1499,7 +1499,7 @@ if TWO_PHASE:
                 # user 2026-07-21: hover joints = the user's MEASURED approach pose (frac~0.083 = the exact size YOLO currently
                 #   fails on). Jitter lift DOWN (bias) -> a range of BIG cubes up to grasp height. Cube stays on the TABLE
                 #   (SUPPORTED, no fall, guaranteed in view) directly under the jaw.
-                _hoverj = [float(x) for x in os.environ.get("EXPORT_HOVER_JOINTS", "-1.571,-1.99,-1.684,1.0,0.0,0.0").split(",")]
+                _hoverj = [float(tX2) for tX2 in os.environ.get("EXPORT_HOVER_JOINTS", "-1.571,-1.99,-1.684,1.0,0.0,0.0").split(",")]
                 _hjb = torch.tensor([_hoverj], device=DEVICE).expand(N, -1)
                 _cz_tab = float(_cube.data.root_pos_w[:, 2].mean().item())   # table cube-center height (from the table pass)
                 for _bp in range(_nbig):
@@ -1510,7 +1510,7 @@ if TWO_PHASE:
                     env.step(_ao)                                            # settle at hover -> FK ee pose
                     # user 2026-07-21: place the cube EXACTLY at the user's measured grasp offset (SNAP GRASP_OFF, gripper frame) ->
                     #   where it read frac~0.083 (frame-filling, centered). NO z-force (that moved it far/tiny). GRASP_OFF z ~= table.
-                    _goff = torch.tensor([[float(x) for x in os.environ.get("EXPORT_GRASP_OFF", "0.0338,-0.0036,0.0068").split(",")]], device=DEVICE)
+                    _goff = torch.tensor([[float(tX2) for tX2 in os.environ.get("EXPORT_GRASP_OFF", "0.0338,-0.0036,0.0068").split(",")]], device=DEVICE)
                     _cw_b = r.data.body_pos_w[:, ee_body_idx] + quat_apply(r.data.body_quat_w[:, ee_body_idx], _goff.expand(N, 3))
                     _cpb = _cube.data.root_pos_w.clone()
                     _cpb[:, 0] = _cw_b[:, 0] + (torch.rand(N, device=DEVICE) * 2 - 1) * 0.01    # at the grasp spot (+ tiny XY jitter)
@@ -1520,9 +1520,9 @@ if TWO_PHASE:
                     _qbg = torch.stack([torch.cos(_ybg/2), torch.zeros_like(_ybg), torch.zeros_like(_ybg), torch.sin(_ybg/2)], -1)
                     _cube.write_root_pose_to_sim(torch.cat([_cpb, _qbg], -1)); _cube.write_root_velocity_to_sim(torch.zeros(N, 6, device=DEVICE))
                     env.step(_ao)                                            # cube settles under jaw + seg updates
-                    _outb = render_cams()
+                    _outb = renderCams()
                     _segb = env.scene["wrist"].data.output["semantic_segmentation"]; _infob = env.scene["wrist"].data.info["semantic_segmentation"]
-                    _idsb = build_fg_ids(_infob, (args.target_cube,)); _idtb = torch.tensor(_idsb, device=_segb.device) if _idsb else None
+                    _idsb = buildFgIds(_infob, (args.target_cube,)); _idtb = torch.tensor(_idsb, device=_segb.device) if _idsb else None
                     _rgbb = _outb["wrist"]; _Hb = _rgbb.shape[1]; _Wb = _rgbb.shape[2]
                     for _i in range(N):
                         _spl = "val" if _rnd.random() < _VAL else "train"; _name = f"wristbig_{_fid:06d}"
@@ -1534,7 +1534,7 @@ if TWO_PHASE:
                             if _xsb.size >= _MINPX:
                                 _rectb = cv2.minAreaRect(np.stack([_xsb,_ysb],1).astype(np.float32)); _boxb = cv2.boxPoints(_rectb)
                                 _bnb = _boxb.copy(); _bnb[:,0] /= _Wb; _bnb[:,1] /= _Hb; _bnb = _bnb.clip(0,1)
-                                _lblb = "0 " + " ".join(f"{v:.6f}" for v in _bnb.reshape(-1))
+                                _lblb = "0 " + " ".join(f"{tV:.6f}" for tV in _bnb.reshape(-1))
                                 if _fid % 400 == 0:
                                     _dbgb = cv2.cvtColor(_imgb, cv2.COLOR_RGB2BGR).copy(); cv2.polylines(_dbgb, [_boxb.astype(int)], True, (0,255,0), 1)
                                     cv2.imwrite(os.path.join(_OUT, f"debug/{_name}.png"), _dbgb)
@@ -1604,7 +1604,7 @@ if TWO_PHASE:
         _ev_iy = (((_EVAL_CASES[:,1]+1.15)-_ehf0)/max(1e-6,_ehf1-_ehf0)*_EH_NY).clamp(0,_EH_NY-1).long()  # forward-dist bin
         _ev_cell = (_ev_iy*_EH_NX + _ev_ix)                                     # flat cell per case
         print(f"[EVAL-SET] {_EVAL_CASES.shape[0]} fixed cases from {os.environ['EVAL_SET']} (round-robin, num-envs={N})", flush=True)
-    fd, wd, ori, s = get_obs()
+    fd, wd, ori, s = getObs()
     gz_prev = r.data.body_pos_w[:, ee_body_idx, 2].clone()
     gz_min = gz_prev.clone()                                     # lowest gripper z reached this episode -> APPROACH/ALIGN up-penalty grows with (gz - gz_min)
     _mz_prev = torch.full_like(gz_prev, 9.0); _mz_min = torch.full_like(gz_prev, 9.0)   # user 2026-07-22: jaw-MOUTH z prev/min (MOUTH_DESC mode) — init high so step-0 hover/up penalties don't false-fire
@@ -1630,32 +1630,32 @@ if TWO_PHASE:
     g = 0; _last_step = 0; _last_reset = 0; _last_back = 0; _last_force = 0; _tp_undo = []; _prev_ph0 = 0   # eval: undo stack + reset/back/force edge counters + env0 phase tracker
     def _tp_refresh(fd_, wd_):                                    # redraw env0 front/wrist + vis after a RESET/BACK (no control step taken)
         try:
-            _cf0 = _LAST_IMG["front"] if _LAST_IMG["front"] is not None else env.scene["front"].data.output["rgb"][..., :3]
-            _cw0 = _LAST_IMG["wrist"] if _LAST_IMG["wrist"] is not None else env.scene["wrist"].data.output["rgb"][..., :3]
-            _cf = _cf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _draw_det(_cf, fd_[0].tolist()); _TPUI["front"] = _png(_cf)
-            _wimg = _cw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _draw_det(_wimg, wd_[0].tolist()); _TPUI["wrist"] = _png(_wimg)   # renamed _cw->_wimg (curric spawn-weight collision)
+            tCf0 = _LAST_IMG["front"] if _LAST_IMG["front"] is not None else env.scene["front"].data.output["rgb"][..., :3]
+            tCw0 = _LAST_IMG["wrist"] if _LAST_IMG["wrist"] is not None else env.scene["wrist"].data.output["rgb"][..., :3]
+            tCf2 = tCf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(tCf2, fd_[0].tolist()); _TPUI["front"] = _png(tCf2)
+            tWimg = tCw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(tWimg, wd_[0].tolist()); _TPUI["wrist"] = _png(tWimg)   # renamed _cw->_wimg (curric spawn-weight collision)
             _TPUI["vis0"] = float(wd_[0, 3] > 0.5)
         except Exception: pass
 
     # ---- hot-loop helpers (user 2026-07-07 modularization): pure per-step math extracted from the loop body ----
-    def _boresight_oerr(yaw_act, pitch_act, eq_, rot, pitch_gain=1.0):
+    def _boresight_oerr(yawAct, pitchAct, eq_, rot, pitchGain=1.0):
         """world-frame boresight angular delta: yaw about world-Z + pitch about EE local-x. Shared by SEARCH
         (a_s=[yaw,pitch], rot=SEARCH_ROT, pitch_gain=WFLEX_GAIN) and APPROACH policy-orientation (a_a[4],a_a[3],
         rot=ROT_SCALE). MIRRORS the deploy _boresight_omega (rebot_deploy_p2_v2_real) for sim2real parity."""
-        _z = torch.zeros(eq_.shape[0], 3, device=DEVICE); _z[:, 2] = 1.0                                    # world-Z yaw axis
-        _lx = quat_apply(eq_, torch.tensor([1.0, 0.0, 0.0], device=DEVICE).expand(eq_.shape[0], -1))        # EE local-x pitch axis
-        return (yaw_act.clamp(-1, 1)*rot).unsqueeze(-1)*_z + ((pitch_act*pitch_gain).clamp(-1, 1)*rot).unsqueeze(-1)*_lx
+        tZ = torch.zeros(eq_.shape[0], 3, device=DEVICE); tZ[:, 2] = 1.0                                    # world-Z yaw axis
+        tLx = quat_apply(eq_, torch.tensor([1.0, 0.0, 0.0], device=DEVICE).expand(eq_.shape[0], -1))        # EE local-x pitch axis
+        return (yawAct.clamp(-1, 1)*rot).unsqueeze(-1)*tZ + ((pitchAct*pitchGain).clamp(-1, 1)*rot).unsqueeze(-1)*tLx
 
-    def _table_penalty(gz_, mouth_w_):
+    def _table_penalty(gz_, mouthW):
         """PENETRATION penalty (linear + STEEP quadratic below the reference; ~0 above). Reference = fixed world z
         (PEN_REF_Z, jaw MOUTH), or cube-center (PEN_REF_CUBE), or the table (default, gripper FK z). All 3 phases."""
         if PEN_REF_Z > 0.0:
-            _pd = (PEN_REF_Z - mouth_w_[:, 2]).clamp(min=0.0)
+            tPd = (PEN_REF_Z - mouthW[:, 2]).clamp(min=0.0)
         elif PEN_REF_CUBE and (_cube_plane_z is not None):
-            _pd = (float(_cube_plane_z) + PEN_Z_OFF - mouth_w_[:, 2]).clamp(min=0.0)
+            tPd = (float(_cube_plane_z) + PEN_Z_OFF - mouthW[:, 2]).clamp(min=0.0)
         else:
-            _pd = (Z_TABLE - gz_).clamp(min=0.0)
-        return W_TABLE*_pd + W_TABLE_HARD*(_pd / max(TABLE_PEN_REF, 1e-6)).clamp(0.0, 1.0)**2
+            tPd = (Z_TABLE - gz_).clamp(min=0.0)
+        return W_TABLE*tPd + W_TABLE_HARD*(tPd / max(TABLE_PEN_REF, 1e-6)).clamp(0.0, 1.0)**2
 
     def _cen_rewards(ncen_):
         """COMBINED centering (tanh inside expo). SEARCH shape (K_CE/CEN_K) and APPROACH shape (K_CE_A/CEN_K_A);
@@ -1663,198 +1663,198 @@ if TWO_PHASE:
         return (torch.exp(K_CE*(1.0 - torch.tanh(CEN_K*ncen_))) - 1.0,
                 torch.exp(K_CE_A*(1.0 - torch.tanh(CEN_K_A*ncen_))) - 1.0)
 
-    def _compute_act_env(a_s, a_a, a_l, is_s, is_a, is_l, s, wd, ph):
+    def _compute_act_env(aS, aA, aL, isS, isA, isL, s, wd, ph):
         """user 2026-07-07 modularization: per-step action mapping (DIRECT/IK/SEARCH_IK/ALIGN + MOVE_CAP + RULE grasp/lift).
         Args = phase actions/masks/obs; reads module globals (r, env, arm_term, ik, W_*, config flags, gl_ztgt/gl_cz0,
         _app_ori). RETURNS act_env (N,7); mutates arm_term._target_qpos in place. VERBATIM extraction of the former inline
         block (outputs proven not to leak past env.step) — no logic change."""
-        act_env = torch.zeros(N, 7, device=DEVICE)
-        _essc = float(_TPUI.get("essc", EVAL_STEP_SCALE)) if TP_EVAL else 1.0     # finer per-STEP motion in step-eval (live-tunable via UI slider)
+        tActEnv = torch.zeros(N, 7, device=DEVICE)
+        tEssc = float(_TPUI.get("essc", EVAL_STEP_SCALE)) if TP_EVAL else 1.0     # finer per-STEP motion in step-eval (live-tunable via UI slider)
         if not SEARCH_IK:                                                                                    # SEARCH via raw pan+wflex joint deltas (default). SEARCH_IK=1 -> handled by the IK block below (boresight rotation)
-            act_env[:, PAN_I]   = torch.where(is_s, a_s[:, 0]*SEARCH_STEP*_essc, act_env[:, PAN_I])                          # SEARCH: pan
-            act_env[:, WFLEX_I] = torch.where(is_s, (a_s[:, 1]*WFLEX_GAIN).clamp(-1, 1)*SEARCH_STEP*_essc, act_env[:, WFLEX_I])  # SEARCH: wrist_flex (WFLEX_GAIN -> pitch down more per step)
+            tActEnv[:, PAN_I]   = torch.where(isS, aS[:, 0]*SEARCH_STEP*tEssc, tActEnv[:, PAN_I])                          # SEARCH: pan
+            tActEnv[:, WFLEX_I] = torch.where(isS, (aS[:, 1]*WFLEX_GAIN).clamp(-1, 1)*SEARCH_STEP*tEssc, tActEnv[:, WFLEX_I])  # SEARCH: wrist_flex (WFLEX_GAIN -> pitch down more per step)
             if SEARCH_ELBOW:
-                act_env[:, ELBOW_I] = torch.where(is_s, a_s[:, 2]*_essc, act_env[:, ELBOW_I])                    # SEARCH: elbow_flex (reach/center) — only when enabled
-        Jb = r.root_physx_view.get_jacobians()[:, ee_jacobi_idx, 0:6, joint_ids]   # jacobian for the IK solve
+                tActEnv[:, ELBOW_I] = torch.where(isS, aS[:, 2]*tEssc, tActEnv[:, ELBOW_I])                    # SEARCH: elbow_flex (reach/center) — only when enabled
+        tJb = r.root_physx_view.get_jacobians()[:, ee_jacobi_idx, 0:6, joint_ids]   # jacobian for the IK solve
         if DIRECT_JOINTS:                                                          # 8953: DIRECT joint-delta learning (NO IK) for APPROACH + ALIGN. sim REAL_JLIM clamps targets to real-robot ranges.
-            for _j in range(6):
-                act_env[:, _j] = torch.where(is_a, torch.clamp(a_a[:, _j], -1.0, 1.0)*_essc, act_env[:, _j])       # APPROACH: 6 raw joint-deltas
+            for tJ2 in range(6):
+                tActEnv[:, tJ2] = torch.where(isA, torch.clamp(aA[:, tJ2], -1.0, 1.0)*tEssc, tActEnv[:, tJ2])       # APPROACH: 6 raw joint-deltas
             if THREE_PHASE:
-                for _j in range(6):
-                    act_env[:, _j] = torch.where(is_l, torch.clamp(a_l[:, _j], -1.0, 1.0)*_essc, act_env[:, _j])   # ALIGN: 6 raw joint-deltas (incl wrist_roll for yaw)
+                for tJ2 in range(6):
+                    tActEnv[:, tJ2] = torch.where(isL, torch.clamp(aL[:, tJ2], -1.0, 1.0)*tEssc, tActEnv[:, tJ2])   # ALIGN: 6 raw joint-deltas (incl wrist_roll for yaw)
         else:
-            ep = r.data.body_pos_w[:, ee_body_idx, :]; eq = r.data.body_quat_w[:, ee_body_idx, :]
-            tgt = ep.clone()
+            tEp = r.data.body_pos_w[:, ee_body_idx, :]; tEq = r.data.body_quat_w[:, ee_body_idx, :]
+            tTgt = tEp.clone()
             if APP_SERVO:
-                _adz = (a_a[:, 2].clamp(-1, 1)*0.5 + 0.5) * _STEP * _essc         # APPROACH descend (>=0 DOWN)
-                tgt[:, 0] = ep[:, 0] + a_a[:, 0].clamp(-1, 1) * _STEP * _essc     # + LATERAL servo
-                tgt[:, 1] = ep[:, 1] + a_a[:, 1].clamp(-1, 1) * _STEP * _essc
+                tAdz = (aA[:, 2].clamp(-1, 1)*0.5 + 0.5) * _STEP * tEssc         # APPROACH descend (>=0 DOWN)
+                tTgt[:, 0] = tEp[:, 0] + aA[:, 0].clamp(-1, 1) * _STEP * tEssc     # + LATERAL servo
+                tTgt[:, 1] = tEp[:, 1] + aA[:, 1].clamp(-1, 1) * _STEP * tEssc
             else:
-                _adz = (a_a[:, 0].clamp(-1, 1)*0.5 + 0.5) * _STEP * _essc         # APPROACH descend-only
-            _ncen_now = torch.sqrt((wd[:, 0] - CX_TGT)**2 + (CY_W*(wd[:, 1] - CY_TGT))**2); _vis_now = (wd[:, 3] > 0.5).float()   # descent gate — same H/V retarget+weight as ncen (CX_TGT,CY_TGT)
-            _pixel_ok = (torch.exp(-DESC_SOFT * _ncen_now)) if DESC_SOFT > 0 else (_ncen_now < DESC_CEN).float()   # PIXEL centering gate (fallback when wrist unproj unreliable)
+                tAdz = (aA[:, 0].clamp(-1, 1)*0.5 + 0.5) * _STEP * tEssc         # APPROACH descend-only
+            tNcenNow = torch.sqrt((wd[:, 0] - CX_TGT)**2 + (CY_W*(wd[:, 1] - CY_TGT))**2); tVisNow = (wd[:, 3] > 0.5).float()   # descent gate — same H/V retarget+weight as ncen (CX_TGT,CY_TGT)
+            tPixelOk = (torch.exp(-DESC_SOFT * tNcenNow)) if DESC_SOFT > 0 else (tNcenNow < DESC_CEN).float()   # PIXEL centering gate (fallback when wrist unproj unreliable)
             if DESC_MXY > 0.0:                                                            # user 2026-07-27: METRIC-PRIMARY descent gate — when wrist-reliable use the TRUE mouth<->cube horizontal (m; unproj+FK; tilt/parallax-immune); else fall back to the pixel gate. Fully deployable (real wrist-det + calib + FK).
-                _recon_ik, _rz_ik = cube_xyz_from_wrist(wd[:, :2], _cube_plane_z)
-                _mouth_ik = ep + quat_apply(eq, _JAW_OFF3.expand(N, 3))
-                _mxy_ik = torch.norm(_recon_ik[:, :2] - _mouth_ik[:, :2], dim=-1)
-                _wv_ik = (wd[:, 3] > 0.5) & (_rz_ik > RZ_MIN_W)
-                _gate = (_wv_ik & (_mxy_ik < DESC_MXY)).float()      # user 2026-07-27: METRIC-ONLY (pixel fallback removed) — wrist unreliable -> NO descent (isolate pure metric behavior)
+                tReconIk, tRzIk = cubeXyzFromWrist(wd[:, :2], _cube_plane_z)
+                tMouthIk = tEp + quat_apply(tEq, _JAW_OFF3.expand(N, 3))
+                tMxyIk = torch.norm(tReconIk[:, :2] - tMouthIk[:, :2], dim=-1)
+                tWvIk = (wd[:, 3] > 0.5) & (tRzIk > RZ_MIN_W)
+                tGate2 = (tWvIk & (tMxyIk < DESC_MXY)).float()      # user 2026-07-27: METRIC-ONLY (pixel fallback removed) — wrist unreliable -> NO descent (isolate pure metric behavior)
             else:
-                _gate = _pixel_ok
-            _desc_ok = _gate * _vis_now                                                  # require the cube detected
-            tgt[:, 2] = ep[:, 2] - _adz * _desc_ok
+                tGate2 = tPixelOk
+            tDescOk = tGate2 * tVisNow                                                  # require the cube detected
+            tTgt[:, 2] = tEp[:, 2] - tAdz * tDescOk
             if DESC_FLOOR > 0.0:                                                      # user 2026-07-05: HARD floor — the LOWEST gripper point (EE or jaw MOUTH, FK) can't go below DESC_FLOOR. ee_floor = DESC_FLOOR - min(0, moff_z) so whichever is lower (EE when mouth is above it, or mouth when below) stops at the floor. Prevents the wrist diving into the table. Real-deployable; replaces table penalty.
-                _moff_z = quat_apply(eq, _JAW_OFF3.expand(N, 3))[:, 2]
-                tgt[:, 2] = torch.where(is_a, torch.maximum(tgt[:, 2], DESC_FLOOR - torch.clamp(_moff_z, max=0.0)), tgt[:, 2])
+                tMoffZ = quat_apply(tEq, _JAW_OFF3.expand(N, 3))[:, 2]
+                tTgt[:, 2] = torch.where(isA, torch.maximum(tTgt[:, 2], DESC_FLOOR - torch.clamp(tMoffZ, max=0.0)), tTgt[:, 2])
             if THREE_PHASE and not ALIGN_DIRECT:                                      # ALIGN (IK): servo cube toward jaw-mouth + fine descend
-                _ldz = (a_l[:, 3].clamp(-1, 1)*0.5 + 0.5) * _STEP * _essc
-                tgt[:, 0] = torch.where(is_l, ep[:, 0] + a_l[:, 0].clamp(-1, 1)*_STEP*_essc, tgt[:, 0])
-                tgt[:, 1] = torch.where(is_l, ep[:, 1] + a_l[:, 1].clamp(-1, 1)*_STEP*_essc, tgt[:, 1])
-                tgt[:, 2] = torch.where(is_l, ep[:, 2] - _ldz, tgt[:, 2])
+                tLdz = (aL[:, 3].clamp(-1, 1)*0.5 + 0.5) * _STEP * tEssc
+                tTgt[:, 0] = torch.where(isL, tEp[:, 0] + aL[:, 0].clamp(-1, 1)*_STEP*tEssc, tTgt[:, 0])
+                tTgt[:, 1] = torch.where(isL, tEp[:, 1] + aL[:, 1].clamp(-1, 1)*_STEP*tEssc, tTgt[:, 1])
+                tTgt[:, 2] = torch.where(isL, tEp[:, 2] - tLdz, tTgt[:, 2])
             if APP_ORI == "freeze":                                                   # user 2026-07-03: hold APPROACH-entry orientation (anchor -> no drift)
-                eq_tgt = _app_ori
+                tEqTgt = _app_ori
             elif APP_ORI == "down":                                                   # slew grasp-axis (local +z) toward world-DOWN, <=ROT_SCALE/step (top-grasp)
-                _ax = quat_apply(eq, _ZAXIS.expand(eq.shape[0], -1))                  # current grasp axis in world
-                _dn = torch.zeros_like(_ax); _dn[:, 2] = -1.0
-                _cr = torch.cross(_ax, _dn, dim=-1); _sn = _cr.norm(dim=-1, keepdim=True)
-                _ang = torch.atan2(_sn.squeeze(-1), (_ax * _dn).sum(-1))              # angle from straight-down (rad)
-                _hs = (torch.clamp(_ang, max=ROT_SCALE) * 0.5).unsqueeze(-1)          # half of the slew-limited step
-                _axn = _cr / (_sn + 1e-8)
-                _qc = torch.cat([torch.cos(_hs), _axn * torch.sin(_hs)], dim=-1)      # world-frame correction quat (w,x,y,z)
-                eq_tgt = quat_mul(_qc, eq)
+                tAx = quat_apply(tEq, _ZAXIS.expand(tEq.shape[0], -1))                  # current grasp axis in world
+                tDn = torch.zeros_like(tAx); tDn[:, 2] = -1.0
+                tCr2 = torch.cross(tAx, tDn, dim=-1); tSn = tCr2.norm(dim=-1, keepdim=True)
+                tAng = torch.atan2(tSn.squeeze(-1), (tAx * tDn).sum(-1))              # angle from straight-down (rad)
+                tHs = (torch.clamp(tAng, max=ROT_SCALE) * 0.5).unsqueeze(-1)          # half of the slew-limited step
+                tAxn = tCr2 / (tSn + 1e-8)
+                tQc = torch.cat([torch.cos(tHs), tAxn * torch.sin(tHs)], dim=-1)      # world-frame correction quat (w,x,y,z)
+                tEqTgt = quat_mul(tQc, tEq)
             elif APP_ORI == "cube":                                                   # user 2026-07-03 (B): AIM grasp-axis(+z) AT the cube -> gripper homes/sucked into cube (wrist keeps cube in FOV)
-                _crxy = s[:, -2:]                                                      # front-cam cube xy offset (world, rel gripper); ~0 if unreliable
-                _aim = torch.zeros_like(ep); _aim[:, 0] = _crxy[:, 0]; _aim[:, 1] = _crxy[:, 1]
-                _aim[:, 2] = (_cube_plane_z - ep[:, 2])                                # downward toward table height
-                _flat = (_crxy.abs().sum(-1) < 1e-4)                                   # front didn't localize -> fall back straight DOWN
-                _aim[_flat] = torch.tensor([0.0, 0.0, -1.0], device=DEVICE)
-                _aim = _aim / (_aim.norm(dim=-1, keepdim=True) + 1e-8)
-                _ax = quat_apply(eq, _ZAXIS.expand(eq.shape[0], -1))                   # current grasp axis in world
-                _cr = torch.cross(_ax, _aim, dim=-1); _sn = _cr.norm(dim=-1, keepdim=True)
-                _ha = (torch.atan2(_sn.squeeze(-1), (_ax * _aim).sum(-1)) * 0.5).unsqueeze(-1)
-                _axn = _cr / (_sn + 1e-8)
-                eq_tgt = quat_mul(torch.cat([torch.cos(_ha), _axn * torch.sin(_ha)], dim=-1), eq)   # rotate grasp-axis -> AIM at cube
+                tCrxy = s[:, -2:]                                                      # front-cam cube xy offset (world, rel gripper); ~0 if unreliable
+                tAim = torch.zeros_like(tEp); tAim[:, 0] = tCrxy[:, 0]; tAim[:, 1] = tCrxy[:, 1]
+                tAim[:, 2] = (_cube_plane_z - tEp[:, 2])                                # downward toward table height
+                tFlat = (tCrxy.abs().sum(-1) < 1e-4)                                   # front didn't localize -> fall back straight DOWN
+                tAim[tFlat] = torch.tensor([0.0, 0.0, -1.0], device=DEVICE)
+                tAim = tAim / (tAim.norm(dim=-1, keepdim=True) + 1e-8)
+                tAx = quat_apply(tEq, _ZAXIS.expand(tEq.shape[0], -1))                   # current grasp axis in world
+                tCr2 = torch.cross(tAx, tAim, dim=-1); tSn = tCr2.norm(dim=-1, keepdim=True)
+                tHa = (torch.atan2(tSn.squeeze(-1), (tAx * tAim).sum(-1)) * 0.5).unsqueeze(-1)
+                tAxn = tCr2 / (tSn + 1e-8)
+                tEqTgt = quat_mul(torch.cat([torch.cos(tHa), tAxn * torch.sin(tHa)], dim=-1), tEq)   # rotate grasp-axis -> AIM at cube
             elif APP_ORI == "wservo":                                                 # user 2026-07-04 (A): VISUAL-SERVO — rotate wrist to keep the cube CENTERED in the WRIST view (cx,cy->0.5) while descending. Not grasp-axis re-aim (cube), not frozen; wrist TRACKS the cube -> doesn't lose it on descent.
-                _wex = (wd[:, 0] - 0.5); _wey = (wd[:, 1] - 0.5)                       # wrist detection centering error (0=centered). NOTE: nwd not defined yet here -> use wd
-                _wzz = torch.zeros_like(ep); _wzz[:, 2] = 1.0                          # world-Z = yaw axis (cx error -> pan-like)
-                _wlx = quat_apply(eq, torch.tensor([1.0, 0.0, 0.0], device=DEVICE).expand(eq.shape[0], -1))   # EE local-x = pitch axis (cy error -> wflex-like)
-                _oerr_ws = ((WSERVO_SX*WSERVO_KX*_wex)*wd[:, 3]).unsqueeze(-1)*_wzz \
-                         + ((WSERVO_SY*WSERVO_KY*_wey)*wd[:, 3]).unsqueeze(-1)*_wlx    # world-frame angular correction (gated by wrist vis)
-                _wn = _oerr_ws.norm(dim=-1, keepdim=True); _oerr_ws = _oerr_ws * torch.clamp(ROT_SCALE/(_wn+1e-8), max=1.0)   # bound per-step to ROT_SCALE
+                tWex = (wd[:, 0] - 0.5); tWey = (wd[:, 1] - 0.5)                       # wrist detection centering error (0=centered). NOTE: nwd not defined yet here -> use wd
+                tWzz = torch.zeros_like(tEp); tWzz[:, 2] = 1.0                          # world-Z = yaw axis (cx error -> pan-like)
+                tWlx = quat_apply(tEq, torch.tensor([1.0, 0.0, 0.0], device=DEVICE).expand(tEq.shape[0], -1))   # EE local-x = pitch axis (cy error -> wflex-like)
+                tOerrWs = ((WSERVO_SX*WSERVO_KX*tWex)*wd[:, 3]).unsqueeze(-1)*tWzz \
+                         + ((WSERVO_SY*WSERVO_KY*tWey)*wd[:, 3]).unsqueeze(-1)*tWlx    # world-frame angular correction (gated by wrist vis)
+                tWn = tOerrWs.norm(dim=-1, keepdim=True); tOerrWs = tOerrWs * torch.clamp(ROT_SCALE/(tWn+1e-8), max=1.0)   # bound per-step to ROT_SCALE
                 if WSERVO_CLAMP > 0.0:                                                 # user 2026-07-05: hard-clamp DOWN-pitch — project out the servo component that tilts the grasp-axis further below WSERVO_CLAMP°
-                    _gax_ws = quat_apply(eq, _HEAD.expand(eq.shape[0], -1))             # NOSE/head direction (wrist->jaw) in world
-                    _dang_ws = torch.asin(torch.clamp(-_gax_ws[:, 2], -1.0, 1.0))       # rad below horizontal (+ = nose down)
-                    _pdir = torch.cross(_ZAXIS.expand(eq.shape[0], -1), _gax_ws, dim=-1)  # d(down-angle) ∝ ω·(ẑ×gax): axis whose +rotation pitches the head DOWN
-                    _pdir = _pdir / (_pdir.norm(dim=-1, keepdim=True) + 1e-8)
-                    _prate = (_oerr_ws * _pdir).sum(dim=-1, keepdim=True)               # servo's pitch component along _pdir (+ = pitching DOWN)
-                    _lim_ws = WSERVO_CLAMP*0.0174533
-                    _da = _dang_ws.unsqueeze(-1)                                         # signed pitch from horizontal (+down / −up)
-                    _blk = (((_da >= _lim_ws) & (_prate > 0)) | ((_da <= -_lim_ws) & (_prate < 0))).float()   # block pushing further OUTSIDE ±lim (both crane-down and crane-up)
-                    _oerr_ws = _oerr_ws - _blk * _prate * _pdir
-                    _rest = torch.clamp((_da - _lim_ws).clamp(min=0.0), max=ROT_SCALE) + torch.clamp((_da + _lim_ws).clamp(max=0.0), min=-ROT_SCALE)   # restore toward nearest ±lim boundary
-                    _oerr_ws = _oerr_ws - _pdir * _rest                                  # keep grasp-axis WITHIN ±WSERVO_CLAMP° of horizontal
-                eq_tgt = eq                                                           # (6D DLS below uses _oerr_ws directly; eq_tgt only feeds the unused q_des path)
+                    tGaxWs = quat_apply(tEq, _HEAD.expand(tEq.shape[0], -1))             # NOSE/head direction (wrist->jaw) in world
+                    tDangWs = torch.asin(torch.clamp(-tGaxWs[:, 2], -1.0, 1.0))       # rad below horizontal (+ = nose down)
+                    tPdir = torch.cross(_ZAXIS.expand(tEq.shape[0], -1), tGaxWs, dim=-1)  # d(down-angle) ∝ ω·(ẑ×gax): axis whose +rotation pitches the head DOWN
+                    tPdir = tPdir / (tPdir.norm(dim=-1, keepdim=True) + 1e-8)
+                    tPrate = (tOerrWs * tPdir).sum(dim=-1, keepdim=True)               # servo's pitch component along _pdir (+ = pitching DOWN)
+                    tLimWs = WSERVO_CLAMP*0.0174533
+                    tDa = tDangWs.unsqueeze(-1)                                         # signed pitch from horizontal (+down / −up)
+                    tBlk = (((tDa >= tLimWs) & (tPrate > 0)) | ((tDa <= -tLimWs) & (tPrate < 0))).float()   # block pushing further OUTSIDE ±lim (both crane-down and crane-up)
+                    tOerrWs = tOerrWs - tBlk * tPrate * tPdir
+                    tRest = torch.clamp((tDa - tLimWs).clamp(min=0.0), max=ROT_SCALE) + torch.clamp((tDa + tLimWs).clamp(max=0.0), min=-ROT_SCALE)   # restore toward nearest ±lim boundary
+                    tOerrWs = tOerrWs - tPdir * tRest                                  # keep grasp-axis WITHIN ±WSERVO_CLAMP° of horizontal
+                tEqTgt = tEq                                                           # (6D DLS below uses _oerr_ws directly; eq_tgt only feeds the unused q_des path)
             elif APP_ORI == "policy":                                                 # user 2026-07-04 (b): POLICY controls orientation — a_a[3]=pitch(EE local-x), a_a[4]=yaw(world-Z). Approach LEARNS to orient (keep cube in view) while descending, not scripted.
-                _yaw_in = torch.zeros(a_a.shape[0], device=DEVICE) if APP_NO_YAW else a_a[:, 4]   # user 2026-07-18: APP_NO_YAW -> pitch-only orientation (no yaw)
-                _oerr_pol = _boresight_oerr(_yaw_in, a_a[:, 3], eq, ROT_SCALE)       # policy-commanded orientation delta (yaw world-Z + pitch EE-x)
-                _ak = (ANCHOR_K * max(0.0, 1.0 - g/ANCHOR_ANNEAL)) if ANCHOR_ANNEAL > 0.0 else ANCHOR_K   # user 2026-07-10: anneal anchor 2.0->0 over ANCHOR_ANNEAL env-steps (g), then fully policy
-                if _ak > 0.0:                                                          # user 2026-07-10: restoring spring toward handoff pose (_app_ori) — policy CORRECTS around the search aim, no free drift (fixes cube-loss)
-                    _qe = eq.clone(); _qe[:, 1:] = -_qe[:, 1:]                          # conj(eq) = inverse (unit quat)
-                    _qr = quat_mul(_app_ori, _qe)                                       # world-frame rotation: current eq -> handoff anchor
-                    _qr = _qr * torch.sign(_qr[:, :1] + 1e-9)                           # canonical (w>=0 -> shortest arc)
-                    _sn = _qr[:, 1:].norm(dim=-1, keepdim=True)                         # |xyz| = sin(theta/2)
-                    _th = 2.0*torch.atan2(_sn.squeeze(-1), _qr[:, 0].clamp(-1.0, 1.0))  # angle to anchor (rad)
-                    _sp = (_qr[:, 1:]/(_sn + 1e-8)) * (_ak*_th).unsqueeze(-1)           # spring = _ak * rotvec(eq -> anchor)
-                    _spn = _sp.norm(dim=-1, keepdim=True)
-                    _sp = _sp * torch.clamp(ROT_SCALE/(_spn + 1e-8), max=1.0)           # bound per-step to ROT_SCALE
-                    _oerr_pol = _oerr_pol + _sp                                          # policy nudge + rule-based pull back to handoff aim (anneals to 0)
+                tYawIn = torch.zeros(aA.shape[0], device=DEVICE) if APP_NO_YAW else aA[:, 4]   # user 2026-07-18: APP_NO_YAW -> pitch-only orientation (no yaw)
+                tOerrPol = _boresight_oerr(tYawIn, aA[:, 3], tEq, ROT_SCALE)       # policy-commanded orientation delta (yaw world-Z + pitch EE-x)
+                tAk = (ANCHOR_K * max(0.0, 1.0 - g/ANCHOR_ANNEAL)) if ANCHOR_ANNEAL > 0.0 else ANCHOR_K   # user 2026-07-10: anneal anchor 2.0->0 over ANCHOR_ANNEAL env-steps (g), then fully policy
+                if tAk > 0.0:                                                          # user 2026-07-10: restoring spring toward handoff pose (_app_ori) — policy CORRECTS around the search aim, no free drift (fixes cube-loss)
+                    tQe = tEq.clone(); tQe[:, 1:] = -tQe[:, 1:]                          # conj(eq) = inverse (unit quat)
+                    tQr = quat_mul(_app_ori, tQe)                                       # world-frame rotation: current eq -> handoff anchor
+                    tQr = tQr * torch.sign(tQr[:, :1] + 1e-9)                           # canonical (w>=0 -> shortest arc)
+                    tSn = tQr[:, 1:].norm(dim=-1, keepdim=True)                         # |xyz| = sin(theta/2)
+                    tTh2 = 2.0*torch.atan2(tSn.squeeze(-1), tQr[:, 0].clamp(-1.0, 1.0))  # angle to anchor (rad)
+                    tSp = (tQr[:, 1:]/(tSn + 1e-8)) * (tAk*tTh2).unsqueeze(-1)           # spring = _ak * rotvec(eq -> anchor)
+                    tSpn = tSp.norm(dim=-1, keepdim=True)
+                    tSp = tSp * torch.clamp(ROT_SCALE/(tSpn + 1e-8), max=1.0)           # bound per-step to ROT_SCALE
+                    tOerrPol = tOerrPol + tSp                                          # policy nudge + rule-based pull back to handoff aim (anneals to 0)
                 if WSERVO_CLAMP > 0.0:                                                 # user 2026-07-05: same DOWN-pitch hard clamp as wservo, applied to the POLICY orientation delta (8953 uses clamp instead of the W_WPITCH reward penalty)
-                    _gax_p = quat_apply(eq, _HEAD.expand(eq.shape[0], -1))              # NOSE/head direction (wrist->jaw) in world
-                    _dang_p = torch.asin(torch.clamp(-_gax_p[:, 2], -1.0, 1.0))
-                    _pdir_p = torch.cross(_ZAXIS.expand(eq.shape[0], -1), _gax_p, dim=-1)
-                    _pdir_p = _pdir_p / (_pdir_p.norm(dim=-1, keepdim=True) + 1e-8)
-                    _prate_p = (_oerr_pol * _pdir_p).sum(dim=-1, keepdim=True)
-                    _lim_p = WSERVO_CLAMP*0.0174533
-                    _dap = _dang_p.unsqueeze(-1)                                        # signed pitch from horizontal (+down / −up)
-                    _blkp = (((_dap >= _lim_p) & (_prate_p > 0)) | ((_dap <= -_lim_p) & (_prate_p < 0))).float()
-                    _oerr_pol = _oerr_pol - _blkp * _prate_p * _pdir_p                  # block pushing further OUTSIDE ±lim
-                    _restp = torch.clamp((_dap - _lim_p).clamp(min=0.0), max=ROT_SCALE) + torch.clamp((_dap + _lim_p).clamp(max=0.0), min=-ROT_SCALE)
-                    _oerr_pol = _oerr_pol - _pdir_p * _restp                            # keep grasp-axis WITHIN ±WSERVO_CLAMP° of horizontal
+                    tGaxP = quat_apply(tEq, _HEAD.expand(tEq.shape[0], -1))              # NOSE/head direction (wrist->jaw) in world
+                    tDangP = torch.asin(torch.clamp(-tGaxP[:, 2], -1.0, 1.0))
+                    tPdirP = torch.cross(_ZAXIS.expand(tEq.shape[0], -1), tGaxP, dim=-1)
+                    tPdirP = tPdirP / (tPdirP.norm(dim=-1, keepdim=True) + 1e-8)
+                    tPrateP = (tOerrPol * tPdirP).sum(dim=-1, keepdim=True)
+                    tLimP = WSERVO_CLAMP*0.0174533
+                    tDap = tDangP.unsqueeze(-1)                                        # signed pitch from horizontal (+down / −up)
+                    tBlkp = (((tDap >= tLimP) & (tPrateP > 0)) | ((tDap <= -tLimP) & (tPrateP < 0))).float()
+                    tOerrPol = tOerrPol - tBlkp * tPrateP * tPdirP                  # block pushing further OUTSIDE ±lim
+                    tRestp = torch.clamp((tDap - tLimP).clamp(min=0.0), max=ROT_SCALE) + torch.clamp((tDap + tLimP).clamp(max=0.0), min=-ROT_SCALE)
+                    tOerrPol = tOerrPol - tPdirP * tRestp                            # keep grasp-axis WITHIN ±WSERVO_CLAMP° of horizontal
                 if DESC_GATE_PITCH:                                                    # user 2026-07-27: PITCH descent gate — when off-center, project out the pitch component that LOWERS the jaw-mouth (mirror of the EE-z gate at 1739; covers the a_a[3] leak). Deployable (FK eq + fixed JAW_OFF3 + wrist-detect ncen); MUST mirror in deploy.
-                    _moz_p = quat_apply(eq, _JAW_OFF3.expand(eq.shape[0], 3))            # jaw-mouth offset r (world)
-                    _ncap_p = torch.stack([_moz_p[:, 1], -_moz_p[:, 0], torch.zeros_like(_moz_p[:, 0])], dim=-1)   # ∂(ω×r)_z/∂ω : mouth-z sensitivity to the angular delta
-                    _mzv_p = (_oerr_pol * _ncap_p).sum(dim=-1)                           # mouth-z velocity from the pitch (ω·_ncap); <0 = mouth going DOWN
-                    _coef_p = (1.0 - _desc_ok) * _mzv_p.clamp(max=0.0) / (_ncap_p.pow(2).sum(dim=-1) + 1e-8)   # off-center(_desc_ok=0) AND down -> removal coef
-                    _oerr_pol = _oerr_pol - _coef_p.unsqueeze(-1) * _ncap_p              # cancel the mouth-lowering pitch component when off-center
-                eq_tgt = eq
+                    tMozP = quat_apply(tEq, _JAW_OFF3.expand(tEq.shape[0], 3))            # jaw-mouth offset r (world)
+                    tNcapP = torch.stack([tMozP[:, 1], -tMozP[:, 0], torch.zeros_like(tMozP[:, 0])], dim=-1)   # ∂(ω×r)_z/∂ω : mouth-z sensitivity to the angular delta
+                    tMzvP = (tOerrPol * tNcapP).sum(dim=-1)                           # mouth-z velocity from the pitch (ω·_ncap); <0 = mouth going DOWN
+                    tCoefP = (1.0 - tDescOk) * tMzvP.clamp(max=0.0) / (tNcapP.pow(2).sum(dim=-1) + 1e-8)   # off-center(_desc_ok=0) AND down -> removal coef
+                    tOerrPol = tOerrPol - tCoefP.unsqueeze(-1) * tNcapP              # cancel the mouth-lowering pitch component when off-center
+                tEqTgt = tEq
             else:
-                eq_tgt = eq                                                           # free (legacy): hold current -> drifts
-            ik.set_command(torch.cat([tgt, eq_tgt], dim=-1), ep, eq)                  # user 2026-07-03: orientation target = APP_ORI anchor (was always current eq -> topple)
-            q_des = ik.compute(ep, eq, Jb, r.data.joint_pos[:, joint_ids])
-            _ik_mask = is_a if (THREE_PHASE and ALIGN_DIRECT) else (is_a | is_l)          # SEARCH is NOT here — it moves ONLY pan+wflex (SEARCH_IK=0 direct, or =1 poshold2 block below)
-            _actq = r.data.joint_pos[:, joint_ids]
-            arm_term._target_qpos[_ik_mask] = _actq[_ik_mask]                            # sync PD target to ACTUAL before IK servo (drift-fix)
+                tEqTgt = tEq                                                           # free (legacy): hold current -> drifts
+            ik.set_command(torch.cat([tTgt, tEqTgt], dim=-1), tEp, tEq)                  # user 2026-07-03: orientation target = APP_ORI anchor (was always current eq -> topple)
+            tQDes = ik.compute(tEp, tEq, tJb, r.data.joint_pos[:, joint_ids])
+            tIkMask = isA if (THREE_PHASE and ALIGN_DIRECT) else (isA | isL)          # SEARCH is NOT here — it moves ONLY pan+wflex (SEARCH_IK=0 direct, or =1 poshold2 block below)
+            tActq = r.data.joint_pos[:, joint_ids]
+            arm_term._target_qpos[tIkMask] = tActq[tIkMask]                            # sync PD target to ACTUAL before IK servo (drift-fix)
             if APP_ORI in ("cube", "wservo", "policy"):                                  # user 2026-07-03/04: INCREMENTAL damped 6D-Jacobian LS (position + orientation). Stays near actual (no full-IK branch-jump runaway).
-                _perr = (tgt - ep)                                                        # position error (N,3)
+                tPerr = (tTgt - tEp)                                                        # position error (N,3)
                 if APP_ORI == "cube":
-                    _oang = torch.clamp(torch.atan2(_sn.squeeze(-1), (_ax * _aim).sum(-1)), max=ROT_SCALE)   # grasp-axis -> aim angle, bounded
-                    _oerr = (_cr / (_sn + 1e-8)) * _oang.unsqueeze(-1)                    # cube-aim orientation error
+                    tOang = torch.clamp(torch.atan2(tSn.squeeze(-1), (tAx * tAim).sum(-1)), max=ROT_SCALE)   # grasp-axis -> aim angle, bounded
+                    tOerr = (tCr2 / (tSn + 1e-8)) * tOang.unsqueeze(-1)                    # cube-aim orientation error
                 elif APP_ORI == "wservo":                                                 # visual-servo omega (keep cube centered in wrist)
-                    _oerr = _oerr_ws
+                    tOerr = tOerrWs
                 else:                                                                     # policy: orientation error = policy-commanded delta
-                    _oerr = _oerr_pol
-                _err6 = torch.cat([_perr, _oerr], dim=-1)                                 # (N,6) pose error
+                    tOerr = tOerrPol
+                tErr6 = torch.cat([tPerr, tOerr], dim=-1)                                 # (N,6) pose error
                 if IK_WRIST_W != 1.0:                                                      # user 2026-07-10 (B): WEIGHTED DLS — penalize wrist_flex motion so ELBOW/LIFT do the reach (was over-cranking wrist). dq = W⁻¹Jᵀ(JW⁻¹Jᵀ+λI)⁻¹e
-                    _wiv = torch.ones(6, device=DEVICE); _wiv[WFLEX_I] = 1.0 / IK_WRIST_W
-                    _JWi = Jb * _wiv.view(1, 1, 6)                                          # J·W⁻¹ (scale joint columns)
-                    _JJt6 = torch.bmm(_JWi, Jb.transpose(1, 2)) + IK_DAMP * torch.eye(6, device=DEVICE).unsqueeze(0)
-                    _dq = torch.bmm(Jb.transpose(1, 2), torch.linalg.solve(_JJt6, _err6.unsqueeze(-1))).squeeze(-1) * _wiv.view(1, 6)
+                    tWiv = torch.ones(6, device=DEVICE); tWiv[WFLEX_I] = 1.0 / IK_WRIST_W
+                    tJWi = tJb * tWiv.view(1, 1, 6)                                          # J·W⁻¹ (scale joint columns)
+                    tJJt6 = torch.bmm(tJWi, tJb.transpose(1, 2)) + IK_DAMP * torch.eye(6, device=DEVICE).unsqueeze(0)
+                    tDq = torch.bmm(tJb.transpose(1, 2), torch.linalg.solve(tJJt6, tErr6.unsqueeze(-1))).squeeze(-1) * tWiv.view(1, 6)
                 else:
-                    _JJt6 = torch.bmm(Jb, Jb.transpose(1, 2)) + IK_DAMP * torch.eye(6, device=DEVICE).unsqueeze(0)
-                    _dq = torch.bmm(Jb.transpose(1, 2), torch.linalg.solve(_JJt6, _err6.unsqueeze(-1))).squeeze(-1)
+                    tJJt6 = torch.bmm(tJb, tJb.transpose(1, 2)) + IK_DAMP * torch.eye(6, device=DEVICE).unsqueeze(0)
+                    tDq = torch.bmm(tJb.transpose(1, 2), torch.linalg.solve(tJJt6, tErr6.unsqueeze(-1))).squeeze(-1)
             else:
-                _perr = (tgt - ep); _Jp = Jb[:, 0:3, :]                                  # position-only DLS (approach), pose IK (align)
-                _JJt = torch.bmm(_Jp, _Jp.transpose(1, 2)) + IK_DAMP * torch.eye(3, device=DEVICE).unsqueeze(0)
-                _dq_a = torch.bmm(_Jp.transpose(1, 2), torch.linalg.solve(_JJt, _perr.unsqueeze(-1))).squeeze(-1)
-                _dq = torch.where(is_a.unsqueeze(-1), _dq_a, (q_des - _actq))
-            app_dq = torch.clamp(_dq / ARM_SCALE, -1.0, 1.0)
-            for _j in range(6):
-                act_env[:, _j] = torch.where(_ik_mask, app_dq[:, _j], act_env[:, _j])   # IK servo (APPROACH + ALIGN)
+                tPerr = (tTgt - tEp); tJp = tJb[:, 0:3, :]                                  # position-only DLS (approach), pose IK (align)
+                tJJt = torch.bmm(tJp, tJp.transpose(1, 2)) + IK_DAMP * torch.eye(3, device=DEVICE).unsqueeze(0)
+                tDqA = torch.bmm(tJp.transpose(1, 2), torch.linalg.solve(tJJt, tPerr.unsqueeze(-1))).squeeze(-1)
+                tDq = torch.where(isA.unsqueeze(-1), tDqA, (tQDes - tActq))
+            tAppDq = torch.clamp(tDq / ARM_SCALE, -1.0, 1.0)
+            for tJ2 in range(6):
+                tActEnv[:, tJ2] = torch.where(tIkMask, tAppDq[:, tJ2], tActEnv[:, tJ2])   # IK servo (APPROACH + ALIGN)
             if APP_NO_YAW:                                                            # user 2026-07-18: lock wrist_yaw(4)+wrist_roll(5) in APPROACH -> no wrist twist, 4-joint approach
-                act_env[is_a, 4] = 0.0; act_env[is_a, 5] = 0.0
+                tActEnv[isA, 4] = 0.0; tActEnv[isA, 5] = 0.0
             if SEARCH_IK:                                                             # user 2026-07-07 SEARCH_IK=1 = "poshold2" (8953): 2-DOF (pan+wflex ONLY) DLS against the 6D twist [ZERO linear = HOLD EE ; boresight angular]. The position rows make pan/wflex rotate the camera while MINIMIZING EE translation (partial hold, no full-arm IK). Only pan+wflex move (NOT in _ik_mask). Trade-off: pan (big EE arc) is throttled by the hold. SEARCH_IK=0 = direct pan/wflex deltas (8951), handled by the `if not SEARCH_IK` block above.
-                _pax = Jb[:, 3:6, PAN_I]; _wax = Jb[:, 3:6, WFLEX_I]                                        # pan/wflex angular axes (world)
-                _paxn = _pax / (_pax.norm(dim=-1, keepdim=True) + 1e-8); _waxn = _wax / (_wax.norm(dim=-1, keepdim=True) + 1e-8)
-                _om = (a_s[:, 0].clamp(-1, 1)*SEARCH_ROT*_essc).unsqueeze(-1)*_paxn \
-                    + ((a_s[:, 1]*WFLEX_GAIN).clamp(-1, 1)*SEARCH_ROT*_essc).unsqueeze(-1)*_waxn            # desired boresight angular vel: yaw + pitch(*WFLEX_GAIN)
-                _J2 = Jb[:, :, [PAN_I, WFLEX_I]]                                                            # (N,6,2) FULL twist columns (linear 0:3 + angular 3:6)
-                _tw = torch.cat([torch.zeros_like(_om), _om], dim=-1)                                       # (N,6) ZERO linear (hold EE) + boresight angular
-                _JtJ = torch.bmm(_J2.transpose(1, 2), _J2) + IK_DAMP*torch.eye(2, device=DEVICE).unsqueeze(0)
-                _dpw = torch.linalg.solve(_JtJ, torch.bmm(_J2.transpose(1, 2), _tw.unsqueeze(-1))).squeeze(-1)   # (N,2) [d_pan,d_wflex]
-                _sdq = torch.clamp(_dpw / ARM_SCALE, -1.0, 1.0)
-                act_env[:, PAN_I]   = torch.where(is_s, _sdq[:, 0], act_env[:, PAN_I])
-                act_env[:, WFLEX_I] = torch.where(is_s, _sdq[:, 1], act_env[:, WFLEX_I])
+                tPax = tJb[:, 3:6, PAN_I]; tWax = tJb[:, 3:6, WFLEX_I]                                        # pan/wflex angular axes (world)
+                tPaxn = tPax / (tPax.norm(dim=-1, keepdim=True) + 1e-8); tWaxn = tWax / (tWax.norm(dim=-1, keepdim=True) + 1e-8)
+                tOm = (aS[:, 0].clamp(-1, 1)*SEARCH_ROT*tEssc).unsqueeze(-1)*tPaxn \
+                    + ((aS[:, 1]*WFLEX_GAIN).clamp(-1, 1)*SEARCH_ROT*tEssc).unsqueeze(-1)*tWaxn            # desired boresight angular vel: yaw + pitch(*WFLEX_GAIN)
+                tJ22 = tJb[:, :, [PAN_I, WFLEX_I]]                                                            # (N,6,2) FULL twist columns (linear 0:3 + angular 3:6)
+                tTw = torch.cat([torch.zeros_like(tOm), tOm], dim=-1)                                       # (N,6) ZERO linear (hold EE) + boresight angular
+                tJtJ = torch.bmm(tJ22.transpose(1, 2), tJ22) + IK_DAMP*torch.eye(2, device=DEVICE).unsqueeze(0)
+                tDpw = torch.linalg.solve(tJtJ, torch.bmm(tJ22.transpose(1, 2), tTw.unsqueeze(-1))).squeeze(-1)   # (N,2) [d_pan,d_wflex]
+                tSdq = torch.clamp(tDpw / ARM_SCALE, -1.0, 1.0)
+                tActEnv[:, PAN_I]   = torch.where(isS, tSdq[:, 0], tActEnv[:, PAN_I])
+                tActEnv[:, WFLEX_I] = torch.where(isS, tSdq[:, 1], tActEnv[:, WFLEX_I])
             if THREE_PHASE and ALIGN_DIRECT:                                         # ALIGN (DIRECT): 6 raw joint-deltas (incl wrist_roll for yaw), while APPROACH stayed IK
-                for _j in range(6):
-                    act_env[:, _j] = torch.where(is_l, torch.clamp(a_l[:, _j], -1.0, 1.0)*_essc, act_env[:, _j])
+                for tJ2 in range(6):
+                    tActEnv[:, tJ2] = torch.where(isL, torch.clamp(aL[:, tJ2], -1.0, 1.0)*tEssc, tActEnv[:, tJ2])
             elif THREE_PHASE:                                                        # ALIGN (IK): wrist_roll aligns gripper to cube yaw
-                act_env[:, WROLL_I] = torch.where(is_l, (a_l[:, 2].clamp(-1, 1)*_essc), act_env[:, WROLL_I])
-        act_env[succ_lat & (ph < 3)] = 0.0                                       # reached grasp height -> hold passive (EXCEPT ph>=3 rule grasp/lift, which drive below)
-        act_env[:, 6] = 1.0                                                       # gripper OPEN (approach-only, no grasp yet)
+                tActEnv[:, WROLL_I] = torch.where(isL, (aL[:, 2].clamp(-1, 1)*tEssc), tActEnv[:, WROLL_I])
+        tActEnv[succ_lat & (ph < 3)] = 0.0                                       # reached grasp height -> hold passive (EXCEPT ph>=3 rule grasp/lift, which drive below)
+        tActEnv[:, 6] = 1.0                                                       # gripper OPEN (approach-only, no grasp yet)
         if RULE_GL and THREE_PHASE:                                               # RULE grasp+lift override (ph3=GRASP hold, ph4=LIFT). Runs AFTER the open-default so it wins.
-            _is_g = (ph == 3); _is_lift = (ph == 4); _gl = _is_g | _is_lift
-            if bool(_is_lift.any()):                                              # LIFT: IK-raise EE z toward gl_ztgt (xy+orientation held), gentle RGL_STEP/step
-                _ep = r.data.body_pos_w[:, ee_body_idx, :]; _eq = r.data.body_quat_w[:, ee_body_idx, :]
-                _t = _ep.clone(); _t[:, 2] = torch.minimum(_ep[:, 2] + RGL_STEP, gl_ztgt)
-                ik.set_command(torch.cat([_t, _eq], dim=-1), _ep, _eq)
-                arm_term._target_qpos[_is_lift] = r.data.joint_pos[:, joint_ids][_is_lift]   # user 2026-07-02: same drift-fix for LIFT IK (sync PD target to actual before servo)
-                _ldq = torch.clamp((ik.compute(_ep, _eq, Jb, r.data.joint_pos[:, joint_ids]) - arm_term._target_qpos) / ARM_SCALE, -1.0, 1.0)
-                for _j in range(6):
-                    act_env[:, _j] = torch.where(_is_lift, _ldq[:, _j], act_env[:, _j])
-            for _j in range(6):
-                act_env[:, _j] = torch.where(_is_g, torch.zeros_like(act_env[:, _j]), act_env[:, _j])   # GRASP: hold pose (no arm delta)
-            act_env[:, 6] = torch.where(_gl, torch.full_like(act_env[:, 6], -1.0), act_env[:, 6])        # CLOSE gripper during grasp+lift
-        return act_env
+            tIsG = (ph == 3); tIsLift = (ph == 4); tGl = tIsG | tIsLift
+            if bool(tIsLift.any()):                                              # LIFT: IK-raise EE z toward gl_ztgt (xy+orientation held), gentle RGL_STEP/step
+                tEp2 = r.data.body_pos_w[:, ee_body_idx, :]; tEq2 = r.data.body_quat_w[:, ee_body_idx, :]
+                tT3 = tEp2.clone(); tT3[:, 2] = torch.minimum(tEp2[:, 2] + RGL_STEP, gl_ztgt)
+                ik.set_command(torch.cat([tT3, tEq2], dim=-1), tEp2, tEq2)
+                arm_term._target_qpos[tIsLift] = r.data.joint_pos[:, joint_ids][tIsLift]   # user 2026-07-02: same drift-fix for LIFT IK (sync PD target to actual before servo)
+                tLdq = torch.clamp((ik.compute(tEp2, tEq2, tJb, r.data.joint_pos[:, joint_ids]) - arm_term._target_qpos) / ARM_SCALE, -1.0, 1.0)
+                for tJ2 in range(6):
+                    tActEnv[:, tJ2] = torch.where(tIsLift, tLdq[:, tJ2], tActEnv[:, tJ2])
+            for tJ2 in range(6):
+                tActEnv[:, tJ2] = torch.where(tIsG, torch.zeros_like(tActEnv[:, tJ2]), tActEnv[:, tJ2])   # GRASP: hold pose (no arm delta)
+            tActEnv[:, 6] = torch.where(tGl, torch.full_like(tActEnv[:, 6], -1.0), tActEnv[:, 6])        # CLOSE gripper during grasp+lift
+        return tActEnv
 
     if _EVAL_CASES is not None:   # user 2026-07-23: PLACE eval-set cubes at STARTUP so the FIRST round already runs assigned cases -> counts. Was: first round = default spawn, _env_case=-1 -> uncounted -> ~half the bench wasted.
         _rid = torch.arange(N, device=DEVICE); _no = N
@@ -1889,7 +1889,7 @@ if TWO_PHASE:
             if _NOM_KP[0] is None:                                                # user 2026-07-22: capture nominal (cfg) arm gains once — held during every sweep so the sweep is DR-free (== bench)
                 try:
                     _NOM_KP[0] = r.data.default_joint_stiffness.clone(); _NOM_KD[0] = r.data.default_joint_damping.clone()
-                    print(f"[SWEEP-NODR] captured nominal gains kp[0]={[round(float(x),1) for x in _NOM_KP[0][0].tolist()]} — actuator-gain DR held at nominal during sweep (== no-DR bench)", flush=True)
+                    print(f"[SWEEP-NODR] captured nominal gains kp[0]={[round(float(tX2),1) for tX2 in _NOM_KP[0][0].tolist()]} — actuator-gain DR held at nominal during sweep (== no-DR bench)", flush=True)
                 except Exception as _e:
                     print(f"[SWEEP-NODR] nominal-gain capture FAILED ({_e}); sweep keeps training DR", flush=True)
             print(f"[CURRIC] === self-eval sweep START @ step {g:,} ({_NCELL} cells) ===", flush=True)
@@ -1906,9 +1906,9 @@ if TWO_PHASE:
                         try: env.scene.update(0.0)
                         except Exception: pass
                         for _ in range(2): env.sim.render()
-                        fd, wd, ori, s = get_obs(); _tp_refresh(fd, wd)
+                        fd, wd, ori, s = getObs(); _tp_refresh(fd, wd)
                         _cw0 = env.scene[args.target_cube].data.root_pos_w[0].detach().cpu().tolist()
-                        _TPUI["cubew"] = [round(float(x),3) for x in _cw0]
+                        _TPUI["cubew"] = [round(float(tX2),3) for tX2 in _cw0]
                         _TPUI["ncen0"]=float(torch.norm(wd[0,0:2]-0.5)); _TPUI["frac0"]=float(wd[0,2]); _TPUI["vis0"]=float(wd[0,3]>0.5)
                 except Exception: pass
                 _wtick += 1; _tm_eval.sleep(0.05)
@@ -1925,10 +1925,10 @@ if TWO_PHASE:
                     _tp_recent.clear(); _gzmin_recent.clear(); _lift_recent.clear()
                     _nc = env.scene[args.target_cube].data.root_pos_w[0].detach().cpu().tolist()
                     _TPUI["cube"][0], _TPUI["cube"][1], _TPUI["cube"][2] = _nc[0], _nc[1], _nc[2]
-                    fd, wd, ori, s = get_obs(); gz_prev = r.data.body_pos_w[:, ee_body_idx, 2].clone()
+                    fd, wd, ori, s = getObs(); gz_prev = r.data.body_pos_w[:, ee_body_idx, 2].clone()
                     _TPUI["phase0"] = 0; _TPUI["plog"] = (_TPUI.get("plog", []) + [f"step {g:,}: 🔄 RESET → SEARCH (new env)"])[-8:]
                     _tp_refresh(fd, wd)
-                    print(f"[TP-EVAL] RESET -> new env, cube={[round(x,3) for x in _nc]}", flush=True)
+                    print(f"[TP-EVAL] RESET -> new env, cube={[round(tX2,3) for tX2 in _nc]}", flush=True)
                 except Exception as _e: print(f"[TP-EVAL] reset fail: {_e}", flush=True)
                 continue
             if _TPUI.get("backreq",0) > _last_back:               # BACK -> restore the snapshot taken before the last step. no control step.
@@ -1942,7 +1942,7 @@ if TWO_PHASE:
                         env.sim.forward()
                         ph = _snp["ph"]; chold = _snp["ch"]; lhold = _snp["lh"]; succ_lat = _snp["sl"]; gz_prev = _snp["gz"]
                         _TPUI["cube"][0], _TPUI["cube"][1], _TPUI["cube"][2] = _snp["sld"]
-                        fd, wd, ori, s = get_obs(); _prev_ph0 = int(ph[0].item()); _TPUI["phase0"] = _prev_ph0
+                        fd, wd, ori, s = getObs(); _prev_ph0 = int(ph[0].item()); _TPUI["phase0"] = _prev_ph0
                         _TPUI["plog"] = (_TPUI.get("plog", []) + [f"step {g:,}: ⏮ BACK ({len(_tp_undo)} left)"])[-8:]
                         _tp_refresh(fd, wd)
                         print(f"[TP-EVAL] BACK -> {len(_tp_undo)} snapshots left", flush=True)
@@ -1968,13 +1968,13 @@ if TWO_PHASE:
             except Exception as _e: print(f"[TP-EVAL] setcube fail: {_e}", flush=True)
         if TP_EVAL or (_curric_on and _sweeping[0]):             # deterministic (mean) actions for eval + curriculum self-eval sweep (user 2026-07-16: reverted stochastic — noise tanks APPROACH precision -> RSR 13.6%->1%; deterministic is the deploy mode)
             with torch.no_grad():
-                a_s = srch["ac"].mean_action(fd, wd, ori, s); a_a = appr["ac"].mean_action(fd, wd, ori, s)
-                a_l = algn["ac"].mean_action(fd, wd, ori, s) if THREE_PHASE else None
+                a_s = srch["ac"].meanAction(fd, wd, ori, s); a_a = appr["ac"].meanAction(fd, wd, ori, s)
+                a_l = algn["ac"].meanAction(fd, wd, ori, s) if THREE_PHASE else None
         else:
             with torch.no_grad():
-                a_s, _ = srch["ac"].get_action(fd, wd, ori, s)
-                a_a, _ = appr["ac"].get_action(fd, wd, ori, s)
-                a_l = (algn["ac"].get_action(fd, wd, ori, s)[0]) if THREE_PHASE else None
+                a_s, _ = srch["ac"].getAction(fd, wd, ori, s)
+                a_a, _ = appr["ac"].getAction(fd, wd, ori, s)
+                a_l = (algn["ac"].getAction(fd, wd, ori, s)[0]) if THREE_PHASE else None
         if g < args.learning_starts and not TP_EVAL:
             a_s = torch.rand(N, N_ACT_S, device=DEVICE)*2-1; a_a = torch.rand(N, N_ACT_A, device=DEVICE)*2-1
             if THREE_PHASE: a_l = torch.rand(N, 6 if (DIRECT_JOINTS or ALIGN_DIRECT) else 4, device=DEVICE)*2-1
@@ -2000,17 +2000,17 @@ if TWO_PHASE:
         if TP_EVAL and _qb_dbg is not None:                                          # DBG: which joints were COMMANDED vs which actually MOVED (env0)
             _qa = r.data.joint_pos[0, joint_ids]; _dq = (_qa - _qb_dbg)
             _nm = ["pan","lift","elbow","wflex","wyaw","wroll"]
-            _cmd = ["%s=%+.3f"%(_nm[_j], float(act_env[0,_j])) for _j in range(6)]
-            _mov = ["%s=%+.3f"%(_nm[_j], float(_dq[_j])) for _j in range(6)]
+            _cmd = ["%s=%+.3f"%(_nm[tJ2], float(act_env[0,tJ2])) for tJ2 in range(6)]
+            _mov = ["%s=%+.3f"%(_nm[tJ2], float(_dq[tJ2])) for tJ2 in range(6)]
             print("[TPDBG ph=%d] CMD %s | MOVED %s"%(int(ph[0].item()), " ".join(_cmd), " ".join(_mov)), flush=True)
         _PH_CUR[0] = ph                                                           # user 2026-07-19: expose current per-env phase so get_obs applies privilege to APPROACH envs only (+ stashes the front-guided acquisition projection for r_s)
-        nfd, nwd, nori, ns = get_obs()
+        nfd, nwd, nori, ns = getObs()
         gz = r.data.body_pos_w[:, ee_body_idx, 2]
         ncen = torch.sqrt((nwd[:, 0] - CX_TGT)**2 + (CY_W*(nwd[:, 1] - CY_TGT))**2); nvis = (nwd[:, 3] > 0.5).float()   # centering err w/ H/V retarget(CX_TGT,CY_TGT)+weight(CY_W) — search & approach
         seen = torch.maximum(seen, nvis)                                          # latch: cube has been seen in this phase
         cen_r, _cen_a = _cen_rewards(ncen)                                        # SEARCH (K_CE/CEN_K) + APPROACH (K_CE_A/CEN_K_A) centering rewards
         _mouth_w = r.data.body_pos_w[:, ee_body_idx] + quat_apply(r.data.body_quat_w[:, ee_body_idx], _JAW_OFF3.expand(N, 3))   # jaw MOUTH (FK): gripper_link origin + _goff (link->mouth geometry)
-        _recon_w, _rz_w = cube_xyz_from_wrist(nwd[:, :2], _cube_plane_z)                          # user 2026-07-22: DEPLOYABLE wrist-detection ray ∩ table-plane -> cube world xy
+        _recon_w, _rz_w = cubeXyzFromWrist(nwd[:, :2], _cube_plane_z)                          # user 2026-07-22: DEPLOYABLE wrist-detection ray ∩ table-plane -> cube world xy
         _wv = (nwd[:, 3] > 0.5) & (_rz_w > RZ_MIN_W)                                              # wrist RELIABLE (sees cube AND steep ray)
         _mouth_xy_err = torch.norm(_recon_w[:, :2] - _mouth_w[:, :2], dim=-1)                     # metric MOUTH<->cube horizontal (m), height-independent (fixes pixel-parallax lateral drift)
         _tabpen = _table_penalty(gz, _mouth_w)                                    # PENETRATION penalty (linear + steep quadratic below the reference)
@@ -2027,7 +2027,7 @@ if TWO_PHASE:
             print(f"[DIVERGED] PhysX non-finite -> force-reset {int(_diverged.sum())} env(s): {_dids.tolist()[:16]}", flush=True)
             for _di in _dids.tolist()[:4]:   # DIAG: last-finite (pre-step) arm state -> limit-slam vs velocity-runaway vs contact
                 _jp = _pjp[_di, joint_ids]; _jv = _pjv[_di, joint_ids]
-                print(f"[DIVERGED-DIAG] env{_di} prev q(rad)={[round(float(x),3) for x in _jp]} prev qd={[round(float(x),2) for x in _jv]} |qd|max={float(_jv.abs().max()):.2f}", flush=True)
+                print(f"[DIVERGED-DIAG] env{_di} prev q(rad)={[round(float(tX2),3) for tX2 in _jp]} prev qd={[round(float(tX2),2) for tX2 in _jv]} |qd|max={float(_jv.abs().max()):.2f}", flush=True)
         _cube_gone = _diverged | ((_cube_w - env.scene.env_origins)[:, :2].norm(dim=-1) > CUBE_GONE_R) | (_cube_w[:, 2] < -0.5) | (_cube_w[:, 2] > 1.5)   # user 2026-07-10: cube knocked far / off table / launched (physics) -> corrupted env (drop from success + metrics, force-reset). 2026-07-21: + non-finite robot FK (_diverged)
         if bool(_diverged.any()):   # ROOT FIX 2026-07-21: a diverged env's FK is NaN -> its reward/metrics are NaN. get_obs's nan_to_num sanitizes the OBS but NOT the reward -> a NaN reward stored in the buffer poisons the C51 loss -> NaN weights -> Normal(loc=nan) crash in the UPDATE (what killed official10-era 8953). Drop diverged envs from _cum / phase-transitions / the BUFFER; they are force-reset next step anyway.
             is_s = is_s & ~_diverged; is_a = is_a & ~_diverged; is_l = is_l & ~_diverged
@@ -2072,9 +2072,9 @@ if TWO_PHASE:
         _agate = _csign if DESC_GATE else torch.ones_like(_csign)                                     # user 2026-07-09: DESC_GATE=0 -> PLAIN descent (no centering gate); centering handled separately by W_AC
         # user 2026-07-09: cube_rel horizontal-align reward (wrist + front unproj, two-sided expo, gated on that cam's reliable detection). deployable, non-privileged. penalizes "sit back".
         _ee_xy = r.data.body_pos_w[:, ee_body_idx, :2]                                             # ALWAYS compute front+wrist cube-dist (reward + UI validation)
-        _rw, _rzw = cube_xyz_from_wrist(nwd[:, :2], _cube_plane_z)
+        _rw, _rzw = cubeXyzFromWrist(nwd[:, :2], _cube_plane_z)
         _dw = torch.norm(_rw[:, :2] - _ee_xy, dim=-1); _vw = (nwd[:, 3] > 0.5) & (_rzw > RZ_MIN_W)   # wrist cube horizontal dist (m) + STEEP-reliable mask (RZ_MIN_W)
-        _rf2, _rzf2 = cube_xyz_from_front(nfd[:, :2], _cube_plane_z)
+        _rf2, _rzf2 = cubeXyzFromFront(nfd[:, :2], _cube_plane_z)
         _df = torch.norm(_rf2[:, :2] - _ee_xy, dim=-1); _vf = (nfd[:, 3] > 0.5) & (_rzf2 > RZ_MIN)   # front cube horizontal dist (m) + reliable
         if DESC_D > 0.0:   # user 2026-07-10: COMBINED descent gate — front HORIZONTAL proximity(_df) AND centering(ncen). override _csign.
             _gprox = torch.where(_vf, ((2.0*DESC_D - _df)/DESC_D).clamp(0.0, 1.0), torch.zeros(N, device=DEVICE))   # 1 at _df<=DESC_D(over cube) -> 0 at _df>=2*DESC_D ; front-invalid -> 0 (no blind descend)
@@ -2082,7 +2082,7 @@ if TWO_PHASE:
             _gcen = ((2.0*_dcref - ncen)/_dcref).clamp(0.0, 1.0)   # 1 at ncen<=_dcref(centered) -> 0 at >=2*_dcref
             _agate = _gprox * _gcen   # AND: descend+ only when OVER cube AND centered
         _df3 = torch.norm(_rf2 - _mouth_w, dim=-1); _dw3 = torch.norm(_rw - _mouth_w, dim=-1)   # user 2026-07-10: DEPLOYABLE 3D dist (unproj cube (X,Y,plane_z) <-> jaw MOUTH FK) — approximates privileged _dcube w/o cube GT. plane_z=known cube-center height. MONITOR (UI vs _dcube to validate unproj accuracy).
-        _tri, _tgap = cube_xyz_triangulate(nfd[:, :2], nwd[:, :2]); _dtri = torch.norm(_tri - _mouth_w, dim=-1)   # user 2026-07-10: STEREO 3D (front+wrist rays, NO plane assumption) <-> mouth. Reliable when both cams valid AND rays consistent (gap small).
+        _tri, _tgap = cubeXyzTriangulate(nfd[:, :2], nwd[:, :2]); _dtri = torch.norm(_tri - _mouth_w, dim=-1)   # user 2026-07-10: STEREO 3D (front+wrist rays, NO plane assumption) <-> mouth. Reliable when both cams valid AND rays consistent (gap small).
         _crw_seen = torch.maximum(_crw_seen, _vw.float())        # user 2026-07-09: latch — wrist has RELIABLY seen the cube this phase
         _crf_seen = torch.maximum(_crf_seen, _vf.float())        # front latch
         # user 2026-07-14: DWELL reward — consecutive frames within DWELL_D (DEPLOYABLE 3D dist, front OR wrist valid, like _cr3_ok) -> EXPO growth
@@ -2179,7 +2179,7 @@ if TWO_PHASE:
         _crw_seen = torch.where(_reset_tr, torch.zeros_like(_crw_seen), _crw_seen)
         _crf_seen = torch.where(_reset_tr, torch.zeros_like(_crf_seen), _crf_seen)
         if RULE_GL and THREE_PHASE:                                              # RULE grasp+lift FSM: ALIGN success -> GRASP(hold) -> LIFT(raise)
-            _czw = cube_z_w()
+            _czw = cubeZW()
             _to_grasp = succ_l                                                   # in-mouth this step -> begin rule grasp (RSR still credited via succ_l/succ_lat below)
             gl_cz0  = torch.where(_to_grasp, _czw, gl_cz0)                        # cube z at grasp start (lift-success baseline)
             gl_ztgt = torch.where(_to_grasp, r.data.body_pos_w[:, ee_body_idx, 2] + RGL_LIFTZ, gl_ztgt)  # lift target = grasp EE z + LIFTZ
@@ -2283,10 +2283,10 @@ if TWO_PHASE:
                     _eval_seen.index_add_(0, _fi, torch.ones_like(_hh)); _eval_hits.index_add_(0, _fi, _hh)
                     _eval_hits_old.index_add_(0, _fi, _rsr_old_hit.float()[_fm])   # user 2026-07-22: privileged rsr_old per case
                     _eval_srch.index_add_(0, _fi, _eval_srch_reached[rid].float()[_fm])   # user 2026-07-22: SEARCH-reached per case
-                    _evh.log_episodes(_EVAL_CASES, _fi, rid[_fm], _eval_srch_reached[rid][_fm], _rsr_hit[_fm], _rsr_old_hit[_fm], lift_lat[rid][_fm], g)   # 2026-11-01: opt-in per-episode CSV
+                    _evh.logEpisodes(_EVAL_CASES, _fi, rid[_fm], _eval_srch_reached[rid][_fm], _rsr_hit[_fm], _rsr_old_hit[_fm], lift_lat[rid][_fm], g)   # 2026-11-01: opt-in per-episode CSV
                     _e0 = (rid[_fm] == 0).nonzero()
                     if _e0.numel() > 0:                                   # 2026-11-02: env 0 finished -> close its video (opt-in)
-                        _j = int(_e0[0, 0]); _evh.video_end(int(_fi[_j]), bool(_eval_srch_reached[rid][_fm][_j]), bool(_rsr_hit[_fm][_j]), bool(_rsr_old_hit[_fm][_j]), bool(lift_lat[rid][_fm][_j]))
+                        _j = int(_e0[0, 0]); _evh.videoEnd(int(_fi[_j]), bool(_eval_srch_reached[rid][_fm][_j]), bool(_rsr_hit[_fm][_j]), bool(_rsr_old_hit[_fm][_j]), bool(lift_lat[rid][_fm][_j]))
             _tp_recent.extend(_rsr_hit.float().tolist())
             _rsr_old_recent.extend(_rsr_old_hit.float().tolist())                   # privileged-RSR-hit rolling (UI "rsr_old")
             if len(_rsr_old_recent) > _METRIC_WIN: del _rsr_old_recent[:len(_rsr_old_recent) - _METRIC_WIN]
@@ -2401,15 +2401,15 @@ if TWO_PHASE:
                     if len(_ch) > 60: del _ch[:len(_ch)-60]
                     _sn2 = _cur_seen.reshape(CURRIC_NY, CURRIC_NX).cpu().tolist()   # user 2026-07-15/16: per-cell curric-sweep heatmaps (RSR + SEARCH), keep previous sweep for before/after
                     def _mk_curric_heat(_hitT, _lbl, _rate):
-                        _pp = (_hitT/_cur_seen.clamp(min=1.0)).reshape(CURRIC_NY, CURRIC_NX).cpu().tolist(); _rws = ""
-                        for _ry in range(CURRIC_NY-1, -1, -1):                      # far (top) -> near (bottom)
-                            _cl = ""
-                            for _rx in range(CURRIC_NX):
-                                _bg = "#222" if _sn2[_ry][_rx] < 1 else (lambda _v: f"rgb({int(200*(1-_v))},{int(200*_v)},40)")(_pp[_ry][_rx])
-                                _cl += f"<td style='width:13px;height:13px;background:{_bg}'></td>"
-                            _rws += f"<tr>{_cl}</tr>"
+                        tPp = (_hitT/_cur_seen.clamp(min=1.0)).reshape(CURRIC_NY, CURRIC_NX).cpu().tolist(); tRws = ""
+                        for tRy2 in range(CURRIC_NY-1, -1, -1):                      # far (top) -> near (bottom)
+                            tCl = ""
+                            for tRx2 in range(CURRIC_NX):
+                                tBg = "#222" if _sn2[tRy2][tRx2] < 1 else (lambda _v: f"rgb({int(200*(1-_v))},{int(200*_v)},40)")(tPp[tRy2][tRx2])
+                                tCl += f"<td style='width:13px;height:13px;background:{tBg}'></td>"
+                            tRws += f"<tr>{tCl}</tr>"
                         return (f"<div style='color:#888;font-size:10px'>{_lbl} @{g//1000}k · {_rate:.0f}%</div>"
-                                f"<table style='border-spacing:2px'>{_rws}</table>")
+                                f"<table style='border-spacing:2px'>{tRws}</table>")
                     _srsr_c = float((_cur_srch.sum()/_cur_seen.sum().clamp(min=1.0)).item())*100.0
                     _TPUI["curric_heat_prev"] = _TPUI.get("curric_heat", "")
                     _TPUI["curric_heat"] = _mk_curric_heat(_cur_hit, "RSR", _ov)
@@ -2495,7 +2495,7 @@ if TWO_PHASE:
                      cdtri=(float(_dtri[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0), tgap=(float(_tgap[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0),   # user 2026-07-10: STEREO triangulated 3D dist (median, both-cam-valid) + ray gap (intersection error; smaller = more reliable)
                      cdfm=(float(_df[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0), cdwm=(float(_dw[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0), cdnm=int((_vf & _vw & is_a).sum().item()),   # user 2026-07-09: MATCHED — front vs wrist on the SAME both-valid envs -> should AGREE if unproj correct
 
-                     reachz=((sum(1 for x in _gzmin_recent if x < 0.12)/len(_gzmin_recent)) if _gzmin_recent else 0.0),   # approach-progress: ep-min gz + ep-min cube dist + reach% below 0.12
+                     reachz=((sum(1 for tX2 in _gzmin_recent if tX2 < 0.12)/len(_gzmin_recent)) if _gzmin_recent else 0.0),   # approach-progress: ep-min gz + ep-min cube dist + reach% below 0.12
                      crs=_cum["s"], cra=_cum["a"], crl=_cum["l"], three=THREE_PHASE,
                      gz=float(torch.nan_to_num(gz).median().item()), als=float(srch["alpha"]), ala=float(appr["alpha"]), succ=_tp_succ_total,   # nan_to_num: diverged env gz(FK)=NaN; keep DISPLAY finite (2026-07-21)
                      scs=_succ_s, sca=_succ_a, scl=_succ_l,
@@ -2514,15 +2514,15 @@ if TWO_PHASE:
             try:                                                          # DR-composited (gray table/black gripper = detector input), det overlay + direction arrows
                 _cf0 = _LAST_IMG["front"] if _LAST_IMG["front"] is not None else env.scene["front"].data.output["rgb"][..., :3]
                 _cw0 = _LAST_IMG["wrist"] if _LAST_IMG["wrist"] is not None else env.scene["wrist"].data.output["rgb"][..., :3]
-                _eeq = r.data.body_quat_w[0, ee_body_idx]; (_rr,_pp,_yy), _gax = _quat_rpy(_eeq)   # user 2026-07-03: gripper orientation for UI
-                _TPUI["rpy"]=(round(_rr,1),round(_pp,1),round(_yy,1)); _TPUI["quat"]=[round(float(v),3) for v in _eeq.tolist()]
-                _cf = _cf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _draw_det(_cf, nfd[0].tolist())
-                _H=_cf.shape[0]; _sc=_H*0.42; _draw_arrow(_cf, _H//2, _H//2, _gax[0]*_sc, -_gax[1]*_sc); _TPUI["front"] = _png(_cf)
-                _wimg = _cw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _wd=nwd[0].tolist(); _draw_det(_wimg, _wd)   # user 2026-07-20: renamed _cw->_wimg (name collision with curric spawn-weight _cw -> multinomial crash under TRAIN_VIZ=1+CURRIC=1)
+                _eeq = r.data.body_quat_w[0, ee_body_idx]; (_rr,_pp,_yy), _gax = _quatRpy(_eeq)   # user 2026-07-03: gripper orientation for UI
+                _TPUI["rpy"]=(round(_rr,1),round(_pp,1),round(_yy,1)); _TPUI["quat"]=[round(float(tV),3) for tV in _eeq.tolist()]
+                _cf = _cf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(_cf, nfd[0].tolist())
+                _H=_cf.shape[0]; _sc=_H*0.42; _drawArrow(_cf, _H//2, _H//2, _gax[0]*_sc, -_gax[1]*_sc); _TPUI["front"] = _png(_cf)
+                _wimg = _cw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _wd=nwd[0].tolist(); _drawDet(_wimg, _wd)   # user 2026-07-20: renamed _cw->_wimg (name collision with curric spawn-weight _cw -> multinomial crash under TRAIN_VIZ=1+CURRIC=1)
                 _ww=_wimg.shape[0]                                                # user 2026-07-03: wrist shows ITS OWN dir = toward the cube DETECTED in the wrist view (center->detection). Was a dup of front's world grasp-axis so both looked identical. Short arrow / into-page ring == cube centered.
-                if len(_wd)>3 and _wd[3]>0.5: _draw_arrow(_wimg, _ww//2, _ww//2, (_wd[0]-0.5)*_ww, (_wd[1]-0.5)*_ww, col=(255,140,0))
+                if len(_wd)>3 and _wd[3]>0.5: _drawArrow(_wimg, _ww//2, _ww//2, (_wd[0]-0.5)*_ww, (_wd[1]-0.5)*_ww, col=(255,140,0))
                 _TPUI["wrist"] = _png(_wimg)
-                _evh.video_frame(_cf, _wimg, int(ph[0].item()))   # 2026-11-02: opt-in rollout video of env 0 (EVAL_VIDEO_DIR)
+                _evh.videoFrame(_cf, _wimg, int(ph[0].item()))   # 2026-11-02: opt-in rollout video of env 0 (EVAL_VIDEO_DIR)
             except Exception: pass
         if TP_EVAL or (TRAIN_VIZ and (g // N) % 4 == 0):                                  # sparklines + clip GIF — user 2026-07-02: 10->4 (more frequent live clip)
             _tppush("vis", _TPUI["vis"]); _tppush("rs", _TPUI["rs"]); _tppush("ra", _TPUI["ra"]); _tppush("ncen_s", _TPUI.get("ncen_s",0.0)); _tppush("ncen_a", _TPUI.get("ncen_a",0.0))   # user 2026-07-22: rsr/rsr_old moved to every-iter push above
@@ -2557,8 +2557,8 @@ if TWO_PHASE:
             if _rsrd_dist:   # user 2026-07-13: RSR by SPAWN fwd-DISTANCE — split reachable vs unreachable-far
                 _rb = []
                 for _lo, _hi in [(0.0,0.25),(0.25,0.35),(0.35,0.45),(0.45,0.55),(0.55,0.65),(0.65,1.0)]:
-                    _ix = [_i for _i, _d in enumerate(_rsrd_dist) if _lo <= _d < _hi]
-                    if _ix: _rb.append(f"{_lo:.2f}-{_hi:.2f}:R{100*sum(_rsrd_hit[_i] for _i in _ix)/len(_ix):.0f}%(n{len(_ix)})")
+                    _ix = [tI2 for tI2, tD4 in enumerate(_rsrd_dist) if _lo <= tD4 < _hi]
+                    if _ix: _rb.append(f"{_lo:.2f}-{_hi:.2f}:R{100*sum(_rsrd_hit[tI2] for tI2 in _ix)/len(_ix):.0f}%(n{len(_ix)})")
                 print("[RSR-DIST] " + " | ".join(_rb), flush=True)
             if _EVAL_CASES is not None:                                            # FIXED eval-set sweep progress + reproducible RSR over all cases seen
                 _sn = _eval_seen; _msk = _sn > 0; _cov = int(_msk.sum().item()); _M = _EVAL_CASES.shape[0]
@@ -2569,21 +2569,21 @@ if TWO_PHASE:
                 _TPUI["eval_rsr"]=_srsr; _TPUI["eval_rsr_old"]=_srsr_old; _TPUI["eval_srch"]=_ssrch; _TPUI["eval_cov"]=_cov; _TPUI["eval_M"]=_M; _TPUI["eval_sweeps"]=_eval_sweeps[0]
                 # success HEATMAP over (lateral × forward-dist) — aggregate per-case hits/seen back to grid cells. build for BOTH RSR(deployable) and rsr_old(privileged true-reach).
                 def _mk_eval_heat(_hitsT, _lbl):
-                    _hh = torch.zeros(_EH_NX*_EH_NY, device=DEVICE); _hs = torch.zeros(_EH_NX*_EH_NY, device=DEVICE)
-                    _hh.index_add_(0, _ev_cell, _hitsT); _hs.index_add_(0, _ev_cell, _eval_seen)
-                    _hh=_hh.cpu().tolist(); _hs=_hs.cpu().tolist(); _rows=""
-                    for _ry in range(_EH_NY-1,-1,-1):                              # far (top) -> near (bottom)
-                        _fwd=_ehf0+(_ry+0.5)/_EH_NY*(_ehf1-_ehf0); _cellshtml=""
-                        for _rx in range(_EH_NX):
-                            _c=_ry*_EH_NX+_rx; _s=_hs[_c]
-                            if _s<1: _bg="#222"
+                    tHh = torch.zeros(_EH_NX*_EH_NY, device=DEVICE); tHs = torch.zeros(_EH_NX*_EH_NY, device=DEVICE)
+                    tHh.index_add_(0, _ev_cell, _hitsT); tHs.index_add_(0, _ev_cell, _eval_seen)
+                    tHh=tHh.cpu().tolist(); tHs=tHs.cpu().tolist(); tRows=""
+                    for tRy2 in range(_EH_NY-1,-1,-1):                              # far (top) -> near (bottom)
+                        tFwd=_ehf0+(tRy2+0.5)/_EH_NY*(_ehf1-_ehf0); tCellshtml=""
+                        for tRx2 in range(_EH_NX):
+                            tC3=tRy2*_EH_NX+tRx2; tS3=tHs[tC3]
+                            if tS3<1: tBg="#222"
                             else:
-                                _p=_hh[_c]/_s; _g=int(200*_p); _r=int(200*(1-_p)); _bg=f"rgb({_r},{_g},40)"
-                            _cellshtml+=f"<td style='width:11px;height:11px;background:{_bg}' title='fwd~{_fwd*100:.0f}cm {int(_s)}ep R{int(100*_hh[_c]/_s) if _s>0 else 0}%'></td>"
-                        _rows+=f"<tr><td style='color:#777;font-size:9px;padding-right:4px'>{_fwd*100:.0f}cm</td>{_cellshtml}</tr>"
+                                tP3=tHh[tC3]/tS3; tG2=int(200*tP3); tR2=int(200*(1-tP3)); tBg=f"rgb({tR2},{tG2},40)"
+                            tCellshtml+=f"<td style='width:11px;height:11px;background:{tBg}' title='fwd~{tFwd*100:.0f}cm {int(tS3)}ep R{int(100*tHh[tC3]/tS3) if tS3>0 else 0}%'></td>"
+                        tRows+=f"<tr><td style='color:#777;font-size:9px;padding-right:4px'>{tFwd*100:.0f}cm</td>{tCellshtml}</tr>"
                     return (f"<div style='background:#181818;border-radius:10px;padding:10px 14px;margin:5px'>"
                         f"<div style='color:#888;font-size:11px;letter-spacing:1px'>{_lbl} (vertical=forward distance, horizontal=left-right {_ehx0*100:.0f}→{_ehx1*100:.0f}cm · green=success)</div>"
-                        f"<table style='border-spacing:2px;margin-top:6px'>{_rows}</table></div>")
+                        f"<table style='border-spacing:2px;margin-top:6px'>{tRows}</table></div>")
                 _TPUI["eval_heat"]=_mk_eval_heat(_eval_hits, "RSR heatmap (deployable)")
                 _TPUI["eval_heat_old"]=_mk_eval_heat(_eval_hits_old, "rsr_old heatmap (privileged actual reach)")
                 _TPUI["eval_heat_srch"]=_mk_eval_heat(_eval_srch, "SEARCH heatmap (APPROACH reached)")
@@ -2604,7 +2604,7 @@ if TWO_PHASE:
                     torch.save({"actor":algn["ac"].state_dict(),"critic":algn["cr"].state_dict(),"step":g}, os.path.join(args.save_dir, f"align_{_sk}.pt"))
                 print(f"[TP] PERIODIC ckpt saved (never overwritten): search_{_sk}.pt / approach_{_sk}.pt", flush=True)
             # BEST checkpoint (user 2026-07-02): score = RSR%*1 + reach%(<0.12) as tiebreak -> keep the best policy so regression can't lose it
-            _reachz = (sum(1 for x in _gzmin_recent if x < 0.12)/len(_gzmin_recent)) if _gzmin_recent else 0.0
+            _reachz = (sum(1 for tX2 in _gzmin_recent if tX2 < 0.12)/len(_gzmin_recent)) if _gzmin_recent else 0.0
             _score = _sr*100.0 + _reachz
             if len(_tp_recent) >= 200 and _score > _tp_best:
                 _tp_best = _score
