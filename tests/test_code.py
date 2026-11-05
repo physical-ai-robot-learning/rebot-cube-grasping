@@ -122,6 +122,8 @@ def test_july_fingerprint_unchanged(rel):
 @needsBase
 @pytest.mark.parametrize("path", sorted(REFACTOR_MAP["files"]), ids=str)
 def test_refactor_is_move_plus_rename(path):
+    if REFACTOR_MAP["files"][path].get("manual"):
+        pytest.skip("restyled by hand; covered by tests/test_characterization.py")
     refactor_equivalence.checkEntry(path, REFACTOR_MAP["files"][path])
 
 

@@ -29,6 +29,7 @@ CRITICAL sim<->real PARITY:
 """
 
 import argparse
+import sys
 import time
 import numpy as np
 import torch
@@ -50,6 +51,7 @@ ARM_SCALE, GRIP_SCALE = 0.05, 0.0143
 #   TORQUE via current/torque limits, NOT the position target.
 #   Real mapping: smaller sim qpos = more CLOSED; map your real "closed/grip" to q~0.03 and "open" to q~0.05.
 GRIP_LO, GRIP_HI = 0.0, 0.05
+GRIP_REST = 0.02                     # gripper target at REST (m), REBOT_REST_POSE
 ARM_LO = np.array([-1.5708, -3.14, -3.14, -0.1745, -1.8326, -3.1416], dtype=np.float32)
 ARM_HI = np.array([ 1.5708,  0.00,  0.00,  1.57,    1.8326,  3.1416], dtype=np.float32)
 PAN_IDX, ELBOW_IDX, PAN_FORWARD = 0, 2, 1.54
@@ -133,17 +135,17 @@ def pickDevice(device="auto"):
 class VisualPolicy:
     """Loads enc_w + enc_f + actor from dagger_final.pt and runs deterministic inference."""
 
-    def __init__(self, checkpoint_path, device="auto"):
-        self.device = pickDevice(device)
-        self.enc_w = CNNEncoder(WRIST_SIZE).to(self.device).eval()
-        self.enc_f = CNNEncoder(FRONT_SIZE).to(self.device).eval()
-        self.actor = Actor().to(self.device).eval()
-        tCk = torch.load(checkpoint_path, map_location=self.device)
-        self.enc_w.load_state_dict(tCk["enc_w"])
-        self.enc_f.load_state_dict(tCk["enc_f"])
-        self.actor.load_state_dict(tCk["actor"])
-        print(f"[deploy-v] loaded visual student from {checkpoint_path} (step {tCk.get('step','?')}) "
-              f"on device={self.device}")
+    def __init__(self, checkpointPath, device="auto"):
+        self.mDevice = pickDevice(device)
+        self.mWristEncoder = CNNEncoder(WRIST_SIZE).to(self.mDevice).eval()
+        self.mFrontEncoder = CNNEncoder(FRONT_SIZE).to(self.mDevice).eval()
+        self.mActor = Actor().to(self.mDevice).eval()
+        tCk = torch.load(checkpointPath, map_location=self.mDevice)
+        self.mWristEncoder.load_state_dict(tCk["enc_w"])
+        self.mFrontEncoder.load_state_dict(tCk["enc_f"])
+        self.mActor.load_state_dict(tCk["actor"])
+        print(f"[deploy-v] loaded visual student from {checkpointPath} (step {tCk.get('step','?')}) "
+              f"on device={self.mDevice}")
 
     @staticmethod
     def _ds(rgbUint8, size):
@@ -164,10 +166,10 @@ class VisualPolicy:
 
     @torch.no_grad()
     def act(self, frontRgb, wristRgb, state21):
-        tW = self._ds(wristRgb, WRIST_SIZE).to(self.device)
-        tF = self._ds(frontRgb, FRONT_SIZE).to(self.device)
-        tS = torch.as_tensor(state21, dtype=torch.float32, device=self.device).unsqueeze(0)
-        tA = self.actor.meanAction(self.enc_w(tW), self.enc_f(tF), tS)
+        tW = self._ds(wristRgb, WRIST_SIZE).to(self.mDevice)
+        tF = self._ds(frontRgb, FRONT_SIZE).to(self.mDevice)
+        tS = torch.as_tensor(state21, dtype=torch.float32, device=self.mDevice).unsqueeze(0)
+        tA = self.mActor.meanAction(self.mWristEncoder(tW), self.mFrontEncoder(tF), tS)
         return tA.squeeze(0).cpu().numpy()
 
 
@@ -186,24 +188,24 @@ def buildState(jointPos, targetQpos7):
 # ════════════════════════════════════════════════════════════════════════════════
 class ActionController:
     def __init__(self):
-        self.arm_target = REST_QPOS.copy()
-        self.grip_target = 0.02
+        self.mArmTarget = REST_QPOS.copy()
+        self.mGripTarget = GRIP_REST
 
-    def reset(self, arm_qpos, grip_qpos):
-        self.arm_target = np.asarray(arm_qpos, dtype=np.float32).copy()
-        self.grip_target = float(grip_qpos)
+    def reset(self, armQpos, gripQpos):
+        self.mArmTarget = np.asarray(armQpos, dtype=np.float32).copy()
+        self.mGripTarget = float(gripQpos)
 
-    def step(self, action, pan_qpos):
+    def step(self, action, panQpos):
         tA = np.clip(np.asarray(action, dtype=np.float32), -1.0, 1.0)
-        self.arm_target = np.clip(self.arm_target + tA[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
-        if float(pan_qpos) < PAN_FORWARD:
-            self.arm_target[ELBOW_IDX] = float(np.clip(self.arm_target[ELBOW_IDX], ELBOW_TUCK_LO, ELBOW_TUCK_HI))
-        self.grip_target = float(np.clip(self.grip_target + tA[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
-        return self.arm_target.copy(), self.grip_target
+        self.mArmTarget = np.clip(self.mArmTarget + tA[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
+        if float(panQpos) < PAN_FORWARD:
+            self.mArmTarget[ELBOW_IDX] = float(np.clip(self.mArmTarget[ELBOW_IDX], ELBOW_TUCK_LO, ELBOW_TUCK_HI))
+        self.mGripTarget = float(np.clip(self.mGripTarget + tA[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
+        return self.mArmTarget.copy(), self.mGripTarget
 
     @property
     def targetQpos7(self):
-        return np.concatenate([self.arm_target, [self.grip_target]]).astype(np.float32)
+        return np.concatenate([self.mArmTarget, [self.mGripTarget]]).astype(np.float32)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -235,10 +237,10 @@ class VisualRobotInterface:
 class MockVisualRobot(VisualRobotInterface):
     """No-hardware stand-in to smoke-test the obs->policy->action flow on any PC (torch only)."""
     def __init__(self):
-        self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
+        self.mJointPos = np.concatenate([REST_QPOS, [GRIP_REST, GRIP_REST]]).astype(np.float32)
 
     def readJointPos(self):
-        return self._jp.copy()
+        return self.mJointPos.copy()
 
     def getFrontImage(self):
         return (np.random.rand(128, 128, 3) * 255).astype(np.uint8)
@@ -247,12 +249,12 @@ class MockVisualRobot(VisualRobotInterface):
         return (np.random.rand(128, 128, 3) * 255).astype(np.uint8)
 
     def sendJointTargets(self, armTarget, gripperTarget):
-        self._jp[:N_ARM] = armTarget
-        self._jp[6] = gripperTarget
-        self._jp[7] = gripperTarget
+        self.mJointPos[:N_ARM] = armTarget
+        self.mJointPos[6] = gripperTarget
+        self.mJointPos[7] = gripperTarget
 
     def goToRest(self):
-        self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
+        self.mJointPos = np.concatenate([REST_QPOS, [GRIP_REST, GRIP_REST]]).astype(np.float32)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -286,22 +288,28 @@ def run(policy: VisualPolicy, robot: VisualRobotInterface, hz=CONTROL_HZ, maxSte
         robot.close()
 
 
-def main():
-    tAp = argparse.ArgumentParser()
+class DeployError(RuntimeError):
+    """The deploy loop was asked to run without a robot implementation."""
+
+
+def main(argv: list[str] | None = None) -> int:
+    tAp = argparse.ArgumentParser(description="Isaac-free deploy loop of the camera-based DAgger student.")
     tAp.add_argument("--checkpoint", required=True, help="dagger_final.pt (visual student)")
     tAp.add_argument("--hz", type=float, default=CONTROL_HZ)
     tAp.add_argument("--max-steps", type=int, default=0)
     tAp.add_argument("--device", default="auto", help="auto -> cuda|mps|cpu (Mac: mps or cpu, both fine)")
     tAp.add_argument("--mock", action="store_true", help="run with MockVisualRobot (no hardware)")
-    tArgs = tAp.parse_args()
+    tArgs = tAp.parse_args(argv)
     tPolicy = VisualPolicy(tArgs.checkpoint, device=tArgs.device)
     if tArgs.mock:
         print("[deploy-v] MOCK mode — implement VisualRobotInterface for real hardware.")
         run(tPolicy, MockVisualRobot(), hz=tArgs.hz, maxSteps=tArgs.max_steps)
     else:
-        raise SystemExit("Implement a VisualRobotInterface for the reBot and pass it to run(); "
-                         "or use --mock to test the pipeline.")
+        print(DeployError("Implement a VisualRobotInterface for the reBot and pass it to run(); "
+                          "or use --mock to test the pipeline."), file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

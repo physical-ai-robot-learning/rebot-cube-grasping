@@ -12,7 +12,8 @@ at the pre-refactor commit (git show BASE:old) and the current file are compared
      binding flags (local / global / free / parameter / imported / assigned / referenced) must be identical after the
      rename map is applied. This catches a renamed local that would silently resolve to a different binding.
 
-Entries whose "renames" is empty are pure moves. Files moved verbatim to archive/ are not listed here; their
+Entries whose "renames" is empty are pure moves. Entries with a "manual" note were restyled by hand beyond renaming
+(small Isaac-free modules); they are skipped here and covered by the golden tests in tests/test_characterization.py. Files moved verbatim to archive/ are not listed here; their
 fingerprints are checked directly against analysis/code_fingerprints*.json (tests/test_code.py).
 
 Usage (repository root, needs the git history that contains BASE):
@@ -256,14 +257,21 @@ def main(argv: list[str] | None = None) -> int:
     tMap = loadMap()["files"]
     tTargets = tArgs or sorted(tMap)
     tFails = 0
+    tManual = 0
     for tPath in tTargets:
+        if tMap[tPath].get("manual"):
+            tManual += 1
+            print(f"skip {tPath}  (manual: {tMap[tPath]['manual']})")
+            continue
         try:
             checkEntry(tPath, tMap[tPath])
             print(f"ok   {tPath}  ({len(tMap[tPath].get('renames', {}))} renames)")
         except EquivalenceError as tError:
             tFails += 1
             print(f"FAIL {tError}")
-    print(f"\n{'PASS' if not tFails else 'FAIL'}: {len(tTargets) - tFails}/{len(tTargets)} files equivalent to {BASE}")
+    tChecked = len(tTargets) - tManual
+    print(f"\n{'PASS' if not tFails else 'FAIL'}: {tChecked - tFails}/{tChecked} files equivalent to {BASE} "
+          f"({tManual} restyled by hand, covered by tests/test_characterization.py)")
     return 1 if tFails else 0
 
 

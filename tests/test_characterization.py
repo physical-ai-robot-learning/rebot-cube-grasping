@@ -75,7 +75,7 @@ def _p2():
 
 def _arrow(ui, img, *args):
     tIm = img.copy()
-    ui._drawArrow(tIm, *args)
+    ui.drawArrow(tIm, *args)
     return tIm.tobytes()
 
 
@@ -85,16 +85,16 @@ def test_ui_render_helpers():
     tImg = (tRng.random((48, 64, 3)) * 255).astype(np.uint8)
     tImg[10:20, 30:44] = (230, 20, 20)
     tOut = {
-        "spark": ui._spark([0.1, 0.5, 0.3, 0.9], "#ff0000"),
-        "spark_short": ui._spark([1.0], "#00ff00", w=100, h=20),
-        "card": ui._card("RSR", "12.5", sub="x"),
-        "trimmean": [ui._trimmean(torch.arange(20, dtype=torch.float32)), ui._trimmean(torch.tensor([3.0, 1.0])),
-                     ui._trimmean(torch.zeros(0))],
-        "quat_rpy": _r(np.concatenate([np.array(v) for v in ui._quatRpy([0.9, 0.1, -0.3, 0.2])])),
-        "draw_det": _sha(ui._drawDet(tImg.copy(), [0.5, 0.4, 0.1, 1.0]).tobytes()),
+        "spark": ui.sparkSvg([0.1, 0.5, 0.3, 0.9], "#ff0000"),
+        "spark_short": ui.sparkSvg([1.0], "#00ff00", w=100, h=20),
+        "card": ui.statCard("RSR", "12.5", sub="x"),
+        "trimmean": [ui.trimmedMean(torch.arange(20, dtype=torch.float32)), ui.trimmedMean(torch.tensor([3.0, 1.0])),
+                     ui.trimmedMean(torch.zeros(0))],
+        "quat_rpy": _r(np.concatenate([np.array(v) for v in ui.quatRpy([0.9, 0.1, -0.3, 0.2])])),
+        "draw_det": _sha(ui.drawDetection(tImg.copy(), [0.5, 0.4, 0.1, 1.0]).tobytes()),
         "draw_arrow_long": _sha(_arrow(ui, tImg, 30, 24, 20, -10)),
         "draw_arrow_ring": _sha(_arrow(ui, tImg, 30, 24, 1, 1)),
-        "png_len": len(ui._png(tImg)) > 0,
+        "png_len": len(ui.pngBytes(tImg)) > 0,
     }
     _check("ui_render", tOut)
 

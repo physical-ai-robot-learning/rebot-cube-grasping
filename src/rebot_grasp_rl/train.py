@@ -884,10 +884,10 @@ cap = args.buffer_size   # kept solely for the [DET] start banner below
 # The single-policy dashboard (_H server, _UI/_HIST state, _push/_graph/update_ui, _EVAL,
 # and the EVAL_STEP interactive loop) was DELETED: it drove the removed single-agent loop and
 # its server was never started when TWO_PHASE=1 (all jobs set it). The TWO_PHASE block has its
-# own UI (_TPUI/_TPHND/_tpg). The remaining helpers (_png/_spark/_card/_draw_det) are shared.
+# own UI (_TPUI/_TPHND/_tpg). The remaining helpers (pngBytes/sparkSvg/statCard/_draw_det) are shared.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import imageio
-from rebot_grasp_rl.dashboard_render import _png, _spark, _trimmean, _card, _drawDet, _quatRpy, _drawArrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
+from rebot_grasp_rl.dashboard_render import pngBytes, sparkSvg, trimmedMean, statCard, drawDetection, quatRpy, drawArrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
 
 # update_ui() and the MLflow logging block were DELETED: both were driven only by the removed
 # single-agent loop (update_ui wrote the dead _UI dict; MLflow's _MLF was logged only there).
@@ -1202,7 +1202,7 @@ if TWO_PHASE:
     def _tppush(k, v, cap=160):
         _TPHIST[k].append(v)
         if len(_TPHIST[k]) > cap: _TPHIST[k].pop(0)
-    def _tpg(title, k, c): return f"<div style='display:inline-block;margin:6px'><div style='color:#aaa;font-size:11px'>{title}</div>{_spark(_TPHIST[k], c)}</div>"
+    def _tpg(title, k, c): return f"<div style='display:inline-block;margin:6px'><div style='color:#aaa;font-size:11px'>{title}</div>{sparkSvg(_TPHIST[k], c)}</div>"
     class _TPHND(_TPBH):
         def log_message(self, *a): pass
         def do_GET(self):
@@ -1242,57 +1242,57 @@ if TWO_PHASE:
                 if "v" in tQ2: _TPUI["essc"] = max(0.02, min(1.0, float(tQ2["v"][0])))
                 self.send_response(200); self.end_headers(); self.wfile.write(b"ok"); return
             tU = _TPUI
-            tCards = (_card("STEP", f"{tU['step']:,}", "#4fc3f7")
-                     + _card("RSR", f"{tU['rsr']*100:.1f}%", "#ffca28", f"n={tU['n']} · approach success (unified center+frac+height condition)")
-                     + _card("RSR DCUBE (priv)", f"{tU.get('rsr_old',0.0)*100:.1f}%", "#9575cd", f"n={tU.get('n_old',0)} · PRIVILEGED reference (actual jaw↔cube<{RSR_DCUBE}m, not used for reward/termination)")
-                     + _card("SEARCH success rate", f"{tU.get('wr_s',0.0)*100:.1f}%", "#42a5f5", f"{int(round(tU.get('wr_s',0.0)*tU.get('wn_s',0)))}/{tU.get('wn_s',0)} episodes · found cube and handed off within {SEARCH_MAX_S:.0f}s (1 vote per episode, counted on reset)")
-                     + _card("approach→search re-handoff rate", f"{tU.get('wr_resrch',0.0)*100:.1f}%", "#ef5350", f"{int(round(tU.get('wr_resrch',0.0)*tU.get('wn_resrch',0)))}/{tU.get('wn_resrch',0)} approach-reaching episodes with full cube loss→re-search (lower = approach keeps/looks at the cube better)")
-                     + _card("centering reach rate", f"{tU.get('cenrate',0.0)*100:.0f}%", "#42a5f5", f"fraction currently in SEARCH with ncen&lt;{SEARCH_CENTER} · 256env · leading indicator of handoff")
-                     + _card("head angle (search)", f"{tU.get('head_deg_s',0.0):+.0f}°", "#ffa726", "SEARCH mean nose angle · +tilt down (down=dive direction)/−tilt back (up)/0 level · wflex divergence watch (ramping to the 128° limit = dive)")
-                     + _card("→APPROACH transition rate", f"{tU.get('apprate',0.0)*100:.0f}%", "#66bb6a", f"fraction of all envs reaching APPROACH · handoff throughput")
-                     + _card("APPROACH centering", f"{tU.get('appr_cen',0.0)*100:.0f}%", "#ab47bc", f"fraction in APPROACH with ncen&lt;{APP_CEN} · actual approach centering (for NO_RESRCH)")
-                     + _card("wrist frac (search)", f"{tU.get('frac_s',0.0):.3f}", "#4dd0e1", "SEARCH-phase mean wrist frac (visible env) · cube size")
-                     + _card("wrist frac (approach)", f"{tU.get('frac_a',0.0):.3f}", "#ffa726", f"APPROACH-phase mean wrist frac (visible env) · success gate frac&gt;{FRAC_GRASP}")
-                     + _card("head angle", f"{tU.get('head_deg',0.0):+.0f}°", "#ffa726", f"APPROACH mean nose angle · +tilt down (down)/−tilt back (up)/0 level · |value|↑=more bent (suppressed by W_WPITCH expo)")
-                     + _card("APPROACH success rate", f"{tU.get('wr_a',0.0)*100:.0f}%", "#66bb6a", f"last {tU.get('wn_a',0)} runs · " + ("ALIGN reached" if tU.get('three') else "grasp height reached"))
-                     + (_card("ALIGN handoff rate", f"{tU.get('wr_h',0.0)*100:.0f}%", "#26c6da", f"last {tU.get('wn_h',0)} runs · approach→ALIGN transition") if tU.get('three') else "")
-                     + (_card("ALIGN success rate", f"{tU.get('wr_l',0.0)*100:.0f}%", "#ab47bc", f"last {tU.get('wn_l',0)} runs · aligned in mouth (in-mouth)") if tU.get('three') else "")
-                     + _card("SEARCH envs", f"{tU['phs']}", "#42a5f5", f"buf {tU['sbuf']:,} · α{tU['als']:.2f}")
-                     + _card("APPROACH envs", f"{tU['pha']}", "#66bb6a", f"buf {tU['abuf']:,} · α{tU['ala']:.2f}")
-                     + (_card("ALIGN envs", f"{tU.get('pla',0)}", "#ab47bc", f"buf {tU.get('labuf',0):,} · α{tU.get('all',0.0):.2f}") if tU.get('three') else "")
-                     + _card("wrist vis", f"{tU['vis']*100:.0f}%", "#26c6da", "search leading indicator")
-                     + _card("gripper z", f"{tU['gz']:.3f}", "#ef5350", "FK (m)")
-                     + _card("gripper orientation RPY", (lambda _r: f"{_r[0]:.0f},{_r[1]:.0f},{_r[2]:.0f}°")(tU.get('rpy',(0,0,0))), "#26c6da", "roll,pitch,yaw · quat "+str(tU.get('quat',[])))
-                     + _card("r_search", f"{tU['rs']:+.2f}", "#42a5f5", f"Σcum {tU.get('crs',0.0):+.0f}")
-                     + _card("r_approach", f"{tU['ra']:+.2f}", "#66bb6a", f"Σcum {tU.get('cra',0.0):+.0f}")
-                     + _card("wrist frac (abs)", f"{tU.get('frac',0.0):.3f}", "#ffa726", "ABSOLUTE wrist frac = YOLO bbox area/img area (median, APPROACH envs, larger cube↑)")                     + _card("search ncen", f"{tU.get('ncen_s',0.0):.3f}", "#42a5f5", f"0=dead center · handoff&lt;{SEARCH_CENTER}")
-                     + _card("approach ncen", f"{tU.get('ncen_a',0.0):.3f}", "#66bb6a", f"0=dead center · env0 {tU.get('ncen0',0.0):.3f} · success&lt;{APP_CEN}")
-                     + _card("search sweep", f"{tU.get('sweep',0.0):.2f}", "#7e57c2", "mean |a_s| — anti-stall: should rise while blind")
-                     + _card("search acq(front)", f"{tU.get('acqr',0.0):+.2f}", "#26a69a", f"FRONT-guided acquisition reward (W_ACQ_F) mean · fraction of blind SEARCH envs with a front guide {tU.get('acqcov',0.0)*100:.0f}% · steers aiming via front when the wrist cannot see")
-                     + _card("descend depth", f"{tU.get('dmin',0.0):.3f}", "#ef5350", f"live avg gz (APPROACH, →0.055 grasp) · reach&lt;0.12 {tU.get('reachz',0.0)*100:.0f}%")
-                     + _card("cube dist (SEARCH)", f"{tU.get('dcube_s',0.0):.3f}", "#26c6da", "live median gripper↔cube (SEARCH envs, m)")
-                     + _card("cube dist (APPROACH)", f"{tU.get('dcube_a',tU.get('dcube',0.0)):.3f}", "#26a69a", "live median gripper↔cube (APPROACH envs, m →0)")
-                     + _card("cube_dist_front", f"{tU.get('cdf',0.0):.3f}", "#8d6e63", "front back-projected horizontal distance (m, APPROACH)")
-                     + _card("cube_dist_wrist", f"{tU.get('cdw',0.0):.3f}", "#8d6e63", "wrist back-projected horizontal distance (m, wrist-valid envs)")
-                     + _card("cube_dist_front_3d", f"{tU.get('cdf3',0.0):.3f}", "#5c6bc0", "front back-projected 3D distance (m) — deployable dcube approximation. Compare with the privileged 'cube dist' (dcube_v) next to it to verify back-projection accuracy")
-                     + _card("dcube (front-valid)", f"{tU.get('dcube_v',0.0):.3f}", "#26a69a", "privileged 3D distance, same front-valid envs — for apples-to-apples comparison with cube_dist_front_3d")
-                     + _card("cube_dist_wrist_3d", f"{tU.get('cdw3',0.0):.3f}", "#5c6bc0", "wrist back-projected 3D distance (m) — deployable. Accurate in the close (steep) range")
-                     + _card("cube_dist_tri_3d", f"{tU.get('cdtri',0.0):.3f}", "#7e57c2", f"STEREO triangulated 3D distance (m, front+wrist ray intersection, no plane assumption) · ray gap {tU.get('tgap',0.0):.3f}(smaller = more reliable) — compare with dcube above")
-                     + _card("F/W matched", f"{tU.get('cdfm',0.0):.3f} / {tU.get('cdwm',0.0):.3f}", "#4db6ac", f"front/wrist distance on the same both-valid envs (n={tU.get('cdnm',0)}) · similar = computation OK")
+            tCards = (statCard("STEP", f"{tU['step']:,}", "#4fc3f7")
+                     + statCard("RSR", f"{tU['rsr']*100:.1f}%", "#ffca28", f"n={tU['n']} · approach success (unified center+frac+height condition)")
+                     + statCard("RSR DCUBE (priv)", f"{tU.get('rsr_old',0.0)*100:.1f}%", "#9575cd", f"n={tU.get('n_old',0)} · PRIVILEGED reference (actual jaw↔cube<{RSR_DCUBE}m, not used for reward/termination)")
+                     + statCard("SEARCH success rate", f"{tU.get('wr_s',0.0)*100:.1f}%", "#42a5f5", f"{int(round(tU.get('wr_s',0.0)*tU.get('wn_s',0)))}/{tU.get('wn_s',0)} episodes · found cube and handed off within {SEARCH_MAX_S:.0f}s (1 vote per episode, counted on reset)")
+                     + statCard("approach→search re-handoff rate", f"{tU.get('wr_resrch',0.0)*100:.1f}%", "#ef5350", f"{int(round(tU.get('wr_resrch',0.0)*tU.get('wn_resrch',0)))}/{tU.get('wn_resrch',0)} approach-reaching episodes with full cube loss→re-search (lower = approach keeps/looks at the cube better)")
+                     + statCard("centering reach rate", f"{tU.get('cenrate',0.0)*100:.0f}%", "#42a5f5", f"fraction currently in SEARCH with ncen&lt;{SEARCH_CENTER} · 256env · leading indicator of handoff")
+                     + statCard("head angle (search)", f"{tU.get('head_deg_s',0.0):+.0f}°", "#ffa726", "SEARCH mean nose angle · +tilt down (down=dive direction)/−tilt back (up)/0 level · wflex divergence watch (ramping to the 128° limit = dive)")
+                     + statCard("→APPROACH transition rate", f"{tU.get('apprate',0.0)*100:.0f}%", "#66bb6a", f"fraction of all envs reaching APPROACH · handoff throughput")
+                     + statCard("APPROACH centering", f"{tU.get('appr_cen',0.0)*100:.0f}%", "#ab47bc", f"fraction in APPROACH with ncen&lt;{APP_CEN} · actual approach centering (for NO_RESRCH)")
+                     + statCard("wrist frac (search)", f"{tU.get('frac_s',0.0):.3f}", "#4dd0e1", "SEARCH-phase mean wrist frac (visible env) · cube size")
+                     + statCard("wrist frac (approach)", f"{tU.get('frac_a',0.0):.3f}", "#ffa726", f"APPROACH-phase mean wrist frac (visible env) · success gate frac&gt;{FRAC_GRASP}")
+                     + statCard("head angle", f"{tU.get('head_deg',0.0):+.0f}°", "#ffa726", f"APPROACH mean nose angle · +tilt down (down)/−tilt back (up)/0 level · |value|↑=more bent (suppressed by W_WPITCH expo)")
+                     + statCard("APPROACH success rate", f"{tU.get('wr_a',0.0)*100:.0f}%", "#66bb6a", f"last {tU.get('wn_a',0)} runs · " + ("ALIGN reached" if tU.get('three') else "grasp height reached"))
+                     + (statCard("ALIGN handoff rate", f"{tU.get('wr_h',0.0)*100:.0f}%", "#26c6da", f"last {tU.get('wn_h',0)} runs · approach→ALIGN transition") if tU.get('three') else "")
+                     + (statCard("ALIGN success rate", f"{tU.get('wr_l',0.0)*100:.0f}%", "#ab47bc", f"last {tU.get('wn_l',0)} runs · aligned in mouth (in-mouth)") if tU.get('three') else "")
+                     + statCard("SEARCH envs", f"{tU['phs']}", "#42a5f5", f"buf {tU['sbuf']:,} · α{tU['als']:.2f}")
+                     + statCard("APPROACH envs", f"{tU['pha']}", "#66bb6a", f"buf {tU['abuf']:,} · α{tU['ala']:.2f}")
+                     + (statCard("ALIGN envs", f"{tU.get('pla',0)}", "#ab47bc", f"buf {tU.get('labuf',0):,} · α{tU.get('all',0.0):.2f}") if tU.get('three') else "")
+                     + statCard("wrist vis", f"{tU['vis']*100:.0f}%", "#26c6da", "search leading indicator")
+                     + statCard("gripper z", f"{tU['gz']:.3f}", "#ef5350", "FK (m)")
+                     + statCard("gripper orientation RPY", (lambda _r: f"{_r[0]:.0f},{_r[1]:.0f},{_r[2]:.0f}°")(tU.get('rpy',(0,0,0))), "#26c6da", "roll,pitch,yaw · quat "+str(tU.get('quat',[])))
+                     + statCard("r_search", f"{tU['rs']:+.2f}", "#42a5f5", f"Σcum {tU.get('crs',0.0):+.0f}")
+                     + statCard("r_approach", f"{tU['ra']:+.2f}", "#66bb6a", f"Σcum {tU.get('cra',0.0):+.0f}")
+                     + statCard("wrist frac (abs)", f"{tU.get('frac',0.0):.3f}", "#ffa726", "ABSOLUTE wrist frac = YOLO bbox area/img area (median, APPROACH envs, larger cube↑)")                     + statCard("search ncen", f"{tU.get('ncen_s',0.0):.3f}", "#42a5f5", f"0=dead center · handoff&lt;{SEARCH_CENTER}")
+                     + statCard("approach ncen", f"{tU.get('ncen_a',0.0):.3f}", "#66bb6a", f"0=dead center · env0 {tU.get('ncen0',0.0):.3f} · success&lt;{APP_CEN}")
+                     + statCard("search sweep", f"{tU.get('sweep',0.0):.2f}", "#7e57c2", "mean |a_s| — anti-stall: should rise while blind")
+                     + statCard("search acq(front)", f"{tU.get('acqr',0.0):+.2f}", "#26a69a", f"FRONT-guided acquisition reward (W_ACQ_F) mean · fraction of blind SEARCH envs with a front guide {tU.get('acqcov',0.0)*100:.0f}% · steers aiming via front when the wrist cannot see")
+                     + statCard("descend depth", f"{tU.get('dmin',0.0):.3f}", "#ef5350", f"live avg gz (APPROACH, →0.055 grasp) · reach&lt;0.12 {tU.get('reachz',0.0)*100:.0f}%")
+                     + statCard("cube dist (SEARCH)", f"{tU.get('dcube_s',0.0):.3f}", "#26c6da", "live median gripper↔cube (SEARCH envs, m)")
+                     + statCard("cube dist (APPROACH)", f"{tU.get('dcube_a',tU.get('dcube',0.0)):.3f}", "#26a69a", "live median gripper↔cube (APPROACH envs, m →0)")
+                     + statCard("cube_dist_front", f"{tU.get('cdf',0.0):.3f}", "#8d6e63", "front back-projected horizontal distance (m, APPROACH)")
+                     + statCard("cube_dist_wrist", f"{tU.get('cdw',0.0):.3f}", "#8d6e63", "wrist back-projected horizontal distance (m, wrist-valid envs)")
+                     + statCard("cube_dist_front_3d", f"{tU.get('cdf3',0.0):.3f}", "#5c6bc0", "front back-projected 3D distance (m) — deployable dcube approximation. Compare with the privileged 'cube dist' (dcube_v) next to it to verify back-projection accuracy")
+                     + statCard("dcube (front-valid)", f"{tU.get('dcube_v',0.0):.3f}", "#26a69a", "privileged 3D distance, same front-valid envs — for apples-to-apples comparison with cube_dist_front_3d")
+                     + statCard("cube_dist_wrist_3d", f"{tU.get('cdw3',0.0):.3f}", "#5c6bc0", "wrist back-projected 3D distance (m) — deployable. Accurate in the close (steep) range")
+                     + statCard("cube_dist_tri_3d", f"{tU.get('cdtri',0.0):.3f}", "#7e57c2", f"STEREO triangulated 3D distance (m, front+wrist ray intersection, no plane assumption) · ray gap {tU.get('tgap',0.0):.3f}(smaller = more reliable) — compare with dcube above")
+                     + statCard("F/W matched", f"{tU.get('cdfm',0.0):.3f} / {tU.get('cdwm',0.0):.3f}", "#4db6ac", f"front/wrist distance on the same both-valid envs (n={tU.get('cdnm',0)}) · similar = computation OK")
                      + "<div style='width:100%;height:0'></div><div style='color:#888;font-size:11px;margin:6px 0 0 6px'>▼ trimmed-mean (mean after removing 4 from each end = 8 outliers)</div>"
-                     + _card("cube dist (tm)", f"{tU.get('dcube_tm',0.0):.3f}", "#00897b", "trimmed-mean gripper↔cube (APPROACH, 8 outliers removed, flown-away cubes excluded)")
-                     + _card("cube flew away", f"{tU.get('cube_gone',0)}", "#ef5350", "number of envs whose cube flew away due to physics (forced reset/fail, excluded from metrics)")
-                     + _card("front_3d (tm)", f"{tU.get('cdf3_tm',0.0):.3f}", "#3949ab", "trimmed-mean front-3D distance")
-                     + _card("approach ncen (tm)", f"{tU.get('ncen_a_tm',0.0):.3f}", "#43a047", "trimmed-mean centering err (visible APPROACH)")
-                     + _card("descend z (tm)", f"{tU.get('dmin_tm',0.0):.3f}", "#e53935", "trimmed-mean gz (APPROACH)")
-                     + _card("wrist frac (tm)", f"{tU.get('frac_tm',0.0):.3f}", "#fb8c00", "trimmed-mean wrist frac (APPROACH)")
+                     + statCard("cube dist (tm)", f"{tU.get('dcube_tm',0.0):.3f}", "#00897b", "trimmed-mean gripper↔cube (APPROACH, 8 outliers removed, flown-away cubes excluded)")
+                     + statCard("cube flew away", f"{tU.get('cube_gone',0)}", "#ef5350", "number of envs whose cube flew away due to physics (forced reset/fail, excluded from metrics)")
+                     + statCard("front_3d (tm)", f"{tU.get('cdf3_tm',0.0):.3f}", "#3949ab", "trimmed-mean front-3D distance")
+                     + statCard("approach ncen (tm)", f"{tU.get('ncen_a_tm',0.0):.3f}", "#43a047", "trimmed-mean centering err (visible APPROACH)")
+                     + statCard("descend z (tm)", f"{tU.get('dmin_tm',0.0):.3f}", "#e53935", "trimmed-mean gz (APPROACH)")
+                     + statCard("wrist frac (tm)", f"{tU.get('frac_tm',0.0):.3f}", "#fb8c00", "trimmed-mean wrist frac (APPROACH)")
                      + "<div style='width:100%;height:0'></div><div style='color:#888;font-size:11px;margin:6px 0 0 6px'>▼ r_approach per-term breakdown (APPROACH env mean · +reward/−penalty). A large + while ncen/dist are bad means farming</div>"
-                     + _card("rb: descend", f"{tU.get('rb_desc',0):+.2f}", "#26a69a", "descend (W_DEPTH·center gate)")
-                     + _card("rb: frac", f"{tU.get('rb_frac',0):+.2f}", "#ffa726", "frac LEVEL(W_AF, ungated)")
-                     + _card("rb: novis", f"{tU.get('rb_novis',0):+.2f}", "#ef5350", "not-visible penalty (−W_NOVIS_A)")
-                     + _card("rb: gone", f"{tU.get('rb_gone',0):+.2f}", "#ef5350", "cube-flung penalty (−W_GONE)")
-                     + _card("rb: table", f"{tU.get('rb_tab',0):+.2f}", "#ef5350", "table penalty (−)")
-                     + (_card("r_align", f"{tU.get('rl',0.0):+.2f}", "#ab47bc", f"Σcum {tU.get('crl',0.0):+.0f}") if tU.get('three') else ""))
+                     + statCard("rb: descend", f"{tU.get('rb_desc',0):+.2f}", "#26a69a", "descend (W_DEPTH·center gate)")
+                     + statCard("rb: frac", f"{tU.get('rb_frac',0):+.2f}", "#ffa726", "frac LEVEL(W_AF, ungated)")
+                     + statCard("rb: novis", f"{tU.get('rb_novis',0):+.2f}", "#ef5350", "not-visible penalty (−W_NOVIS_A)")
+                     + statCard("rb: gone", f"{tU.get('rb_gone',0):+.2f}", "#ef5350", "cube-flung penalty (−W_GONE)")
+                     + statCard("rb: table", f"{tU.get('rb_tab',0):+.2f}", "#ef5350", "table penalty (−)")
+                     + (statCard("r_align", f"{tU.get('rl',0.0):+.2f}", "#ab47bc", f"Σcum {tU.get('crl',0.0):+.0f}") if tU.get('three') else ""))
             tChist = tU.get('curric_hist') or []                              # user 2026-07-15: in-training EVAL history (curriculum self-eval sweeps) — sparkline in the training UI
             if tChist:
                 tCmax = max(1.0, max(tR for _, tR in tChist))
@@ -1317,7 +1317,7 @@ if TWO_PHASE:
                             + tSbars + "</div>"
                             + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ SEARCH success rate (0-100%) · bright blue=latest ({tShist[-1][1]:.1f}%)</div>") if tShist else "")
                 tSpark = (f"<div style='width:100%;font-size:15px;font-weight:700;color:#66bb6a;margin:6px 6px 2px'>■ in-training EVAL history (curriculum self-eval, every {CURRIC_EVERY:,} steps)</div>"
-                          + _card("★ latest EVAL RSR", f"{tClast[1]:.1f}%", "#66bb6a", f"@ step {tClast[0]:,} · {len(tChist)} sweeps · grid {CURRIC_NX}×{CURRIC_NY}")
+                          + statCard("★ latest EVAL RSR", f"{tClast[1]:.1f}%", "#66bb6a", f"@ step {tClast[0]:,} · {len(tChist)} sweeps · grid {CURRIC_NX}×{CURRIC_NY}")
                           + "<div style='width:560px;display:flex;align-items:flex-end;gap:2px;height:64px;margin:6px 6px;padding:4px 6px;background:#111;border-radius:6px'>"
                           + tBars + "</div>"
                           + f"<div style='width:560px;font-size:11px;color:#888;margin:0 6px 6px'>left→right = training progress · bar height ∝ EVAL RSR (peak {tCmax:.1f}%) · bright green=latest</div>"
@@ -1328,10 +1328,10 @@ if TWO_PHASE:
             if tU.get('eval_M'):                                              # user 2026-07-14: FIXED eval-set benchmark panel at the TOP (RSR + coverage + success heatmap)
                 tCovpct = 100*tU.get('eval_cov',0)/max(1,tU.get('eval_M',1))
                 tCards = ("<div style='width:100%;font-size:15px;font-weight:700;color:#ffca28;margin:6px 6px 2px'>■ fixed EVAL benchmark (reproducible)</div>"
-                         + _card("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy success rate")
-                         + _card("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", "privileged true 3D distance<RSR_DCUBE · true reach rate (gap vs RSR = overestimate)")
-                         + _card("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "fraction where SEARCH handed off to APPROACH (search success rate)")
-                         + _card("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct:.1f}%) · full sweeps {tU.get('eval_sweeps',0)}")
+                         + statCard("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy success rate")
+                         + statCard("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", "privileged true 3D distance<RSR_DCUBE · true reach rate (gap vs RSR = overestimate)")
+                         + statCard("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "fraction where SEARCH handed off to APPROACH (search success rate)")
+                         + statCard("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct:.1f}%) · full sweeps {tU.get('eval_sweeps',0)}")
                          + tU.get('eval_heat','')
                          + tU.get('eval_heat_old','')
                          + tU.get('eval_heat_srch','')
@@ -1375,10 +1375,10 @@ if TWO_PHASE:
             if TP_EVAL and tU.get('eval_M'):   # user 2026-08-01: BENCH UI = key EVAL metrics + heatmaps only (graphs/diagnostic cards removed, clean)
                 tCovpct2 = 100*tU.get('eval_cov',0)/max(1,tU.get('eval_M',1))
                 tFrag = ("<div style='width:100%;font-size:16px;font-weight:700;color:#ffca28;margin:6px 6px 8px'>■ fixed EVAL benchmark</div>"
-                         + _card("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy")
-                         + _card("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", f"true 3D distance<{RSR_DCUBE}m · true reach rate")
-                         + _card("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "handoff success rate")
-                         + _card("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct2:.1f}%) · sweeps {tU.get('eval_sweeps',0)}")
+                         + statCard("★ EVAL RSR", f"{tU.get('eval_rsr',0.0):.1f}%", "#ffca28", f"fixed {tU.get('eval_M',0):,} cases · deployable proxy")
+                         + statCard("★ RSR DCUBE (actual reach)", f"{tU.get('eval_rsr_old',0.0):.1f}%", "#26a69a", f"true 3D distance<{RSR_DCUBE}m · true reach rate")
+                         + statCard("SEARCH reached", f"{tU.get('eval_srch',0.0):.1f}%", "#42a5f5", "handoff success rate")
+                         + statCard("coverage", f"{tU.get('eval_cov',0):,}", "#4fc3f7", f"/{tU.get('eval_M',0):,} ({tCovpct2:.1f}%) · sweeps {tU.get('eval_sweeps',0)}")
                          + "<div style='display:flex;gap:14px;flex-wrap:wrap;margin-top:10px'>"
                          + tU.get('eval_heat','') + tU.get('eval_heat_old','') + tU.get('eval_heat_srch','')
                          + "</div>")
@@ -1633,8 +1633,8 @@ if TWO_PHASE:
         try:
             tCf0 = _LAST_IMG["front"] if _LAST_IMG["front"] is not None else env.scene["front"].data.output["rgb"][..., :3]
             tCw0 = _LAST_IMG["wrist"] if _LAST_IMG["wrist"] is not None else env.scene["wrist"].data.output["rgb"][..., :3]
-            tCf2 = tCf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(tCf2, fd_[0].tolist()); _TPUI["front"] = _png(tCf2)
-            tWimg = tCw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(tWimg, wd_[0].tolist()); _TPUI["wrist"] = _png(tWimg)   # renamed _cw->_wimg (curric spawn-weight collision)
+            tCf2 = tCf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); drawDetection(tCf2, fd_[0].tolist()); _TPUI["front"] = pngBytes(tCf2)
+            tWimg = tCw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); drawDetection(tWimg, wd_[0].tolist()); _TPUI["wrist"] = pngBytes(tWimg)   # renamed _cw->_wimg (curric spawn-weight collision)
             _TPUI["vis0"] = float(wd_[0, 3] > 0.5)
         except Exception: pass
 
@@ -2490,7 +2490,7 @@ if TWO_PHASE:
                      dcube_a=(float(_dcube[is_a & ~_cube_gone].median().item()) if bool((is_a & ~_cube_gone).any()) else 0.0),   # user 2026-07-22: APPROACH-phase gripper<->cube dist (explicit; == legacy 'dcube')
                      cdf=(float(_df[_vf & is_a].median().item()) if bool((_vf & is_a).any()) else 0.0), cdw=(float(_dw[_vw & is_a].median().item()) if bool((_vw & is_a).any()) else 0.0),   # front / wrist over their OWN valid subsets (differ by subset, not comparable)
                      cdf3=(float(_df3[_vf & is_a].median().item()) if bool((_vf & is_a).any()) else 0.0), cdw3=(float(_dw3[_vw & is_a].median().item()) if bool((_vw & is_a).any()) else 0.0),   # user 2026-07-10: DEPLOYABLE 3D dist (front/wrist) — compare vs privileged 'dcube' to validate unproj accuracy
-                     dcube_tm=_trimmean(_dcube[is_a & ~_cube_gone]), cdf3_tm=_trimmean(_df3[_vf & is_a]), ncen_a_tm=_trimmean(ncen[is_a & (nvis > 0.5)]), dmin_tm=_trimmean(gz[is_a]), frac_tm=_trimmean(nwd[is_a, 2]), cube_gone=int(_cube_gone.sum().item()),   # user 2026-07-10: TRIMMED-MEAN (8 outliers removed) versions — separate cards; cube_gone = #envs whose cube flew away (physics)
+                     dcube_tm=trimmedMean(_dcube[is_a & ~_cube_gone]), cdf3_tm=trimmedMean(_df3[_vf & is_a]), ncen_a_tm=trimmedMean(ncen[is_a & (nvis > 0.5)]), dmin_tm=trimmedMean(gz[is_a]), frac_tm=trimmedMean(nwd[is_a, 2]), cube_gone=int(_cube_gone.sum().item()),   # user 2026-07-10: TRIMMED-MEAN (8 outliers removed) versions — separate cards; cube_gone = #envs whose cube flew away (physics)
                      rb_desc=_ma(_rt_desc), rb_frac=_ma(_rt_frac), rb_novis=_ma(_rt_novisA), rb_tab=_ma(-_tabpen), rb_gone=_ma(-_gone_pen), mxy=(float(_mouth_xy_err[is_a & _wv].median().item()) if bool((is_a & _wv).any()) else 0.0),   # REFACTOR 2026-07-27: only surviving reward terms
                      dcube_v=(float(_dcube[_vf & is_a].median().item()) if bool((_vf & is_a).any()) else 0.0),   # privileged dcube on the SAME front-valid subset (apples-to-apples vs cdf3)
                      cdtri=(float(_dtri[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0), tgap=(float(_tgap[_vf & _vw & is_a].median().item()) if bool((_vf & _vw & is_a).any()) else 0.0),   # user 2026-07-10: STEREO triangulated 3D dist (median, both-cam-valid) + ray gap (intersection error; smaller = more reliable)
@@ -2515,14 +2515,14 @@ if TWO_PHASE:
             try:                                                          # DR-composited (gray table/black gripper = detector input), det overlay + direction arrows
                 _cf0 = _LAST_IMG["front"] if _LAST_IMG["front"] is not None else env.scene["front"].data.output["rgb"][..., :3]
                 _cw0 = _LAST_IMG["wrist"] if _LAST_IMG["wrist"] is not None else env.scene["wrist"].data.output["rgb"][..., :3]
-                _eeq = r.data.body_quat_w[0, ee_body_idx]; (_rr,_pp,_yy), _gax = _quatRpy(_eeq)   # user 2026-07-03: gripper orientation for UI
+                _eeq = r.data.body_quat_w[0, ee_body_idx]; (_rr,_pp,_yy), _gax = quatRpy(_eeq)   # user 2026-07-03: gripper orientation for UI
                 _TPUI["rpy"]=(round(_rr,1),round(_pp,1),round(_yy,1)); _TPUI["quat"]=[round(float(tV),3) for tV in _eeq.tolist()]
-                _cf = _cf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _drawDet(_cf, nfd[0].tolist())
-                _H=_cf.shape[0]; _sc=_H*0.42; _drawArrow(_cf, _H//2, _H//2, _gax[0]*_sc, -_gax[1]*_sc); _TPUI["front"] = _png(_cf)
-                _wimg = _cw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _wd=nwd[0].tolist(); _drawDet(_wimg, _wd)   # user 2026-07-20: renamed _cw->_wimg (name collision with curric spawn-weight _cw -> multinomial crash under TRAIN_VIZ=1+CURRIC=1)
+                _cf = _cf0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); drawDetection(_cf, nfd[0].tolist())
+                _H=_cf.shape[0]; _sc=_H*0.42; drawArrow(_cf, _H//2, _H//2, _gax[0]*_sc, -_gax[1]*_sc); _TPUI["front"] = pngBytes(_cf)
+                _wimg = _cw0[0, ..., :3].detach().cpu().numpy().astype("uint8").copy(); _wd=nwd[0].tolist(); drawDetection(_wimg, _wd)   # user 2026-07-20: renamed _cw->_wimg (name collision with curric spawn-weight _cw -> multinomial crash under TRAIN_VIZ=1+CURRIC=1)
                 _ww=_wimg.shape[0]                                                # user 2026-07-03: wrist shows ITS OWN dir = toward the cube DETECTED in the wrist view (center->detection). Was a dup of front's world grasp-axis so both looked identical. Short arrow / into-page ring == cube centered.
-                if len(_wd)>3 and _wd[3]>0.5: _drawArrow(_wimg, _ww//2, _ww//2, (_wd[0]-0.5)*_ww, (_wd[1]-0.5)*_ww, col=(255,140,0))
-                _TPUI["wrist"] = _png(_wimg)
+                if len(_wd)>3 and _wd[3]>0.5: drawArrow(_wimg, _ww//2, _ww//2, (_wd[0]-0.5)*_ww, (_wd[1]-0.5)*_ww, col=(255,140,0))
+                _TPUI["wrist"] = pngBytes(_wimg)
                 _evh.videoFrame(_cf, _wimg, int(ph[0].item()))   # 2026-11-02: opt-in rollout video of env 0 (EVAL_VIDEO_DIR)
             except Exception: pass
         if TP_EVAL or (TRAIN_VIZ and (g // N) % 4 == 0):                                  # sparklines + clip GIF — user 2026-07-02: 10->4 (more frequent live clip)

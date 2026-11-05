@@ -22,6 +22,7 @@ CRITICAL sim<->real PARITY (or the policy will fail):
 """
 
 import argparse
+import sys
 import time
 import numpy as np
 import torch
@@ -43,6 +44,7 @@ REST_QPOS = np.array([0.0, -1.15, -1.00, 0.55, 0.0, 0.0], dtype=np.float32)   # 
 ARM_SCALE = 0.05                     # delta rad / step  (HALVED for calmer motion; sim scale=0.05)
 GRIP_SCALE = 0.0143                  # delta m / step    (MirroredTargetDeltaGripperActionCfg.scale)
 GRIP_LO, GRIP_HI = 0.0, 0.045        # gripper stroke (m); HI capped to the trained safe range (no over-open/breakage)
+GRIP_REST = 0.02                     # gripper target at REST (m), REBOT_REST_POSE
 # HARD per-joint target limits (order = arm joints in JOINT_ORDER) -- real-robot safety + sim parity:
 #  pan +-90deg | lift,elbow USD | wrist_flex UP -10deg / DOWN +90 | wrist_yaw +-105 | wrist_roll +-180
 ARM_LO = np.array([-1.5708, -3.14, -3.14, -0.1745, -1.8326, -3.1416], dtype=np.float32)
@@ -161,29 +163,29 @@ class ActionController:
     Initialize target to the current measured joint positions at reset (like the sim reset())."""
 
     def __init__(self):
-        self.arm_target = REST_QPOS.copy()           # (6,) rad
-        self.grip_target = 0.02                       # (1,) m  (REBOT_REST_POSE gripper = 0.02)
+        self.mArmTarget = REST_QPOS.copy()           # (6,) rad
+        self.mGripTarget = GRIP_REST                  # (1,) m  (REBOT_REST_POSE gripper)
 
-    def reset(self, arm_qpos, grip_qpos):
-        self.arm_target = np.asarray(arm_qpos, dtype=np.float32).copy()
-        self.grip_target = float(grip_qpos)
+    def reset(self, armQpos, gripQpos):
+        self.mArmTarget = np.asarray(armQpos, dtype=np.float32).copy()
+        self.mGripTarget = float(gripQpos)
 
-    def step(self, action, pan_qpos):
+    def step(self, action, panQpos):
         """action: (7,) in [-1,1]; pan_qpos: measured shoulder_pan (rad). Returns (arm_target[6], grip_target).
         Replicates the sim action term EXACTLY: delta-on-target + hard per-joint clamps + coupled elbow gate."""
         tA = np.clip(np.asarray(action, dtype=np.float32), -1.0, 1.0)
-        self.arm_target = np.clip(self.arm_target + tA[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
+        self.mArmTarget = np.clip(self.mArmTarget + tA[:N_ARM] * ARM_SCALE, ARM_LO, ARM_HI)
         # coupled elbow gate: until the pan has swung forward (>= PAN_FORWARD) hold the elbow folded in the
         # tuck range so it cannot straighten out / extend backward; once pan is forward the elbow is free.
-        if float(pan_qpos) < PAN_FORWARD:
-            self.arm_target[ELBOW_IDX] = float(np.clip(self.arm_target[ELBOW_IDX], ELBOW_TUCK_LO, ELBOW_TUCK_HI))
-        self.grip_target = float(np.clip(self.grip_target + tA[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
-        return self.arm_target.copy(), self.grip_target
+        if float(panQpos) < PAN_FORWARD:
+            self.mArmTarget[ELBOW_IDX] = float(np.clip(self.mArmTarget[ELBOW_IDX], ELBOW_TUCK_LO, ELBOW_TUCK_HI))
+        self.mGripTarget = float(np.clip(self.mGripTarget + tA[6] * GRIP_SCALE, GRIP_LO, GRIP_HI))
+        return self.mArmTarget.copy(), self.mGripTarget
 
     @property
     def targetQpos7(self):
         """The 7-dim commanded target for the obs (arm6 + gripper1)."""
-        return np.concatenate([self.arm_target, [self.grip_target]]).astype(np.float32)
+        return np.concatenate([self.mArmTarget, [self.mGripTarget]]).astype(np.float32)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -221,11 +223,11 @@ class RobotInterface:
 class MockRobot(RobotInterface):
     """No-hardware stand-in so you can smoke-test the pipeline (obs->policy->action) on any PC."""
     def __init__(self):
-        self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
-        self._t = 0
+        self.mJointPos = np.concatenate([REST_QPOS, [GRIP_REST, GRIP_REST]]).astype(np.float32)
+        self.mTick = 0
 
     def readJointState(self):
-        return self._jp.copy(), np.zeros(N_JOINTS, dtype=np.float32)
+        return self.mJointPos.copy(), np.zeros(N_JOINTS, dtype=np.float32)
 
     def getCubePose(self):
         return np.array([0.30, -0.30, 0.06], dtype=np.float32), np.array([1, 0, 0, 0], dtype=np.float32)
@@ -238,13 +240,13 @@ class MockRobot(RobotInterface):
 
     def sendJointTargets(self, armTarget, gripperTarget):
         # pretend the motors instantly reach target (for shape/flow testing only)
-        self._jp[:N_ARM] = armTarget
-        self._jp[6] = gripperTarget
-        self._jp[7] = gripperTarget
-        self._t += 1
+        self.mJointPos[:N_ARM] = armTarget
+        self.mJointPos[6] = gripperTarget
+        self.mJointPos[7] = gripperTarget
+        self.mTick += 1
 
     def goToRest(self):
-        self._jp = np.concatenate([REST_QPOS, [0.02, 0.02]]).astype(np.float32)
+        self.mJointPos = np.concatenate([REST_QPOS, [GRIP_REST, GRIP_REST]]).astype(np.float32)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -284,24 +286,30 @@ def run(actor, robot: RobotInterface, hz=CONTROL_HZ, maxSteps=0, verbose=True):
         robot.close()
 
 
-def main():
-    tAp = argparse.ArgumentParser()
+class DeployError(RuntimeError):
+    """The deploy loop was asked to run without a robot implementation."""
+
+
+def main(argv: list[str] | None = None) -> int:
+    tAp = argparse.ArgumentParser(description="Isaac-free deploy loop of the state-only C51 teacher.")
     tAp.add_argument("--checkpoint", required=True, help="c51_ckpt_*.pt / c51_final.pt from training")
     tAp.add_argument("--hz", type=float, default=CONTROL_HZ)
     tAp.add_argument("--max-steps", type=int, default=0, help="0 = run until Ctrl-C")
     tAp.add_argument("--device", default="cpu")
     tAp.add_argument("--mock", action="store_true", help="run with MockRobot (no hardware, flow test)")
-    tArgs = tAp.parse_args()
+    tArgs = tAp.parse_args(argv)
 
     tActor = loadPolicy(tArgs.checkpoint, device=tArgs.device)
     if tArgs.mock:
         tRobot = MockRobot()
         print("[deploy] MOCK mode — implement RobotInterface for real hardware.")
     else:
-        raise SystemExit("Implement a RobotInterface for the reBot and pass it to run(); "
-                         "or use --mock to test the pipeline. See README.md.")
+        print(DeployError("Implement a RobotInterface for the reBot and pass it to run(); "
+                          "or use --mock to test the pipeline. See README.md."), file=sys.stderr)
+        return 1
     run(tActor, tRobot, hz=tArgs.hz, maxSteps=tArgs.max_steps)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
