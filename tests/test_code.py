@@ -127,6 +127,20 @@ def test_refactor_is_move_plus_rename(path):
     refactor_equivalence.checkEntry(path, REFACTOR_MAP["files"][path])
 
 
+@needsBase
+def test_refactor_check_detects_a_wrong_binding():
+    """Self-test: put back the original name at one use of a renamed local (same syntax tree after the inverse
+    rename, but the name now binds to a global). The scope check must reject it on every Python version."""
+    tPath = "src/rebot_teacher_student/teacher/train_c51.py"
+    tEntry = REFACTOR_MAP["files"][tPath]
+    tSource = (R / tPath).read_text(encoding="utf-8")
+    tAt = tSource.rindex("tA)")
+    tBroken = tSource[:tAt] + "A)" + tSource[tAt + len("tA)"):]
+    assert tEntry["renames"]["tA"] == "A"
+    with pytest.raises(refactor_equivalence.EquivalenceError):
+        refactor_equivalence.checkEntry(tPath, tEntry, tBroken)
+
+
 def test_refactor_map_covers_src():
     tSrc = {str(p.relative_to(R)) for p in (R / "src").rglob("*.py")}
     tMapped = set(REFACTOR_MAP["files"]) | set(REFACTOR_MAP.get("new_files", {}))

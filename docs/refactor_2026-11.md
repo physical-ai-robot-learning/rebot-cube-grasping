@@ -136,6 +136,15 @@ trainer modules (`tB2`, `tQ2`, `tR2`, `tN2`, …). They are listed in the per-fi
 
 CI now checks out the full history (`fetch-depth: 0`) and runs the equivalence check as its own step.
 
+Follow-up (2026-11-05, after the first push): CI runs on Python 3.11, 3.12 and 3.13. Two fixes:
+* the equivalence check merges symbol-table entries that map to the same original name, because Python >= 3.12
+  inlines comprehensions (PEP 709) and lists their iteration variables in the enclosing scope as well; a self-test
+  (`tests/test_code.py::test_refactor_check_detects_a_wrong_binding`) checks that a name re-bound to a global is
+  still rejected on every version;
+* the characterization goldens compare floats with a tolerance of 2e-5 + 1e-4 relative (Linux/x86_64 CPU kernels
+  round differently from macOS/arm64); `test_tolerance_detects_perturbed_weight` checks that a 1 % change of one
+  actor weight still fails (it changes 72 compared values; 0.1 % changes 39).
+
 ## Not executable here
 
 Everything that needs Isaac Sim 5.1 / Isaac Lab 2.3 and the LeIsaac reBot fork: `rebot_grasp_rl/train.py` (training,

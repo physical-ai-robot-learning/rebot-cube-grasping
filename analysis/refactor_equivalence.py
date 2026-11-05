@@ -204,13 +204,18 @@ IGNORED_MODULE_NAMES = {"sys", "os", "__file__"}   # used only by the dropped sy
 
 def _scopes(table, renames, out, prefix=""):
     tKey = f"{prefix}/{table.get_type()}:{renames.get(table.get_name(), table.get_name())}"
-    tSymbols = []
+    tSymbols = {}
     for tSym in table.get_symbols():
         tName = renames.get(tSym.get_name(), tSym.get_name())
         if table.get_type() == "module" and tName in IGNORED_MODULE_NAMES:
             continue
-        tSymbols.append((tName, tuple(getattr(tSym, tFlag)() for tFlag in SCOPE_FLAGS)))
-    out.append((tKey, tuple(sorted(tSymbols))))
+        tFlags = tuple(getattr(tSym, tFlag)() for tFlag in SCOPE_FLAGS)
+        # Python >= 3.12 inlines comprehensions (PEP 709): their iteration variables also appear in the enclosing table.
+        # A renamed comprehension variable (tV) and an unrenamed name of the same origin (v) then map to one original
+        # symbol, so entries of the same original name are merged by OR-ing their flags, as the old table does.
+        tOld = tSymbols.get(tName)
+        tSymbols[tName] = tFlags if tOld is None else tuple(a or b for a, b in zip(tOld, tFlags))
+    out.append((tKey, tuple(sorted(tSymbols.items()))))
     for tChild in table.get_children():
         _scopes(tChild, renames, out, tKey)
     return out
@@ -229,9 +234,10 @@ def oldSource(oldPath: str) -> str:
                           check=True).stdout
 
 
-def checkEntry(newPath: str, entry: dict) -> None:
+def checkEntry(newPath: str, entry: dict, newSource: str | None = None) -> None:
+    """Raise EquivalenceError unless `newSource` (default: the file at `newPath`) is the BASE file up to renames."""
     tOld = oldSource(entry["old"])
-    tNew = (ROOT / newPath).read_text(encoding="utf-8")
+    tNew = (ROOT / newPath).read_text(encoding="utf-8") if newSource is None else newSource
     tRenames = entry.get("renames", {})
     tNorm = _Normaliser(newPath, tRenames, True)
     tNewDump = _canon(tNorm.visit(ast.parse(tNew)))

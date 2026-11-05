@@ -22,6 +22,12 @@ R = Path(__file__).resolve().parents[1]
 GOLDEN_PATH = R / "tests" / "golden" / "characterization_2026-11.json"
 RECORD = os.environ.get("GOLDEN_RECORD") == "1"
 ROUND_DIGITS = 5
+# Cross-platform tolerance for floats (CPU kernels differ between macOS/arm64 and Linux/x86_64, and a value can land on
+# the other side of a rounding step): |got - want| <= FLOAT_TOL + REL_TOL * |want|. Two rounding steps of ROUND_DIGITS
+# plus 1e-4 relative (this also covers the 3-decimal enc_sum of about 118). A real change is far larger:
+# test_tolerance_detects_perturbed_weight perturbs one weight by 1 % and must fail the comparison.
+FLOAT_TOL = 2e-5
+REL_TOL = 1e-4
 _recorded = {}
 
 
@@ -40,7 +46,24 @@ def _check(key, value):
         GOLDEN_PATH.write_text(json.dumps(tData, indent=1, sort_keys=True))
         return
     assert key in _golden(), f"no golden value for {key}"
-    assert value == _golden()[key], key
+    tDiffs = _differences(value, _golden()[key], key)
+    assert not tDiffs, "\n".join(tDiffs[:20])
+
+
+def _differences(got, want, where):
+    """Nested comparison: floats within FLOAT_TOL + REL_TOL * |want| (see above), everything else exactly equal."""
+    if isinstance(got, dict) and isinstance(want, dict):
+        if sorted(got) != sorted(want):
+            return [f"{where}: keys differ"]
+        return [tD for tK in want for tD in _differences(got[tK], want[tK], f"{where}.{tK}")]
+    if isinstance(got, list) and isinstance(want, list):
+        if len(got) != len(want):
+            return [f"{where}: length {len(got)} != {len(want)}"]
+        return [tD for tI, (tG, tW) in enumerate(zip(got, want)) for tD in _differences(tG, tW, f"{where}[{tI}]")]
+    if isinstance(got, float) or isinstance(want, float):
+        if isinstance(got, (int, float)) and isinstance(want, (int, float)) and abs(got - want) <= FLOAT_TOL + REL_TOL * abs(want):
+            return []
+    return [] if got == want else [f"{where}: {got!r} != {want!r}"]
 
 
 def _r(x):
@@ -117,15 +140,19 @@ def test_runtime_defaults():
     _check("runtime", {"n_fields": len(tNames), "values": [repr(getattr(rt.RT, n)) for n in tNames]})
 
 
-def test_project_target_and_nets_on_checkpoints():
+def _project2Outputs(perturb=None):
+    """Outputs of both shipped Project 2 checkpoints on seeded inputs; `perturb` = (state-dict key, factor) scales
+    one actor weight (used to check that the tolerance still detects a change)."""
     nets, _, _, tp, _ = _p2()
     torch.manual_seed(0)
-    tN, tState, tAct = 5, 21 + nets.D_CUBE + nets.D_ACQ, 4
+    tN, tState = 5, 21 + nets.D_CUBE + nets.D_ACQ
     tFd, tWd = torch.rand(tN, nets.D_DET), torch.rand(tN, nets.D_DET)
-    tOri, tS = torch.rand(tN, nets.D_ORI), torch.rand(tN, tState)
+    tOri, _ = torch.rand(tN, nets.D_ORI), torch.rand(tN, tState)
     tOut = {}
     for tName in ("search_last", "approach_last"):
         tCk = torch.load(R / "results" / "checkpoints" / "project2" / f"{tName}.pt", map_location="cpu", weights_only=False)
+        if perturb is not None:
+            tCk["actor"][perturb[0]] = tCk["actor"][perturb[0]] * perturb[1]
         tActDim = tCk["actor"]["mean.weight"].shape[0]
         tStateDim = tCk["actor"]["proj.state_proj.0.weight"].shape[1] + nets.D_CUBE + nets.D_ACQ
         tActor = nets.DetActor(tStateDim, tActDim)
@@ -139,10 +166,20 @@ def test_project_target_and_nets_on_checkpoints():
         tA = tActor.actDeterministic(tFd, tWd, tOri, tS2)
         tQ = tCritic.qValues(tFd, tWd, tOri, tS2, tA)
         tM = tp.projectTarget(tCritic, tFd, tWd, tOri, tS2, tA, torch.linspace(-1, 3, tN),
-                               torch.tensor([1.0, 0.0, 1.0, 1.0, 0.0]), 0.97)
+                              torch.tensor([1.0, 0.0, 1.0, 1.0, 0.0]), 0.97)
         tOut[tName] = {"act": _r(tA), "q": _r(tQ), "proj_sum": _r(tM.sum(-1)), "proj_first": _r(tM[0, :, :8])}
-    del tState, tAct, tS
-    _check("project2_nets", tOut)
+    return tOut
+
+
+def test_project_target_and_nets_on_checkpoints():
+    _check("project2_nets", _project2Outputs())
+
+
+def test_tolerance_detects_perturbed_weight():
+    if RECORD:
+        pytest.skip("recording")
+    tOut = _project2Outputs(perturb=("mean.weight", 1.01))
+    assert _differences(tOut, _golden()["project2_nets"], "project2_nets"), "a 1 % weight change went undetected"
 
 
 # ---------------------------------------------------------------- June networks + deploy loops
