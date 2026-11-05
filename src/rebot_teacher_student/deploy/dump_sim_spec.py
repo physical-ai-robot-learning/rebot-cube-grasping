@@ -4,8 +4,9 @@ can verify rebot_deploy.py's constants (JOINT_ORDER, OBS_LAYOUT) match the train
   PYTHONPATH=src .venv/bin/python -m rebot_teacher_student.deploy.dump_sim_spec
 """
 import os
+from rebot_grasp_common.paths import LEISAAC_ASSETS
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 from isaaclab.app import AppLauncher
 app = AppLauncher({"headless": True}).app

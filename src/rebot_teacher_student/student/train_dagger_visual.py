@@ -24,9 +24,10 @@ import os
 import numpy as np
 import torch
 import torch.nn.functional as F
+from rebot_grasp_common.paths import ISAAC_WS, LEISAAC_ASSETS
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num-envs", type=int, default=128)
@@ -60,11 +61,11 @@ parser.add_argument("--dr", action="store_true",
 parser.add_argument("--front-only", action="store_true",
                     help="drop the wrist camera entirely; student = front(64) + state only (sim2real: "
                          "the real wrist mount/framing is OOD). Deploy then needs no wrist camera.")
-parser.add_argument("--bg-dir", type=str, default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/bg_images/val2017",
+parser.add_argument("--bg-dir", type=str, default=ISAAC_WS + "/bg_images/val2017",
                     help="folder of real-scene photos (people/office/nature, e.g. COCO val2017) MIXED into the DR bg bank")
 parser.add_argument("--bg-max", type=int, default=1500, help="max photos preloaded into the GPU bg bank")
 parser.add_argument("--table-tex-dir", type=str,
-                    default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets/scenes/table_with_cube/textures",
+                    default=ISAAC_WS + "/leisaac/assets/scenes/table_with_cube/textures",
                     help="folder of surface textures (e.g. wood grain) for the TABLE region; color is randomized per-env")
 args, _ = parser.parse_known_args()
 

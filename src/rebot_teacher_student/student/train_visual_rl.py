@@ -23,9 +23,10 @@ import os
 import numpy as np
 import torch
 import torch.nn.functional as F
+from rebot_grasp_common.paths import ISAAC_WS, LEISAAC_ASSETS
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--num-envs", type=int, default=96)
@@ -63,10 +64,10 @@ parser.add_argument("--num-q", type=int, default=2)
 parser.add_argument("--buffer-device", type=str, default="cpu")
 parser.add_argument("--dr", action="store_true", help="visual domain randomization (same as distillation)")
 parser.add_argument("--front-only", action="store_true", help="drop the wrist camera (front + state only)")
-parser.add_argument("--bg-dir", type=str, default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/bg_images/office_real")
+parser.add_argument("--bg-dir", type=str, default=ISAAC_WS + "/bg_images/office_real")
 parser.add_argument("--bg-max", type=int, default=1500)
 parser.add_argument("--table-tex-dir", type=str,
-                    default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets/scenes/table_with_cube/textures")
+                    default=ISAAC_WS + "/leisaac/assets/scenes/table_with_cube/textures")
 args, _ = parser.parse_known_args()
 
 import yaml

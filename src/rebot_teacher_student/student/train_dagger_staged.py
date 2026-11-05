@@ -15,9 +15,10 @@ import argparse, os
 import numpy as np
 import torch
 import torch.nn.functional as F
+from rebot_grasp_common.paths import ISAAC_WS, LEISAAC_ASSETS
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--teachers", nargs=4, required=True, help="4 stage teacher ckpts: reaching align grasp lift")
@@ -28,10 +29,10 @@ ap.add_argument("--save-dir", type=str, required=True)
 ap.add_argument("--target-cube", type=str, default="cube")
 ap.add_argument("--headless", action="store_true")
 ap.add_argument("--dr", action="store_true")
-ap.add_argument("--bg-dir", type=str, default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/bg_images/val2017")
+ap.add_argument("--bg-dir", type=str, default=ISAAC_WS + "/bg_images/val2017")
 ap.add_argument("--bg-max", type=int, default=1500)
 ap.add_argument("--table-tex-dir", type=str,
-                default=os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets/scenes/table_with_cube/textures")
+                default=ISAAC_WS + "/leisaac/assets/scenes/table_with_cube/textures")
 ap.add_argument("--success-rate-target", type=float, default=0.99,
                 help="stop when pure-student end2end sr reaches this (= teacher level, 'as good as teacher')")
 ap.add_argument("--min-sr-episodes", type=int, default=300)

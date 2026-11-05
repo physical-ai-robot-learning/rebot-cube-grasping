@@ -2201,6 +2201,8 @@
   "src/rebot_teacher_student/deploy/requirements.txt": "src/rebot_sim2real/deploy/requirements.txt"
  },
  "new_files": {
-  "src/rebot_grasp_rl/__init__.py": "package docstring (new)"
+  "src/rebot_grasp_rl/__init__.py": "package docstring (new)",
+  "src/rebot_grasp_common/__init__.py": "package docstring (new)",
+  "src/rebot_grasp_common/paths.py": "machine-specific paths with env-var overrides (new); replaces the REBOT_ISAAC_WS / ~/yolo_cube expressions"
  }
 }

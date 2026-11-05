@@ -13,9 +13,10 @@ C51-SAC machinery mirrors train_c51_visual; IK mirrors the validated ikval Diffe
 import os, io, sys, time, math, threading
 import numpy as np, torch
 import torch.nn as nn, torch.nn.functional as F
+from rebot_grasp_common.paths import LEISAAC_ASSETS, YOLO_EXPORT_DIR
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 from rebot_grasp_rl.config import p, args   # argparse extracted to tp_config.py (parsed at import; must run before AppLauncher)
 _IGPU = int(os.environ.get("ISAAC_GPU", "0")); DEVICE = f"cuda:{_IGPU}"   # user 2026-07-14: pin Isaac(physics+render)+tensors to a physical GPU so train+eval CO-LOCATE. NOT CUDA_VISIBLE_DEVICES (Vulkan renderer ignores it -> OOM on GPU0).
@@ -1448,7 +1449,7 @@ if TWO_PHASE:
     if int(os.environ.get("EXPORT_YOLO", "0")):                   # user 2026-07-08: sim -> YOLO-OBB cube dataset (seg-mask labels). Runs then exits. NEEDS --dr(seg) + WARP_*=0 (RGB/seg aligned). single-cube.
         import cv2, sys as _sys, random as _rnd
         from rebot_grasp_env.visual_obs import buildFgIds
-        _OUT   = os.environ.get("EXPORT_DIR", os.path.expanduser("~/yolo_cube"))
+        _OUT   = os.environ.get("EXPORT_DIR", YOLO_EXPORT_DIR)
         _NR    = int(os.environ.get("EXPORT_RESETS", "16"))       # frames ≈ NR*N*2cams (16*256*2 ≈ 8k)
         _MINPX = int(os.environ.get("EXPORT_MIN_PX", "5"))        # cube px < this -> negative (no label)
         _YLO   = float(os.environ.get("EXPORT_Y_LO", "-0.94")); _YHI = float(os.environ.get("EXPORT_Y_HI", "0.02"))  # env-local y: near->far = big->small cube (uniform = small cubes well-represented)

@@ -10,9 +10,10 @@ import argparse, os
 import numpy as np
 import torch
 import torch.nn as nn
+from rebot_grasp_common.paths import LEISAAC_ASSETS
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
-os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+os.environ.setdefault("LEISAAC_ASSETS_ROOT", LEISAAC_ASSETS)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--ckpts", nargs="+", required=True, help="stage checkpoints in order: s0 [s1 [s2]]")

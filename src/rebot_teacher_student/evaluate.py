@@ -32,10 +32,11 @@ import time
 
 import numpy as np
 import torch
+from rebot_grasp_common.paths import LEISAAC_ASSETS
 
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
 os.environ.setdefault("LEISAAC_ASSETS_ROOT",
-                      os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
+                      LEISAAC_ASSETS)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--mode", choices=["single", "staged3", "student"], required=True)
