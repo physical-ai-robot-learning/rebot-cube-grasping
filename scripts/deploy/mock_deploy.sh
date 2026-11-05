@@ -4,6 +4,6 @@
 set -euo pipefail
 export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
 PY="${PY:-python}"
-"$PY" -m rebot_sim2real.deploy.rebot_deploy --checkpoint checkpoints/teacher/c51_v5g_final.pt --mock --max-steps 20 --hz 100
-"$PY" -m rebot_sim2real.deploy.rebot_deploy_visual --checkpoint checkpoints/student/dagger_dual128_v3_final.pt \
+"$PY" -m rebot_teacher_student.deploy.state_deploy --checkpoint results/checkpoints/teacher/c51_v5g_final.pt --mock --max-steps 20 --hz 100
+"$PY" -m rebot_teacher_student.deploy.visual_deploy --checkpoint results/checkpoints/student/dagger_dual128_v3_final.pt \
   --mock --max-steps 20 --hz 100 --device cpu

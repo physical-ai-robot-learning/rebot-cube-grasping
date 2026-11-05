@@ -12,7 +12,7 @@ Faithful port of _sources/squint/train_squint.py MINUS the RGB CNN (we train on 
 
 Uses the SAME Squint-matched env as train_sac.py (configure_env): 5-term reward, delta gripper,
 success=is_fold_success, 50-step episodes. Fleet success counting + dashboard are reused.
-Run: PYTHONPATH=src DISPLAY=:1 .venv/bin/python -m rebot_sim2real.teacher.train_c51 --num-envs 1024 ...
+Run: PYTHONPATH=src DISPLAY=:1 .venv/bin/python -m rebot_teacher_student.teacher.train_c51 --num-envs 1024 ...
 """
 
 import argparse
@@ -85,9 +85,9 @@ import leisaac.tasks.lift_cube  # noqa: F401  (registers the task)
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
 
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.tools import rebot_dashboard as dash
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"
 

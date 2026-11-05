@@ -13,7 +13,7 @@ Success criteria (from the code and the entrypoint files, see results/project2/R
   RSR      = deployable gate (wrist-image centring + jaw-mouth height + cube area fraction, held RSR_HOLD frames)
   RSR_DCUBE / rsr_old = privileged gate: true 3-D jaw-mouth-to-cube distance < RSR_DCUBE, held RSR_HOLD frames
   In the curriculum sweeps the per-cell "RSR" is the privileged gate, because every training entrypoint of those
-  days set EVAL_SUCC_BY_OLD=1 (train_sac_det_xattn.py: _chh = _rsr_old_hit if EVAL_SUCC_BY_OLD else _rsr_hit).
+  days set EVAL_SUCC_BY_OLD=1 (src/rebot_grasp_rl/train.py, was train_sac_det_xattn.py: _chh = _rsr_old_hit if EVAL_SUCC_BY_OLD else _rsr_hit).
 Run: python analysis/parse_logs.py [--check]   (--check: recompute and compare with the committed outputs)
 """
 import csv

@@ -10,7 +10,7 @@ Faithful visual port of _sources/squint/train_squint.py:
     detached critic; rollout uses no_grad encode. autotune entropy, gamma .9, tau .01, bootstrap-always.
 
 Live dashboard shows the front+wrist views the policy actually consumes.
-Run: PYTHONPATH=src DISPLAY=:1 python -m rebot_sim2real.student.train_c51_visual --num-envs 128 ...
+Run: PYTHONPATH=src DISPLAY=:1 python -m rebot_teacher_student.student.train_c51_visual --num-envs 128 ...
 """
 import argparse
 import os
@@ -65,11 +65,11 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-from rebot_sim2real.env.visual_obs import (
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.visual_obs import (
     configure_visual, downsample, STATE_DIM, WRIST_SIZE, FRONT_SIZE)
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.tools import rebot_dashboard as dash
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"
 BUF_DEV = torch.device(args.buffer_device)

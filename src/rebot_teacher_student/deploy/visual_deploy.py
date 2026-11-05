@@ -58,7 +58,7 @@ CONTROL_HZ = 10.0
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-#  Visual policy networks  (must match src/rebot_sim2real/student/visual_nets.py so the ckpt loads)
+#  Visual policy networks  (must match src/rebot_teacher_student/student/visual_nets.py so the ckpt loads)
 # ════════════════════════════════════════════════════════════════════════════════
 class CNNEncoder(nn.Module):
     REPR_DIM = 1024

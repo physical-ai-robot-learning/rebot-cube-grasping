@@ -14,7 +14,7 @@ PIPELINE
                 (continuing formulation -- mirrors the proven joint teacher).
 
 Run (needs a free GPU + a distilled checkpoint to --warm):
-  PYTHONPATH=src DISPLAY=:1 python -m rebot_sim2real.student.train_visual_rl --headless --dr \
+  PYTHONPATH=src DISPLAY=:1 python -m rebot_teacher_student.student.train_visual_rl --headless --dr \
      --warm rl_output/rl_dagger_single_real/dagger_final.pt --bg-dir bg_images/office_real \
      --num-envs 96 --buffer-device cpu --http-port 8891 --save-dir rl_output/rl_visual_rl_single
 """
@@ -86,13 +86,13 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-from rebot_sim2real.env.visual_obs import (
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.visual_obs import (
     configure_visual, downsample, student_state, composite_bg, add_proprio_noise, wrist_aug, image_dr,
     recolor_seg_region, tag_gripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM)
-from rebot_sim2real.student.visual_nets import CNNEncoder, Actor, CriticC51, project_target
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.tools import rebot_dashboard as dash
+from rebot_teacher_student.student.visual_nets import CNNEncoder, Actor, CriticC51, project_target
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"
 BUF_DEV = torch.device(args.buffer_device)

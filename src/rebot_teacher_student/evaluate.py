@@ -70,9 +70,9 @@ from isaaclab_tasks.utils.parse_cfg import parse_env_cfg  # noqa: E402
 import leisaac.tasks.lift_cube  # noqa: E402,F401
 from leisaac.tasks.lift_cube import mdp  # noqa: E402
 
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits  # noqa: E402
-import rebot_sim2real.env.maniskill_rewards as MR  # noqa: E402
-from rebot_sim2real.student.visual_nets import StateOnlyActor  # noqa: E402
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits  # noqa: E402
+import rebot_teacher_student.env.rewards as MR  # noqa: E402
+from rebot_teacher_student.student.visual_nets import StateOnlyActor  # noqa: E402
 
 DEVICE = "cuda:0"
 N = args.num_envs
@@ -91,7 +91,7 @@ env_cfg.scene.jaw_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/gri
 _obj.spawn.activate_contact_sensors = True
 env_cfg.scene.robot.spawn.activate_contact_sensors = True
 if STUDENT:
-    from rebot_sim2real.env.visual_obs import configure_visual, downsample, student_state, WRIST_SIZE, FRONT_SIZE, STATE_DIM
+    from rebot_teacher_student.env.visual_obs import configure_visual, downsample, student_state, WRIST_SIZE, FRONT_SIZE, STATE_DIM
     env_cfg = configure_visual(env_cfg, target_cube=TARGET, keep_privileged=True, dr=False, front_only=False)
 else:  # state-only policies never use images (same as train_c51.py without --cameras)
     for cam in ["front", "side", "wrist"]:
@@ -128,7 +128,7 @@ if args.mode in ("single", "staged3"):
     if args.mode == "staged3" and len(actors) != 3:
         raise SystemExit("staged3 needs exactly 3 checkpoints (s0 s1 s2)")
 else:
-    from rebot_sim2real.student.visual_nets import CNNEncoder, Actor
+    from rebot_teacher_student.student.visual_nets import CNNEncoder, Actor
     ck = load(args.ckpts[0])
     if ck.get("front_only", False):
         raise SystemExit("front-only students are not supported by this evaluator")

@@ -19,9 +19,10 @@ def tracked_text_files():
 def test_required_files():
     for f in ["README.md", "LICENSE", "NOTICE", "CITATION.cff", "docs/claims.md", "docs/provenance.md",
               "docs/third_party.md", "analysis/verify_claims.py", 
-              "LICENSES/MIT-Squint.txt", "scripts/eval/eval_policies.py", "scripts/eval/project2_eval.sh",
+              "LICENSES/MIT-Squint.txt", "scripts/eval/project2_eval.sh", "docs/refactor_2026-11.md",
               "analysis/parse_logs.py", "results/project2/bench_daemon.log", "results/project2/ntfy_poller.log",
-              "results/project2/log_summary.json", "checkpoints/project2/search_last.pt", "checkpoints/project2/approach_last.pt"]:
+              "results/project2/log_summary.json", "results/checkpoints/project2/search_last.pt",
+              "results/checkpoints/project2/approach_last.pt"]:
         assert (R / f).is_file(), f
 
 
@@ -58,5 +59,5 @@ def test_media_small():
 
 
 def test_checkpoints_total_under_40mb():
-    tot = sum(p.stat().st_size for p in (R / "checkpoints").rglob("*.pt"))
+    tot = sum(p.stat().st_size for p in (R / "results" / "checkpoints").rglob("*.pt"))
     assert tot < 40 * 1024 * 1024, tot

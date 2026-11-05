@@ -7,7 +7,7 @@ policy learns from the approach policy's live end-states, place from grasp's). E
 env that reaches stage 2 and hits place-done. At deploy the 3 actors run in sequence by stage.
 
 Run (LIVE-watch in the GUI on :1 -> omit --headless):
-  PYTHONPATH=src DISPLAY=:1 python -m rebot_sim2real.teacher.train_c51_joint --num-envs 1024 --save-dir rl_output/rl_c51_joint
+  PYTHONPATH=src DISPLAY=:1 python -m rebot_teacher_student.teacher.train_c51_joint --num-envs 1024 --save-dir rl_output/rl_c51_joint
 """
 import argparse, os
 import numpy as np
@@ -61,9 +61,9 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.tools import rebot_dashboard as dash
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"; TARGET = args.target_cube; N = args.num_envs; NS = 4   # reaching -> align -> grasp -> lift
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)

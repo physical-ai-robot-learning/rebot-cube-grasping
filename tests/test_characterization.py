@@ -57,7 +57,6 @@ def _sha(b):
 @pytest.fixture(autouse=True)
 def _paths(monkeypatch):
     monkeypatch.syspath_prepend(str(R / "src"))
-    monkeypatch.syspath_prepend(str(R / "src" / "det_xattn"))
 
 
 # ---------------------------------------------------------------- Project 2 helpers
@@ -65,12 +64,12 @@ def _p2():
     # network shape knobs of the shipped checkpoints (configs/project2_bench_2026-08-03.env)
     os.environ["D_CUBE"] = "4"
     os.environ["D_ACQ"] = "3"
-    sys.modules.pop("det_xattn_nets", None)
-    import det_xattn_nets as nets
-    import robot_profile
-    import runtime
-    import tp_net
-    import ui_render
+    sys.modules.pop("rebot_grasp_rl.nets", None)
+    from rebot_grasp_rl import dashboard_render as ui_render
+    from rebot_grasp_rl import nets
+    from rebot_grasp_rl import robot_profile
+    from rebot_grasp_rl import runtime
+    from rebot_grasp_rl import target_projection as tp_net
     return nets, robot_profile, runtime, tp_net, ui_render
 
 
@@ -126,7 +125,7 @@ def test_project_target_and_nets_on_checkpoints():
     tOri, tS = torch.rand(tN, nets.D_ORI), torch.rand(tN, tState)
     tOut = {}
     for tName in ("search_last", "approach_last"):
-        tCk = torch.load(R / "checkpoints" / "project2" / f"{tName}.pt", map_location="cpu", weights_only=False)
+        tCk = torch.load(R / "results" / "checkpoints" / "project2" / f"{tName}.pt", map_location="cpu", weights_only=False)
         tActDim = tCk["actor"]["mean.weight"].shape[0]
         tStateDim = tCk["actor"]["proj.state_proj.0.weight"].shape[1] + nets.D_CUBE + nets.D_ACQ
         tActor = nets.DetActor(tStateDim, tActDim)
@@ -148,7 +147,7 @@ def test_project_target_and_nets_on_checkpoints():
 
 # ---------------------------------------------------------------- June networks + deploy loops
 def test_june_visual_nets_shapes():
-    from rebot_sim2real.student import visual_nets as vn
+    from rebot_teacher_student.student import visual_nets as vn
     torch.manual_seed(0)
     tEnc = vn.CNNEncoder(64)
     tActor = vn.Actor(21, 7)
@@ -178,17 +177,17 @@ def _run_deploy(module, ckpt, extra, monkeypatch):
 
 
 @pytest.mark.parametrize("module,ckpt,extra", [
-    ("rebot_sim2real.deploy.rebot_deploy", "checkpoints/teacher/c51_v5g_final.pt", []),
-    ("rebot_sim2real.deploy.rebot_deploy", "checkpoints/teacher/c51_smooth_v1_final.pt", []),
-    ("rebot_sim2real.deploy.rebot_deploy_visual", "checkpoints/student/dagger_dual128_v3_final.pt", ["--device", "cpu"]),
+    ("rebot_teacher_student.deploy.state_deploy", "results/checkpoints/teacher/c51_v5g_final.pt", []),
+    ("rebot_teacher_student.deploy.state_deploy", "results/checkpoints/teacher/c51_smooth_v1_final.pt", []),
+    ("rebot_teacher_student.deploy.visual_deploy", "results/checkpoints/student/dagger_dual128_v3_final.pt", ["--device", "cpu"]),
 ])
 def test_deploy_loop_golden(module, ckpt, extra, monkeypatch):
     _check(f"deploy::{Path(ckpt).stem}", _run_deploy(module, ckpt, extra, monkeypatch))
 
 
 def test_deploy_helpers():
-    from rebot_sim2real.deploy import rebot_deploy as d
-    from rebot_sim2real.deploy import rebot_deploy_visual as dv
+    from rebot_teacher_student.deploy import state_deploy as d
+    from rebot_teacher_student.deploy import visual_deploy as dv
     tQ = [0.9, 0.1, -0.3, 0.2]
     tTcp = d.tcp_from_gripper_link([0.3, -0.2, 0.1], tQ)
     tObs = d.build_obs(np.arange(8) * 0.1, np.arange(8) * -0.01, np.arange(7) * 0.02, [0.4, -0.5, 0.02],

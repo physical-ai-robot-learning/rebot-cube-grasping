@@ -3,7 +3,7 @@ run the MATCHING stage actor, advance on that stage's done-condition (approach=a
 grasp=_is_grasped, place=is_fold_success). Reports per-env stage progression + end-to-end success.
 
 Works with however many stage checkpoints you pass (1, 2, or 3) — runs the chain up to the last given.
-  PYTHONPATH=src python -m rebot_sim2real.teacher.infer_staged \
+  PYTHONPATH=src python -m rebot_teacher_student.teacher.infer_staged \
       --ckpts rl_output/rl_c51_s0/c51_final.pt rl_output/rl_c51_s1/c51_final.pt rl_output/rl_c51_s2/c51_final.pt
 """
 import argparse, os
@@ -30,8 +30,8 @@ from isaaclab.sensors import ContactSensorCfg
 from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, TerminationTermCfg as DoneTerm
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-import rebot_sim2real.env.maniskill_rewards as MR
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+import rebot_teacher_student.env.rewards as MR
 
 DEVICE = "cuda:0"; N = args.num_envs; TARGET = args.target_cube; NS = len(args.ckpts)
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)

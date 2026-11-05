@@ -1,6 +1,7 @@
 """Project 2 checks that run without Isaac Sim: log parser, README claims, trainer argparse, eval writer + summary,
 re-evaluation script (dry run) and the recorded configurations."""
 import csv
+import importlib
 import json
 import os
 import subprocess
@@ -34,9 +35,9 @@ def test_verify_claims_passes():
 
 
 def test_trainer_argparse_without_isaac():
-    env = dict(os.environ, PYTHONPATH=str(R / "src/det_xattn"))
+    env = dict(os.environ, PYTHONPATH=str(R / "src"))
     r = subprocess.run([sys.executable, "-c", "import sys; sys.argv=['x','--num-envs','32','--det-conf','0.15'];"
-                        "import tp_config as t; print(t.args.num_envs, t.args.num_atoms, t.args.det_conf)"],
+                        "from rebot_grasp_rl import config as t; print(t.args.num_envs, t.args.num_atoms, t.args.det_conf)"],
                        cwd=R, capture_output=True, text=True, env=env)
     assert r.returncode == 0, r.stderr
     assert r.stdout.split() == ["32", "101", "0.15"]
@@ -56,9 +57,9 @@ def test_eval_hooks_writer_and_summary(tmp_path, monkeypatch):
     torch = pytest.importorskip("torch")
     monkeypatch.setenv("EVAL_OUT_DIR", str(tmp_path))
     monkeypatch.setenv("EVAL_SEED", "7")
-    sys.path.insert(0, str(R / "src/det_xattn"))
-    sys.modules.pop("eval_hooks", None)
-    import eval_hooks
+    sys.path.insert(0, str(R / "src"))
+    sys.modules.pop("rebot_grasp_rl.eval_hooks", None)
+    eval_hooks = importlib.import_module("rebot_grasp_rl.eval_hooks")   # re-read the EVAL_* variables
     assert eval_hooks.enabled()
 
     class Cfg:
@@ -101,7 +102,7 @@ def test_eval_script_dry_run(tmp_path):
     assert len(lines) == 3
     for l in lines:
         assert "TP_EVAL=1" in l and "EVAL_OUT_DIR=" in l and "EVAL_SEED=3" in l and "EVAL_EXIT_WHEN_DONE=1" in l
-        assert "checkpoints/project2" in l and "train_sac_det_xattn.py" in l
+        assert "results/checkpoints/project2" in l and "-m rebot_grasp_rl.train" in l
     assert "evalgrid_86cells" in lines[0] and "eval_set_400cells" in lines[1] and "GRASP_ON=1" in lines[2]
 
 
@@ -109,9 +110,9 @@ def test_video_hook_writes_episode_clip(tmp_path, monkeypatch):
     np = pytest.importorskip("numpy")
     pytest.importorskip("imageio_ffmpeg")
     monkeypatch.setenv("EVAL_VIDEO_DIR", str(tmp_path))
-    sys.path.insert(0, str(R / "src/det_xattn"))
-    sys.modules.pop("eval_hooks", None)
-    import eval_hooks
+    sys.path.insert(0, str(R / "src"))
+    sys.modules.pop("rebot_grasp_rl.eval_hooks", None)
+    eval_hooks = importlib.import_module("rebot_grasp_rl.eval_hooks")   # re-read the EVAL_* variables
     for i in range(6):
         eval_hooks.video_frame(np.full((64, 64, 3), 10 * i, np.uint8), np.zeros((64, 64, 3), np.uint8), 0 if i < 3 else 1)
     eval_hooks.video_end(36, True, False, True, False)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarise a seeded Project 2 re-evaluation (episodes.csv written by src/det_xattn/eval_hooks.py).
+"""Summarise a seeded Project 2 re-evaluation (episodes.csv written by src/rebot_grasp_rl/eval_hooks.py).
 
 For every stage criterion the rate over episodes and a Wilson 95 % interval are computed:
   search   = reached the APPROACH phase            (search stage)

@@ -65,13 +65,13 @@ from isaaclab.sensors import ContactSensorCfg
 from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, TerminationTermCfg as DoneTerm
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.env.visual_obs import (
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student.env.visual_obs import (
     configure_visual, downsample, student_state, composite_bg, add_proprio_noise, wrist_aug, image_dr,
     recolor_seg_region, tag_gripper, WRIST_SIZE, FRONT_SIZE, IMG_RENDER, STATE_DIM, TEACHER_STATE_DIM)
-from rebot_sim2real.student.visual_nets import CNNEncoder, StagedVisualActor, StateOnlyActor
-from rebot_sim2real.tools import rebot_dashboard as dash
+from rebot_teacher_student.student.visual_nets import CNNEncoder, StagedVisualActor, StateOnlyActor
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"; TARGET = args.target_cube; N_ENVS = args.num_envs; NS = 4
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N_ENVS)

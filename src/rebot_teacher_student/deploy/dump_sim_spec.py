@@ -1,7 +1,7 @@
 """Run ON THE TRAINING PC (needs Isaac) to dump the EXACT joint order + obs/action layout, so you
 can verify rebot_deploy.py's constants (JOINT_ORDER, OBS_LAYOUT) match the trained sim 1:1.
 
-  PYTHONPATH=src .venv/bin/python -m rebot_sim2real.deploy.dump_sim_spec
+  PYTHONPATH=src .venv/bin/python -m rebot_teacher_student.deploy.dump_sim_spec
 """
 import os
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
@@ -16,7 +16,7 @@ from isaaclab.sensors import ContactSensorCfg
 from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, TerminationTermCfg as DoneTerm
 import leisaac.tasks.lift_cube  # noqa
 from leisaac.tasks.lift_cube import mdp
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
 
 env_cfg = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device="cuda:0", num_envs=2)
 env_cfg = configure_env(env_cfg, {}, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube")

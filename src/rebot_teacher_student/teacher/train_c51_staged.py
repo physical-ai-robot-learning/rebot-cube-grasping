@@ -8,7 +8,7 @@ Sequential curriculum: train --stage 0 first; then --stage 1 with --prior rl_out
 --stage 2 with --prior <s0> <s1>. At deploy the 3 actors run in sequence (s0 until approach-done -> s1
 until grasp-done -> s2). Reuses train_c51's C51 (Actor/CriticC51/project_target/updates).
 
-  PYTHONPATH=src DISPLAY=:1 python -m rebot_sim2real.teacher.train_c51_staged --stage 0 --headless --num-envs 1024
+  PYTHONPATH=src DISPLAY=:1 python -m rebot_teacher_student.teacher.train_c51_staged --stage 0 --headless --num-envs 1024
   ... --stage 1 --prior rl_output/rl_c51_s0/c51_final.pt
   ... --stage 2 --prior rl_output/rl_c51_s0/c51_final.pt rl_output/rl_c51_s1/c51_final.pt
 """
@@ -66,9 +66,9 @@ from isaaclab.managers import SceneEntityCfg, RewardTermCfg as RewTerm, Terminat
 import leisaac.tasks.lift_cube  # noqa: F401
 from leisaac.tasks.lift_cube import mdp
 from isaaclab_rl.sb3 import Sb3VecEnvWrapper
-from rebot_sim2real.env.env_config import configure_env, apply_motor_limits
-import rebot_sim2real.env.maniskill_rewards as MR
-from rebot_sim2real.tools import rebot_dashboard as dash
+from rebot_teacher_student.env.env_config import configure_env, apply_motor_limits
+import rebot_teacher_student.env.rewards as MR
+from rebot_teacher_student import dashboard as dash
 
 DEVICE = "cuda:0"; TARGET = args.target_cube; N_ENVS = args.num_envs
 TRAIN_STAGE = args.stage
@@ -95,7 +95,7 @@ if args.cameras:
     # dashboard view of the staged training. (state-only obs is unaffected — these feed only the monitor.)
     import isaaclab.sim as _sc
     from isaaclab.sensors import TiledCameraCfg as _TC
-    from rebot_sim2real.env.visual_obs import _lookat_quat_opengl as _laq, FRONT_EYE, FRONT_TARGET
+    from rebot_teacher_student.env.visual_obs import _lookat_quat_opengl as _laq, FRONT_EYE, FRONT_TARGET
     env_cfg.scene.front = _TC(prim_path="{ENV_REGEX_NS}/front_camera",
         offset=_TC.OffsetCfg(pos=FRONT_EYE, rot=_laq(FRONT_EYE, FRONT_TARGET), convention="opengl"),
         data_types=["rgb"], spawn=_sc.PinholeCameraCfg(focal_length=18.0, clipping_range=(0.01, 50.0), lock_camera=True),

@@ -5,5 +5,5 @@
 # recorded. Dashboard: http://localhost:8890
 set -euo pipefail
 source scripts/isaac_env.sh
-"$PY" -m rebot_sim2real.teacher.train_c51 --target-cube cube --num-envs 1024 \
+"$PY" -m rebot_teacher_student.teacher.train_c51 --target-cube cube --num-envs 1024 \
   --success-target 5000 --save-dir rl_output/rl_c51_smooth "$@"

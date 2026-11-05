@@ -28,7 +28,7 @@ import torch
 import torch.nn as nn
 
 # ════════════════════════════════════════════════════════════════════════════════
-#  CONSTANTS  (must match src/rebot_sim2real/env/env_config.py + maniskill_rewards.py)
+#  CONSTANTS  (must match src/rebot_teacher_student/env/env_config.py + maniskill_rewards.py)
 # ════════════════════════════════════════════════════════════════════════════════
 # Articulation joint order (verify with dump_sim_spec.py on the training PC!).
 JOINT_ORDER = ["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_yaw",

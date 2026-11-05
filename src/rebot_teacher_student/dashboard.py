@@ -5,7 +5,7 @@ CUMULATIVE (running) + success count.
 Replay: the LAST SUCCESSFUL episode played back in the same 3 views (looping).
 
 Wiring from the training loop:
-    from rebot_sim2real.tools import rebot_dashboard as dash
+    from rebot_teacher_student import dashboard as dash
     dash.start(port=8890, target_cube="cube")                 # once
     dash.update_cameras({"front": cam_f, "iso": cam_i, "wrist": cam_w})  # each render step (live)
     dash.push_stats(step=..., episode=..., current_reward=..., episode_reward=...,

@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the refactor-equivalence check reads the pre-refactor commit
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -24,9 +26,11 @@ jobs:
         run: python analysis/parse_logs.py --check
       - name: Re-evaluation script (dry run)
         run: DRY_RUN=1 OUT=/tmp/p2eval bash scripts/eval/project2_eval.sh A B C > /dev/null
+      - name: Refactor is a pure move + rename of commit 47398fd
+        run: python analysis/refactor_equivalence.py
       - name: Claims check (every number in README.md vs. the file it comes from)
         run: python analysis/verify_claims.py
-      - name: Tests (log parser, eval writer, layout, parse, imports, fingerprints, mock deploy)
+      - name: Tests (log parser, eval writer, layout, parse, imports, fingerprints, characterization goldens, mock deploy)
         run: python -m pytest -q -rs
       - name: Mock deploy (both loops, shipped checkpoints)
         run: PY=python bash scripts/deploy/mock_deploy.sh

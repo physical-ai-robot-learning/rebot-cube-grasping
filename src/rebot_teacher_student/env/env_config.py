@@ -42,7 +42,7 @@ def tcp_to_obj_pos(env, ee_frame_cfg=None, object_cfg=None):
 
 def is_grasped_obs(env, robot_cfg=None, object_cfg=None, ee_frame_cfg=None):
     """Binary grasp signal (geometric: cube at TCP + gripper closed). Shape: (N, 1)."""
-    from rebot_sim2real.env.maniskill_rewards import _is_grasped
+    from rebot_teacher_student.env.rewards import _is_grasped
     _oc = object_cfg or SceneEntityCfg("cube")
     return _is_grasped(env, _oc, min_force=0.3).float().unsqueeze(-1)
 
@@ -101,7 +101,7 @@ def reset_cubes_mixed(env, env_ids, cube_names=("cube", "cube_blue", "cube_purpl
 def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_cube="cube"):
     """Configure env for reBot LiftCube. target_cube selects which cube to pick
     (cube=red, cube_blue, cube_purple); the other two stay as randomized distractors."""
-    from rebot_sim2real.env.maniskill_rewards import (
+    from rebot_teacher_student.env.rewards import (
         sq_reaching, sq_grasped, sq_place, sq_not_lifted, sq_open_approach, sq_align_hold,
         sq_close_after_align, table_collision_penalty, success_latch, count_successes,
     )
@@ -286,7 +286,7 @@ def configure_env(env_cfg, cfg, mdp, RewTerm, DoneTerm, SceneEntityCfg, target_c
     # ══════════════════════════════════════════
     #  ACTIONS — Squint-exact delta scale
     # ══════════════════════════════════════════
-    from rebot_sim2real.env.target_delta_action import TargetDeltaJointPositionActionCfg
+    from rebot_teacher_student.env.target_delta_action import TargetDeltaJointPositionActionCfg
     from leisaac.devices.mirrored_gripper_action import MirroredTargetDeltaGripperActionCfg
     # arm: reBot 6 joints (adds wrist_yaw), delta position control
     env_cfg.actions.arm_action = TargetDeltaJointPositionActionCfg(

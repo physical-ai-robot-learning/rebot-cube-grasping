@@ -17,8 +17,7 @@ import torch.nn as nn, torch.nn.functional as F
 os.environ.setdefault("OMNI_KIT_ACCEPT_EULA", "YES")
 os.environ.setdefault("LEISAAC_ASSETS_ROOT", os.environ.get("REBOT_ISAAC_WS", os.path.expanduser("~/workspace/rebot_isaac_rl")) + "/leisaac/assets")
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from tp_config import p, args   # argparse extracted to tp_config.py (parsed at import; must run before AppLauncher)
+from rebot_grasp_rl.config import p, args   # argparse extracted to tp_config.py (parsed at import; must run before AppLauncher)
 _IGPU = int(os.environ.get("ISAAC_GPU", "0")); DEVICE = f"cuda:{_IGPU}"   # user 2026-07-14: pin Isaac(physics+render)+tensors to a physical GPU so train+eval CO-LOCATE. NOT CUDA_VISIBLE_DEVICES (Vulkan renderer ignores it -> OOM on GPU0).
 if int(os.environ.get("TF32", "1")):   # user 2026-07-28: TF32 matmul/conv on Ada(4090) -> ~1.3-1.5x faster SAC update (dominant at high UTD), negligible RL accuracy impact. TF32=0 to disable.
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -48,15 +47,15 @@ from isaaclab.controllers import DifferentialIKController, DifferentialIKControl
 from isaaclab.utils.math import subtract_frame_transforms, quat_from_euler_xyz, quat_apply, quat_mul
 import leisaac.tasks.lift_cube  # noqa
 from leisaac.tasks.lift_cube import mdp
-from packages.sim.env_setup.env_config import configure_env, apply_motor_limits, add_dynamics_dr
-from packages.sim.env_setup import visual_obs
-from packages.sim.env_setup.visual_obs import (composite_bg, recolor_seg_region, image_dr,
+from rebot_grasp_env.env_config import configure_env, apply_motor_limits, add_dynamics_dr
+from rebot_grasp_env import visual_obs
+from rebot_grasp_env.visual_obs import (composite_bg, recolor_seg_region, image_dr,
                                                viewpoint_warp, tag_gripper, IMG_RENDER)
 
-from det_xattn_nets import DetActor, DetCriticC51, D_DET, D_ORI
-from tp_net import project_target   # C51 target projection extracted to tp_net.py (pure fn; used by the TWO_PHASE _upd)
-import robot_profile                 # OURS (reBot/SO101) vs OFFICIAL (Seeed reBot-Isaacsim) robot abstraction
-from runtime import RT               # shared mutable runtime state (populated after the sim boots)
+from rebot_grasp_rl.nets import DetActor, DetCriticC51, D_DET, D_ORI
+from rebot_grasp_rl.target_projection import project_target   # C51 target projection extracted to tp_net.py (pure fn; used by the TWO_PHASE _upd)
+from rebot_grasp_rl import robot_profile                 # OURS (reBot/SO101) vs OFFICIAL (Seeed reBot-Isaacsim) robot abstraction
+from rebot_grasp_rl.runtime import RT               # shared mutable runtime state (populated after the sim boots)
 profile = robot_profile.select_profile()   # ROBOT_OFFICIAL=1 -> OFFICIAL else OURS; read once here
 RT.profile = profile
 print(f"[ROBOT] profile={profile.name} arm_joints={profile.arm_joint_names} ee_candidates={profile.ee_link_candidates}", flush=True)
@@ -64,7 +63,7 @@ print(f"[ROBOT] profile={profile.name} arm_joints={profile.arm_joint_names} ee_c
 # ---------------- env ----------------
 N = args.num_envs
 ec = parse_env_cfg("LeIsaac-SO101-LiftCube-v0", device=DEVICE, num_envs=N)
-import eval_hooks as _evh; _evh.seed(ec)   # 2026-11-01: opt-in seeded eval output (no-op unless EVAL_OUT_DIR is set)
+from rebot_grasp_rl import eval_hooks as _evh; _evh.seed(ec)   # 2026-11-01: opt-in seeded eval output (no-op unless EVAL_OUT_DIR is set)
 if profile.name != "ours":   # OFFICIAL: swap in the re-imported PhysX reBot USD (joint1-6, EE gripper_end) BEFORE configure_env/high-start
     from leisaac.assets.robots.lerobot import REBOT_OFFICIAL_CFG
     _off_cfg = REBOT_OFFICIAL_CFG
@@ -117,7 +116,7 @@ try:
     print(f"[HIGH-START] init_state.joint_pos -> {_jp} (wrist_flex boot-cap {_WRIST_BOOT_CAP}, true target {_START_WRIST} applied post-REAL_JLIM)", flush=True)
 except Exception as _e:
     print(f"[HIGH-START] init_state override FAIL: {_e}", flush=True)
-import packages.sim.env_setup.env_config as _envc
+import rebot_grasp_env.env_config as _envc
 _envc._REST_QPOS = torch.tensor(_HIGH_QPOS)                          # keep dist_to_rest obs consistent with the new start
 print(f"[HIGH-START] _REST_QPOS -> {_HIGH_QPOS}", flush=True)
 if args.dyn_dr:        # P1-identical dynamics DR (gripper stiffness/damping/friction/mass) BEFORE visual+single_cube
@@ -189,7 +188,7 @@ _wox = os.environ.get("WRIST_OFF", "")
 if _wox.strip():
     try:
         from isaaclab.sensors import TiledCameraCfg as _TCCw
-        from packages.sim.env_setup import visual_obs as _vob
+        from rebot_grasp_env import visual_obs as _vob
         from isaaclab.utils.math import quat_mul as _qmw, quat_from_euler_xyz as _qeu
         _wp = tuple(float(v) for v in _wox.split(","))
         if profile.name == "official":
@@ -282,7 +281,7 @@ try:
     print(f"[BASE-MOVE] robot base {_ow} -> {ec.scene.robot.init_state.pos}", flush=True)
 except Exception as _e: print(f"[BASE-MOVE] FAILED: {_e}", flush=True)
 try:
-    from packages.sim.env_setup.visual_obs import _lookat_quat_opengl as _laqF
+    from rebot_grasp_env.visual_obs import _lookat_quat_opengl as _laqF
     _feye = (0.35, float(os.environ.get("FRONT_CAM_Y", "0.0")), 0.58)   # opposite (+y) table end, 58cm
     _ftgt = (0.35, _BASE_Y + 0.30, 0.08)                                # look back toward the arm/cube region
     ec.scene.front.offset.pos = _feye
@@ -887,7 +886,7 @@ cap = args.buffer_size   # kept solely for the [DET] start banner below
 # own UI (_TPUI/_TPHND/_tpg). The remaining helpers (_png/_spark/_card/_draw_det) are shared.
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import imageio
-from ui_render import _png, _spark, _trimmean, _card, _draw_det, _quat_rpy, _draw_arrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
+from rebot_grasp_rl.dashboard_render import _png, _spark, _trimmean, _card, _draw_det, _quat_rpy, _draw_arrow   # REFACTOR 2026-07-27: pure UI helpers -> ui_render.py
 
 # update_ui() and the MLflow logging block were DELETED: both were driven only by the removed
 # single-agent loop (update_ui wrote the dead _UI dict; MLflow's _MLF was logged only there).
@@ -1448,7 +1447,7 @@ if TWO_PHASE:
         except Exception as _je: print(f"[GRIP-JLIM] failed: {_je}", flush=True)
     if int(os.environ.get("EXPORT_YOLO", "0")):                   # user 2026-07-08: sim -> YOLO-OBB cube dataset (seg-mask labels). Runs then exits. NEEDS --dr(seg) + WARP_*=0 (RGB/seg aligned). single-cube.
         import cv2, sys as _sys, random as _rnd
-        from packages.sim.env_setup.visual_obs import build_fg_ids
+        from rebot_grasp_env.visual_obs import build_fg_ids
         _OUT   = os.environ.get("EXPORT_DIR", os.path.expanduser("~/yolo_cube"))
         _NR    = int(os.environ.get("EXPORT_RESETS", "16"))       # frames ≈ NR*N*2cams (16*256*2 ≈ 8k)
         _MINPX = int(os.environ.get("EXPORT_MIN_PX", "5"))        # cube px < this -> negative (no label)

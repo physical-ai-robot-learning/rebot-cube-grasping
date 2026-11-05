@@ -1,0 +1,188 @@
+{
+ "base": "47398fd",
+ "note": "Old -> new paths of the 2026-11 restructure. files: restyled modules, checked by analysis/refactor_equivalence.py (renames: new name -> original name). moved_verbatim: byte-identical moves (new -> old). new_files: files added by the refactor.",
+ "files": {
+  "src/rebot_grasp_env/__init__.py": {
+   "old": "src/det_xattn/packages/sim/env_setup/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_env/env_config.py": {
+   "old": "src/det_xattn/packages/sim/env_setup/env_config.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_env/rewards.py": {
+   "old": "src/det_xattn/packages/sim/env_setup/maniskill_rewards.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_env/target_delta_action.py": {
+   "old": "src/det_xattn/packages/sim/env_setup/target_delta_action.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_env/visual_obs.py": {
+   "old": "src/det_xattn/packages/sim/env_setup/visual_obs.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/config.py": {
+   "old": "src/det_xattn/tp_config.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/dashboard_render.py": {
+   "old": "src/det_xattn/ui_render.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/eval_hooks.py": {
+   "old": "src/det_xattn/eval_hooks.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/nets.py": {
+   "old": "src/det_xattn/det_xattn_nets.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/robot_profile.py": {
+   "old": "src/det_xattn/robot_profile.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/runtime.py": {
+   "old": "src/det_xattn/runtime.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/target_projection.py": {
+   "old": "src/det_xattn/tp_net.py",
+   "renames": {}
+  },
+  "src/rebot_grasp_rl/train.py": {
+   "old": "src/det_xattn/train_sac_det_xattn.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/__init__.py": {
+   "old": "src/det_xattn/packages/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/dashboard.py": {
+   "old": "src/rebot_sim2real/tools/rebot_dashboard.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/deploy/__init__.py": {
+   "old": "src/det_xattn/packages/sim/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/deploy/dump_sim_spec.py": {
+   "old": "src/rebot_sim2real/deploy/dump_sim_spec.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/deploy/state_deploy.py": {
+   "old": "src/rebot_sim2real/deploy/rebot_deploy.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/deploy/visual_deploy.py": {
+   "old": "src/rebot_sim2real/deploy/rebot_deploy_visual.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/env/__init__.py": {
+   "old": "src/rebot_sim2real/env/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/env/env_config.py": {
+   "old": "src/rebot_sim2real/env/env_config.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/env/rewards.py": {
+   "old": "src/rebot_sim2real/env/maniskill_rewards.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/env/target_delta_action.py": {
+   "old": "src/rebot_sim2real/env/target_delta_action.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/env/visual_obs.py": {
+   "old": "src/rebot_sim2real/env/visual_obs.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/evaluate.py": {
+   "old": "scripts/eval/eval_policies.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/__init__.py": {
+   "old": "src/rebot_sim2real/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/train_c51_visual.py": {
+   "old": "src/rebot_sim2real/student/train_c51_visual.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/train_dagger_staged.py": {
+   "old": "src/rebot_sim2real/student/train_dagger_staged.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/train_dagger_visual.py": {
+   "old": "src/rebot_sim2real/student/train_dagger_visual.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/train_visual_rl.py": {
+   "old": "src/rebot_sim2real/student/train_visual_rl.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/train_visual_rl_staged.py": {
+   "old": "src/rebot_sim2real/student/train_visual_rl_staged.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/student/visual_nets.py": {
+   "old": "src/rebot_sim2real/student/visual_nets.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/teacher/__init__.py": {
+   "old": "src/rebot_sim2real/deploy/__init__.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/teacher/infer_staged.py": {
+   "old": "src/rebot_sim2real/teacher/infer_staged.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/teacher/train_c51.py": {
+   "old": "src/rebot_sim2real/teacher/train_c51.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/teacher/train_c51_joint.py": {
+   "old": "src/rebot_sim2real/teacher/train_c51_joint.py",
+   "renames": {}
+  },
+  "src/rebot_teacher_student/teacher/train_c51_staged.py": {
+   "old": "src/rebot_sim2real/teacher/train_c51_staged.py",
+   "renames": {}
+  }
+ },
+ "moved_verbatim": {
+  "archive/june_sim_tools/camera_spec_render.py": "src/rebot_sim2real/tools/camera_spec_render.py",
+  "archive/june_sim_tools/diag_cam_sweep2.py": "src/rebot_sim2real/tools/diag_cam_sweep2.py",
+  "archive/june_sim_tools/diag_contactapi.py": "src/rebot_sim2real/tools/diag_contactapi.py",
+  "archive/june_sim_tools/diag_dr_probe.py": "src/rebot_sim2real/tools/diag_dr_probe.py",
+  "archive/june_sim_tools/diag_env_gripper.py": "src/rebot_sim2real/tools/diag_env_gripper.py",
+  "archive/june_sim_tools/diag_finger_geom.py": "src/rebot_sim2real/tools/diag_finger_geom.py",
+  "archive/june_sim_tools/diag_front_sweep.py": "src/rebot_sim2real/tools/diag_front_sweep.py",
+  "archive/june_sim_tools/diag_grasp.py": "src/rebot_sim2real/tools/diag_grasp.py",
+  "archive/june_sim_tools/diag_grasp_wrist.py": "src/rebot_sim2real/tools/diag_grasp_wrist.py",
+  "archive/june_sim_tools/diag_gripper_mounts.py": "src/rebot_sim2real/tools/diag_gripper_mounts.py",
+  "archive/june_sim_tools/diag_gripper_stroke.py": "src/rebot_sim2real/tools/diag_gripper_stroke.py",
+  "archive/june_sim_tools/diag_gripper_view.py": "src/rebot_sim2real/tools/diag_gripper_view.py",
+  "archive/june_sim_tools/diag_mount_marker.py": "src/rebot_sim2real/tools/diag_mount_marker.py",
+  "archive/june_sim_tools/diag_recalib.py": "src/rebot_sim2real/tools/diag_recalib.py",
+  "archive/june_sim_tools/diag_visual_obs.py": "src/rebot_sim2real/tools/diag_visual_obs.py",
+  "archive/june_sim_tools/diag_wrist_calc.py": "src/rebot_sim2real/tools/diag_wrist_calc.py",
+  "archive/june_sim_tools/diag_wrist_sweep.py": "src/rebot_sim2real/tools/diag_wrist_sweep.py",
+  "archive/june_sim_tools/render_successes.py": "src/rebot_sim2real/tools/render_successes.py",
+  "archive/june_sim_tools/render_teacher_2cam.py": "src/rebot_sim2real/tools/render_teacher_2cam.py",
+  "archive/june_sim_tools/render_teacher_hq.py": "src/rebot_sim2real/tools/render_teacher_hq.py",
+  "archive/project2_log_tools/bench_daemon.py": "scripts/project2_tools/bench_daemon.py",
+  "archive/project2_log_tools/ntfy_sweep_poller.py": "scripts/project2_tools/ntfy_sweep_poller.py",
+  "results/checkpoints/README.md": "checkpoints/README.md",
+  "results/checkpoints/project2/approach_last.pt": "checkpoints/project2/approach_last.pt",
+  "results/checkpoints/project2/search_last.pt": "checkpoints/project2/search_last.pt",
+  "results/checkpoints/student/dagger_dual128_v3_final.pt": "checkpoints/student/dagger_dual128_v3_final.pt",
+  "results/checkpoints/teacher/c51_smooth_v1_final.pt": "checkpoints/teacher/c51_smooth_v1_final.pt",
+  "results/checkpoints/teacher/c51_v5g_final.pt": "checkpoints/teacher/c51_v5g_final.pt",
+  "src/rebot_teacher_student/deploy/requirements.txt": "src/rebot_sim2real/deploy/requirements.txt"
+ },
+ "new_files": {
+  "src/rebot_grasp_rl/__init__.py": "package docstring (new)"
+ }
+}

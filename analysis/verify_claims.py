@@ -22,11 +22,11 @@ BENCHCFG = "configs/project2_bench_2026-08-03.env"
 TRAINCFG = "configs/project2_train_9t_dacq_2026-08-02.env"
 SUMMARY = "results/project2/log_summary.json"
 PROV = "docs/provenance.md"
-TPCFG = "src/det_xattn/tp_config.py"
+TPCFG = "src/rebot_grasp_rl/config.py"
 
 SOURCES = {
     "4": "docs/deploy/DEPLOY_SPEC.md",   # 4 cm cube
-    "6": "src/rebot_sim2real/deploy/rebot_deploy.py",  # 6 joints (N_ARM)
+    "6": "src/rebot_teacher_student/deploy/state_deploy.py",  # 6 joints (N_ARM)
     "0.07": BENCHCFG,                    # RSR_DCUBE=0.07 (privileged threshold in the benches)
     "0.14": "results/project2/CHANGES_8953_20260731.md",   # upper end of sweep thresholds (also _ep files)
     "1": BENCHCFG,                       # RSR_HOLD=1
