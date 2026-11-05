@@ -2,8 +2,8 @@
 
 | File | What | Written by |
 |---|---|---|
-| `bench_daemon.log` | 120 benches (124 heatmaps) of approach checkpoints 128k → 3,712k env-steps of run `det_TP304_refac_smoke9t`, each together with the latest search checkpoint, on the fixed eval-set grid (90 cells, later 86), deterministic, 32 envs, no domain randomisation; 2026-08-02 19:27 → 08-03 12:43 | `scripts/project2_tools/bench_daemon.py` (submitted one eval job per new checkpoint) |
-| `ntfy_poller.log` | 114 curriculum self-eval sweeps posted from the dashboards of training runs 8951 (search training) and 8953 (approach training, search frozen); lines carry times, not dates (day 0 is presumably 2026-07-31, when the notifier was added) | `scripts/project2_tools/ntfy_sweep_poller.py` |
+| `bench_daemon.log` | 120 benches (124 heatmaps) of approach checkpoints 128k → 3,712k env-steps of run `det_TP304_refac_smoke9t`, each together with the latest search checkpoint, on the fixed eval-set grid (90 cells, later 86), deterministic, 32 envs, no domain randomisation; 2026-08-02 19:27 → 08-03 12:43 | `archive/project2_log_tools/bench_daemon.py` (submitted one eval job per new checkpoint) |
+| `ntfy_poller.log` | 114 curriculum self-eval sweeps posted from the dashboards of training runs 8951 (search training) and 8953 (approach training, search frozen); lines carry times, not dates (day 0 is presumably 2026-07-31, when the notifier was added) | `archive/project2_log_tools/ntfy_sweep_poller.py` |
 | `CHANGES_8953_20260731.md` | run notes of 2026-07-31: configuration, gates, mouth-offset fix | the author's work session |
 | `heatmaps/bench_e*.png` | per-cell heatmaps of each bench (deployable gate / privileged reach / search) | bench daemon |
 | `eval_grids/*.npy` | eval-set grids (x, y, yaw, wrist start) | trainer tools |

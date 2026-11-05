@@ -7,9 +7,9 @@
 > v3 real-robot fixes: **coupled elbow gate REMOVED** (was the cause of "wanders after align, never
 > grasps") + **gripper open capped (stroke 0→0.05) & convention corrected** (qpos↑=OPEN; see §5 gripper).
 > Runs from **CAMERAS + joint encoders only** — NO cube perception, NO gripper-link FK, NO grasp heuristic.
-> - **Deploy file**: `rebot_deploy_visual.py` (Isaac-free, torch only). Checkpoint =
->   `checkpoints/dagger_dual128_final.pt` (= enc_w + enc_f + actor; sim success ~86-90%).
->   Backup = `checkpoints/dagger_dual128_last.pt` (last periodic ckpt, same arch).
+> - **Deploy file**: `visual_deploy.py` (Isaac-free, torch only). Checkpoint =
+>   `results/checkpoints/dagger_dual128_final.pt` (= enc_w + enc_f + actor; sim success ~86-90%).
+>   Backup = `results/checkpoints/dagger_dual128_last.pt` (last periodic ckpt, same arch).
 > - **Inputs**: joint encoders (8, JOINT_ORDER) + **front camera RGB** + **wrist camera RGB**.
 >   state(21) = qpos(8) + target_qpos(7) + dist_to_rest(6). No 43D privileged obs.
 > - **CAMERA MOUNTS (must match sim or the policy fails):**
@@ -22,15 +22,15 @@
 >     background/lighting/FoV, so just feed the raw camera image.
 > - **ActionController is IDENTICAL** to the state-only deploy below (scale 0.05 + hard joint limits +
 >   coupled elbow gate); the §"slow+constrained" motor velocity limits apply unchanged.
-> - **Hardware interface** (`VisualRobotInterface`): `read_joint_pos()[8]`, `get_front_image()`,
->   `get_wrist_image()`, `send_joint_targets(arm6, gripper)`, `go_to_rest()`. Test: `--mock`.
+> - **Hardware interface** (`VisualRobotInterface`): `readJointPos()[8]`, `getFrontImage()`,
+>   `getWristImage()`, `sendJointTargets(arm6, gripper)`, `goToRest()`. Test: `--mock`.
 > - Note: the visual policy SEES the cube, so sections §3–§4 (cube world frame / quat) are NOT needed
 >   for it — only the camera mounts matter. Joint order / REST / gripper / motor limits below still apply.
 
 > ## UPDATE 2026-06-09 — FINAL "slow + constrained" policy (sim2real-safe) [state-only path]
-> The deployed `checkpoints/c51_policy.pt` = `c51_final.pt`, **train step 7.58M, 5236 successes,
+> The deployed `results/checkpoints/c51_policy.pt` = `c51_final.pt`, **train step 7.58M, 5236 successes,
 > success_rate ~52%**. It was trained with HALVED speed + hard joint limits for safe sim2real.
-> **`rebot_deploy.py` already encodes ALL of this** (ActionController) — just match the real MOTOR
+> **`state_deploy.py` already encodes ALL of this** (ActionController) — just match the real MOTOR
 > velocity limits below. Changes vs the older spec:
 > - **arm action scale 0.1 → 0.05** rad/step (calmer; ~0.5 rad/s).
 > - **HARD per-joint target limits** (ActionController.ARM_LO/HI): pan **±90°**; wrist_flex UP **−10°**
@@ -43,7 +43,7 @@
 > Everything else below (joint order, obs, REST, TCP, frame, gripper, cube) is unchanged.
 
 **All constants/units/frames needed for real-robot deployment**, extracted from the training PC (Isaac). On the inference PC, use these values to finalize
-the constants in `rebot_deploy.py` and the `RobotInterface` adapter (units/FK/frames).
+the constants in `state_deploy.py` and the `RobotInterface` adapter (units/FK/frames).
 
 > **Joint order verified empirically**: 3689 successes occurred, and success requires `reached_rest = ||arm_target[:6] − REST_QPOS|| < 0.2`.
 > If the order were wrong, this value could never get below 0.2 and success would never have occurred → **order confirmed correct.**
@@ -51,7 +51,7 @@ the constants in `rebot_deploy.py` and the `RobotInterface` adapter (units/FK/fr
 
 ---
 
-## 1. Joint order / observation / action / REST / TCP  (matches rebot_deploy.py constants)
+## 1. Joint order / observation / action / REST / TCP  (matches state_deploy.py constants)
 
 **JOINT_ORDER (8, articulation order):**
 ```
@@ -162,4 +162,4 @@ wrist_yaw     0.00 | wrist_roll     0.00 | gripper 0.02 | gripper_joint2 0.02
 1. `pip install -r requirements.txt` (torch, numpy) + an FK library (yourdfpy, etc.).
 2. Take `robot_description_gripper/` (URDF+mesh) and compute the `gripper_link` world pose via FK.
 3. Implement `RobotInterface`: 8-joint encoders (order above), cube pose (world frame, wxyz), gripper_link pose, is_grasped heuristic, motor commands (arm rad · gripper m, both fingers identical).
-4. Verify frames/units/order 1:1 against the values above → `run(load_policy("checkpoints/c51_policy.pt"), ReBot())`.
+4. Verify frames/units/order 1:1 against the values above → `run(load_policy("results/checkpoints/c51_policy.pt"), ReBot())`.

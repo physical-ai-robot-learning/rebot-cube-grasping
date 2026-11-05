@@ -21,7 +21,7 @@ The June teacher videos further down show the earlier simulation version S1.
 
 | File | What it shows | Made from (original host : path, mtime, MD5) | Processing |
 |---|---|---|---|
-| `readme/hero_teacher_hd_rollout.gif` (4.7 MB) | simulation, state-only C51 teacher, one rollout rendered in HD: left = fixed front view, right = close view behind the gripper; the red cube is grasped and lifted | second workstation : `~/Downloads/teacher_hq_00_env0.mp4`, 2026-06-10 15:06, `b5a1bd4ca7107f6ef812d82a02bdaa32` (1448×720, 60 fps, 8.3 s); written by `src/rebot_sim2real/tools/render_teacher_hq.py` | ffmpeg: 12 fps, 900 px wide, 96-colour palette |
+| `readme/hero_teacher_hd_rollout.gif` (4.7 MB) | simulation, state-only C51 teacher, one rollout rendered in HD: left = fixed front view, right = close view behind the gripper; the red cube is grasped and lifted | second workstation : `~/Downloads/teacher_hq_00_env0.mp4`, 2026-06-10 15:06, `b5a1bd4ca7107f6ef812d82a02bdaa32` (1448×720, 60 fps, 8.3 s); written by `archive/june_sim_tools/render_teacher_hq.py` | ffmpeg: 12 fps, 900 px wide, 96-colour palette |
 | `readme/teacher_hd_rollout_env2.gif` (1.6 MB) | simulation, another rollout of the same render run; cube lifted | second workstation : `~/Downloads/teacher_hq_02_env2.mp4`, 2026-06-10 15:06, `ea6247f0ad3bd7760cdd0a06266fbb17` | ffmpeg: 12 fps, 440 px wide |
 | `readme/student_inputs_sim_vs_real.png` | 2×4 panel: front (top) and wrist (bottom) camera; simulated render, simulated 128×128 policy input, real camera frame, real policy input | simulated: `cam_spec/*.png` below (2026-06-10 20:19). Real, second workstation : `~/Downloads/real_diag4/front_live.jpg` (2026-06-10 18:57, `e6fbc72ded18ca36849ccceba4e5a7ff`), `real_diag4/front_ds128.png` (18:01, `0e931caefa30dcf59ec88d6cc977b039`), `real_diag/wrist_full.png` (12:46, `8003db9af1a123d1074eb4eb3b0e7d33`), `real_diag/wrist_ds16.png` (12:46, `ce5437c467e95cea185ab20d2445936b`, the 16×16 input of the first student) | matplotlib panel, no image edits |
 | `readme/real_front_camera_2026-06-10.jpg` | real robot, front camera, during diagnosis of the camera-based student; the arm is next to the red target cube. Outcome of the attempt not recorded | second workstation : `~/Downloads/real_diag4/front_live.jpg`, 2026-06-10 18:57, `e6fbc72ded18ca36849ccceba4e5a7ff` | copied unchanged |
@@ -34,8 +34,8 @@ shows furniture and equipment only).
 
 | Path | What | Made by |
 |---|---|---|
-| `success_videos_v1/*.mp4` (6 clips, 18–26 kB each) | low-resolution combined-view renders of successful rollouts of the first state-only teacher (2026-06-09); file names give env index and training step of the render run | `src/rebot_sim2real/tools/render_successes.py` |
-| `cam_spec/front_full.png`, `front_ds128.png`, `wrist_full.png`, `wrist_ds128.png` | the simulated front and wrist cameras at the REST pose, full resolution and the 128×128 policy input (2026-06-10) | `src/rebot_sim2real/tools/camera_spec_render.py` |
+| `success_videos_v1/*.mp4` (6 clips, 18–26 kB each) | low-resolution combined-view renders of successful rollouts of the first state-only teacher (2026-06-09); file names give env index and training step of the render run | `archive/june_sim_tools/render_successes.py` |
+| `cam_spec/front_full.png`, `front_ds128.png`, `wrist_full.png`, `wrist_ds128.png` | the simulated front and wrist cameras at the REST pose, full resolution and the 128×128 policy input (2026-06-10) | `archive/june_sim_tools/camera_spec_render.py` |
 
 ## Found but not included
 

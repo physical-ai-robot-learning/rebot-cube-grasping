@@ -9,9 +9,9 @@ This document explains **how the inference pipeline works** + **what must be sup
 
 ```
 deploy_package/
-├── rebot_deploy_visual.py     # visual policy inference (main)
-├── rebot_deploy.py            # state-based policy inference (fallback, requires CV cube detection)
-├── checkpoints/
+├── visual_deploy.py     # visual policy inference (main)
+├── state_deploy.py            # state-based policy inference (fallback, requires CV cube detection)
+├── results/checkpoints/
 │   ├── dagger_dual128_fresh.pt    # student A: FRESH training (step 345600)
 │   ├── dagger_dual128_resume.pt   # student B: RESUME training (step 691200)  ← trained longer
 │   ├── dagger_dual128_final.pt    # default = copy of resume
@@ -50,7 +50,7 @@ The policy then outputs a **7D action** (arm 6 delta + gripper 1 delta) at 10Hz.
                                                               ActionController.step(a, pan_qpos)
                                                               = target += a*scale, per-joint clamp, elbow gate
                                                                                 ▼
-                                                              send_joint_targets(7)  →  motors
+                                                              sendJointTargets(7)  →  motors
 ```
 
 ### 2-1. Camera preprocessing `_ds()` — MOST IMPORTANT (cause of the previous failure)
@@ -113,16 +113,16 @@ Variations the student was additionally trained to be robust to (DR): **ISP colo
 ```bash
 cd deploy_package
 # Student B (resume, trained longer, recommended default)
-python rebot_deploy_visual.py --checkpoint checkpoints/dagger_dual128_resume.pt --device auto
+python visual_deploy.py --checkpoint results/checkpoints/dagger_dual128_resume.pt --device auto
 # Student A (fresh) — for comparison
-python rebot_deploy_visual.py --checkpoint checkpoints/dagger_dual128_fresh.pt   --device auto
+python visual_deploy.py --checkpoint results/checkpoints/dagger_dual128_fresh.pt   --device auto
 ```
 - `--device auto` → automatically cuda | **mps (Apple Silicon)** | cpu. A Mac is sufficient (inference takes a few ms @10Hz; the Mac only does camera + motor I/O).
-- Interface to implement (`VisualRobotInterface`): `read_joint_pos()→[8]`, `get_front_image()→HxWx3`, `get_wrist_image()→HxWx3`, `send_joint_targets(7)`. **No cube perception/FK/grasp detection needed.**
+- Interface to implement (`VisualRobotInterface`): `readJointPos()→[8]`, `getFrontImage()→HxWx3`, `getWristImage()→HxWx3`, `sendJointTargets(7)`. **No cube perception/FK/grasp detection needed.**
 
 ---
 
-## 6. State-based fallback (`rebot_deploy.py` + `c51_policy.pt`)
+## 6. State-based fallback (`state_deploy.py` + `c51_policy.pt`)
 If the visual policy fails, or for validation, this path **obtains the cube position with classical CV (HSV red detection) and runs the state-based teacher**.
 - This path is camera-agnostic (43D state obs), so it is unaffected by camera OOD.
 - However, CV/FK must supply the **43D obs**: `qpos8|qvel8|target7|dist6|obj_pos3|obj_quat4|tcp_pos3|tcp_to_obj3|is_grasped1`. The key items are `obj_pos` (HSV→deproject→sim world transform), `tcp_pos` (encoder FK, `robot_description_gripper.zip`), `is_grasped` (gripper qpos + motor current heuristic). For details see DEPLOY_SPEC §state.

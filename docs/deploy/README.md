@@ -5,8 +5,8 @@ Portable inference (no Isaac Sim/Lab — only `torch` + `numpy`). Copy this fold
 
 | | file | input | hardware you implement |
 |---|---|---|---|
-|  **VISUAL (recommended)** | `rebot_deploy_visual.py` + `checkpoints/dagger_dual128_final.pt` | front + wrist **cameras** (128×128) + joint encoders | joints + 2 images only |
-| state-only | `rebot_deploy.py` + `checkpoints/c51_policy.pt` | 43D state incl. **cube pose** | joints + cube perception + FK + grasp heuristic |
+|  **VISUAL (recommended)** | `visual_deploy.py` + `results/checkpoints/dagger_dual128_final.pt` | front + wrist **cameras** (128×128) + joint encoders | joints + 2 images only |
+| state-only | `state_deploy.py` + `results/checkpoints/c51_policy.pt` | 43D state incl. **cube pose** | joints + cube perception + FK + grasp heuristic |
 
 > ##  VISUAL deploy (recommended — camera-only, much simpler hardware side)
 > **dual-128 student v3** (DAgger-distilled from a **99.8% state-only teacher**, fully-random cube
@@ -18,11 +18,11 @@ Portable inference (no Isaac Sim/Lab — only `torch` + `numpy`). Copy this fold
 > only joint encoders + two camera images. (`dagger_dual128_last.pt` = backup checkpoint.)
 > ```bash
 > pip install -r requirements.txt
-> python rebot_deploy_visual.py --checkpoint checkpoints/dagger_dual128_final.pt --mock --max-steps 30   # flow test
+> python visual_deploy.py --checkpoint results/checkpoints/dagger_dual128_final.pt --mock --max-steps 30   # flow test
 > ```
-> Implement `VisualRobotInterface` (see `rebot_deploy_visual.py`):
-> `read_joint_pos()[8]` · `get_front_image()` HxWx3 RGB · `get_wrist_image()` HxWx3 RGB ·
-> `send_joint_targets(arm6, gripper)` · `go_to_rest()`. Then `run(VisualPolicy("checkpoints/dagger_dual128_final.pt"), YourRobot())`.
+> Implement `VisualRobotInterface` (see `visual_deploy.py`):
+> `readJointPos()[8]` · `getFrontImage()` HxWx3 RGB · `getWristImage()` HxWx3 RGB ·
+> `sendJointTargets(arm6, gripper)` · `goToRest()`. Then `run(VisualPolicy("results/checkpoints/dagger_dual128_final.pt"), YourRobot())`.
 > **CAMERA MOUNTS must match sim** (see `DEPLOY_SPEC.md` top): front = ~90cm fwd of arm base / ~55cm high
 > / ~45° down / **head-on** (focal ~18); wrist = on the **camera bracket on top of the gripper**, looking
 > **forward+down at the grasp** (focal ~12) — both downsampled to **128×128**.
@@ -31,7 +31,7 @@ Portable inference (no Isaac Sim/Lab — only `torch` + `numpy`). Copy this fold
 > The policy is tiny (dual-128 CNN, 2.3MB) at 10 Hz → a few ms/step on a Mac CPU. No Isaac, no CUDA.
 > ```bash
 > pip install torch numpy            # Mac CPU/MPS build of torch (no CUDA)
-> python rebot_deploy_visual.py --checkpoint checkpoints/dagger_dual128_final.pt --mock --device auto
+> python visual_deploy.py --checkpoint results/checkpoints/dagger_dual128_final.pt --mock --device auto
 > ```
 > `--device auto` picks **mps** (Apple-Silicon GPU) or **cpu** automatically — both are plenty (the
 > image area-downsample always runs on CPU, so MPS op gaps don't bite). The Mac only needs the camera
@@ -45,13 +45,13 @@ Portable inference (no Isaac Sim/Lab — only `torch` + `numpy`). Copy this fold
 
 ---
 
-## state-only deploy  (`rebot_deploy.py`) — needs cube perception
+## state-only deploy  (`state_deploy.py`) — needs cube perception
 Portable inference for a policy trained by `packages/sim/train_c51.py` (distributional-C51 SAC).
 
 ## Files
 | file | purpose |
 |---|---|
-| `rebot_deploy.py` | standalone Actor + checkpoint loader + obs builder + delta action controller + deploy loop + `RobotInterface` ABC + `MockRobot` |
+| `state_deploy.py` | standalone Actor + checkpoint loader + obs builder + delta action controller + deploy loop + `RobotInterface` ABC + `MockRobot` |
 | `dump_sim_spec.py` | run on the TRAINING PC (needs Isaac) to print the exact joint order / obs layout to verify parity |
 | `requirements.txt` | torch, numpy |
 
@@ -59,7 +59,7 @@ Portable inference for a policy trained by `packages/sim/train_c51.py` (distribu
 ```bash
 pip install -r requirements.txt
 # 1) flow test (no hardware): obs -> policy -> action shapes
-python rebot_deploy.py --checkpoint /path/to/c51_final.pt --mock --max-steps 30
+python state_deploy.py --checkpoint /path/to/c51_final.pt --mock --max-steps 30
 # 2) real robot: implement RobotInterface (see below), then call run(actor, YourRobot())
 ```
 Get a checkpoint from training: `rl_output/rl_c51/c51_ckpt_*.pt` (or `c51_final.pt` after 5000 successes).
@@ -68,22 +68,22 @@ Get a checkpoint from training: `rl_output/rl_c51/c51_ckpt_*.pt` (or `c51_final.
 The policy is **state-based** (no camera), so you must supply the cube pose from your own perception.
 ```python
 class ReBot(RobotInterface):
-    def read_joint_state(self):     # (joint_pos[8], joint_vel[8]) in JOINT_ORDER
-    def get_cube_pose(self):        # (pos[3], quat_wxyz[4]) of the target cube, SIM WORLD frame
-    def get_gripper_link_pose(self):# (pos[3], quat_wxyz[4]) of gripper_link, SIM WORLD frame (your FK)
+    def readJointState(self):     # (joint_pos[8], joint_vel[8]) in JOINT_ORDER
+    def getCubePose(self):        # (pos[3], quat_wxyz[4]) of the target cube, SIM WORLD frame
+    def getGripperLinkPose(self):# (pos[3], quat_wxyz[4]) of gripper_link, SIM WORLD frame (your FK)
     def is_grasped(self):           # bool (e.g. gripper qpos>0.05 AND motor current high)
-    def send_joint_targets(self, arm_target, gripper_target)  # arm rad x6, gripper m (drive BOTH fingers)
-    def go_to_rest(self)            # move to REST before an episode
+    def sendJointTargets(self, arm_target, gripper_target)  # arm rad x6, gripper m (drive BOTH fingers)
+    def goToRest(self)            # move to REST before an episode
 ```
 Then:
 ```python
-from rebot_deploy import load_policy, run
+from state_deploy import load_policy, run
 run(load_policy("c51_final.pt"), ReBot())
 ```
 
 ## sim ↔ real PARITY — get these right or the policy fails
 1. **Joint order** — `JOINT_ORDER = [shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_yaw,
-   wrist_roll, gripper, gripper_joint2]`. **Verify** with `dump_sim_spec.py` and fix `rebot_deploy.py`
+   wrist_roll, gripper, gripper_joint2]`. **Verify** with `dump_sim_spec.py` and fix `state_deploy.py`
    if your sim prints a different order. `gripper_joint2` mirrors `gripper`.
 2. **Units** — arm = radians, gripper = **meters** (prismatic, stroke 0..0.0715). Gripper convention is
    INVERTED: `qpos > 0.05 = closed/gripping`, `< 0.035 = open`.
@@ -109,7 +109,7 @@ tcp_to_obj(3) | is_grasped(1)`
 The policy is trained to grasp the cube, lift it, and return the arm to REST while holding.
 
 ## Notes / limitations
-- Cube perception (`get_cube_pose`) is the main thing you provide — camera+pose-estimation, AprilTag, or
+- Cube perception (`getCubePose`) is the main thing you provide — camera+pose-estimation, AprilTag, or
   motion capture, transformed into the sim world frame. Accuracy here directly limits real performance.
 - `is_grasped` real heuristic is approximate; tune the threshold on hardware.
 - Start at low speed and with E-stop ready. Validate `--mock` flow first, then dry-run above the table.

@@ -3,6 +3,10 @@
 Where every file in this repository came from, what was changed on the way in, what was left out and why.
 Status: 2026-11-01.
 
+> **Paths in this record are those of commit `47398fd` (before the 2026-11-05 restructure).** The old → new map is in
+> [refactor_2026-11.md](refactor_2026-11.md) and `analysis/refactor_2026-11_map.json`; for example `src/det_xattn/` is
+> now `src/rebot_grasp_rl/`, `src/rebot_sim2real/` is `src/rebot_teacher_student/`, `checkpoints/` is `results/checkpoints/`.
+
 ## 1. Sources
 
 This repository was assembled with a **fresh git history**. The original repositories' histories were not imported;

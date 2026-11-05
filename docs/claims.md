@@ -35,9 +35,9 @@ raw logs.
 
 | Claim | Evidence | Verdict |
 |---|---|---|
-| Staged C51-SAC on detection-level observations (no raw pixels, no privileged state) in Isaac Lab, with an IK action space for the approach | `src/det_xattn/`, `configs/project2_*.env` (`NO_PRIV=1`, `APP_NO_YAW=1`) | **SUPPORTED** |
+| Staged C51-SAC on detection-level observations (no raw pixels, no privileged state) in Isaac Lab, with an IK action space for the approach | `src/rebot_grasp_rl/`, `configs/project2_*.env` (`NO_PRIV=1`, `APP_NO_YAW=1`) | **SUPPORTED** |
 | The search stage works in simulation | search criterion 92.1–99.4 % over 120 benches (2026-08-02/03); 95–100 % over 61 sweeps of run 8951; re-evaluation 2026-11-02 (seed 0): 99.4 % (Wilson 96.5–99.9 %, 160 episodes, 86-cell grid) and 98.5 % (96.8–99.3 %, 400 cases) | **SUPPORTED** (simulation; logs + per-episode re-evaluation) |
-| Checkpoints of a logged bench are available | `checkpoints/project2/` = the pair of bench e3712k (search 97.8 %, privileged reach 89.9 %, deployable gate 0.0 %, 86 cells, 2026-08-03); MD5s in provenance §9 | **SUPPORTED** |
+| Checkpoints of a logged bench are available | `results/checkpoints/project2/` = the pair of bench e3712k (search 97.8 %, privileged reach 89.9 %, deployable gate 0.0 %, 86 cells, 2026-08-03); MD5s in provenance §9 | **SUPPORTED** |
 | Two robot models (converted URDF vs vendor USD) in simulation | `robot_profile.py`, run notes | **SUPPORTED** (code) |
 | Rendered rollouts of the included checkpoints in the latest simulation version | 4 seeded episodes (2026-11-02): search → approach → privileged reach in 4/4, deployable gate 0/4, no grasp or lift; videos in `media/project2/rollouts_s4/` | **SUPPORTED** (4 fixed cases only, not a rate) |
 | Curriculum over a 10×10 spawn-cell grid with deterministic self-evaluation sweeps | trainer code, configs, `ntfy_poller.log` | **SUPPORTED** |
