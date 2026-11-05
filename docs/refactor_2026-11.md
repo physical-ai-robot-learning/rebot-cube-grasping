@@ -68,6 +68,11 @@ listed in `analysis/refactor_2026-11_map.json` (`files`: restyled modules with t
 | `src/rebot_sim2real/teacher/train_c51_joint.py` | `src/rebot_teacher_student/teacher/train_c51_joint.py` | 58 | move + rename, AST-checked |
 | `src/rebot_sim2real/teacher/train_c51_staged.py` | `src/rebot_teacher_student/teacher/train_c51_staged.py` | 56 | move + rename, AST-checked |
 
+## Technical report (added after the refactor)
+
+`report/report_en.{tex,pdf}` (5 pages) was written on the same branch; `analysis/verify_report.py` checks every number
+in it against its source file and runs in CI.
+
 ## What was archived (verbatim, nothing deleted)
 
 * `archive/june_sim_tools/` — 20 June one-off Isaac scripts (diagnostics of cameras, gripper, contacts, DR; rollout

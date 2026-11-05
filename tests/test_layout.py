@@ -18,7 +18,8 @@ def tracked_text_files():
 
 def test_required_files():
     for f in ["README.md", "LICENSE", "NOTICE", "CITATION.cff", "docs/claims.md", "docs/provenance.md",
-              "docs/third_party.md", "analysis/verify_claims.py", 
+              "docs/third_party.md", "analysis/verify_claims.py", "analysis/verify_report.py",
+              "report/report_en.tex", "report/report_en.pdf", 
               "LICENSES/MIT-Squint.txt", "scripts/eval/project2_eval.sh", "docs/refactor_2026-11.md",
               "analysis/parse_logs.py", "results/project2/bench_daemon.log", "results/project2/ntfy_poller.log",
               "results/project2/log_summary.json", "results/checkpoints/project2/search_last.pt",

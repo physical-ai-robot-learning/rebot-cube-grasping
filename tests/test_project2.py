@@ -29,6 +29,11 @@ def test_reported_bench_facts():
     assert s["search_pct"] == [92.1, 99.4] and s["rsr_dcube_pct"] == [84.0, 95.2]
 
 
+def test_verify_report_passes():
+    r = run("analysis/verify_report.py")
+    assert r.returncode == 0, r.stdout[-3000:]
+
+
 def test_verify_claims_passes():
     r = run("analysis/verify_claims.py")
     assert r.returncode == 0, r.stdout[-3000:]

@@ -12,7 +12,7 @@ deliberately not merged into one sim-to-real story:
 
 [![ci](https://github.com/physical-ai-robot-learning/rebot-cube-grasping/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange.svg)](LICENSE)
-· [Claims audit](docs/claims.md) · [Raw logs](results/project2/README.md) · [Provenance](docs/provenance.md)
+· [Technical report (PDF)](report/report_en.pdf) · [Claims audit](docs/claims.md) · [Raw logs](results/project2/README.md) · [Provenance](docs/provenance.md)
 · [Third-party notices](docs/third_party.md) · [Earlier stage (June)](docs/stage_2026-06_teacher_student.md)
 · [Refactor log](docs/refactor_2026-11.md) · status: 2026-11-02 (code layout 2026-11-05)
 
@@ -53,6 +53,7 @@ the episode. The **deployable gate was not met in any of them**, and grasp and l
 | [`configs/`](configs/) | bench and training configurations of Project 2 (`*.env`), June reward configuration | you want the knobs behind a number |
 | [`results/`](results/project2/README.md) | raw logs, parsed tables, heatmaps, re-evaluation CSVs ([`results/project2/`](results/project2/README.md)); the search (8,038,400 env-steps) and approach (3,712,000) checkpoints of the last logged bench and the June checkpoints ([`results/checkpoints/`](results/checkpoints/README.md)) | you want to check a number |
 | [`analysis/`](analysis/README.md) | log parser, figure script, README claim checker, re-evaluation summary, provenance fingerprints, refactor-equivalence check | you want to verify the README |
+| [`report/`](report/README.md) | technical report (`report_en.tex` / `report_en.pdf`), numbers checked by `analysis/verify_report.py` | you want the whole story in one document |
 | [`docs/`](docs/) | claims audit, provenance, third-party notices, simulation versions, June stage, deploy spec, refactor log | you want the long story or the audit trail |
 | [`media/`](media/README.md) | GIFs, figures and rollout clips used here | you want to know where a picture comes from |
 | [`archive/`](archive/README.md) | superseded or one-off code kept verbatim: July real-robot deploy record, June residual-pick record, June diagnostics and renders, Project 2 log tools | you want the hardware record (Part 3) |
@@ -127,6 +128,7 @@ What is checked, and how:
 | README numbers | `python analysis/verify_claims.py` | every percentage in this README is in the parsed log summary; every other number is in the file it is taken from |
 | Tests | `python -m pytest -q` | parser, eval writer and Wilson summary on synthetic data, trainer argument parsing, layout and secret scan, imports, mock deploy |
 | Re-evaluation | `python analysis/project2_eval_summary.py results/project2/reeval/bench86` (etc.) | recomputes rates and Wilson intervals from the committed per-episode CSVs |
+| Report numbers | `python analysis/verify_report.py` | every number in `report/report_en.tex` is in the file it is taken from |
 | Refactor | `python analysis/refactor_equivalence.py` | every module moved in the 2026-11 restructure is its pre-refactor code up to renames (syntax tree and scopes); see the [refactor log](docs/refactor_2026-11.md) |
 
 The Isaac stages (training, benches, re-evaluation, June training and evaluation) cannot run in CI; they are

@@ -30,6 +30,8 @@ jobs:
         run: python analysis/refactor_equivalence.py
       - name: Claims check (every number in README.md vs. the file it comes from)
         run: python analysis/verify_claims.py
+      - name: Report check (every number in report/report_en.tex vs. the file it comes from)
+        run: python analysis/verify_report.py
       - name: Tests (log parser, eval writer, layout, parse, imports, fingerprints, characterization goldens, mock deploy)
         run: python -m pytest -q -rs
       - name: Mock deploy (both loops, shipped checkpoints)
