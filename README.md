@@ -53,10 +53,10 @@ the episode. The **deployable gate was not met in any of them**, and grasp and l
 
 The source code is not published in this repository. It comprises the Isaac Lab environment, the staged C51-SAC
 trainer (search → approach), the June teacher–student pipeline with its deploy loops, and the evaluation and
-re-evaluation tools. It is available on request: open an issue in this repository.
+re-evaluation tools. Research access may be considered upon reasonable request (please open an issue in this repository).
 
 Every number in the technical report was checked by a script against the repository file it is taken from; that
-script is included with the code on request. Where this page or the documents name a code path, a configuration
+script is part of the non-public code. Where this page or the documents name a code path, a configuration
 file or the included checkpoints, that file belongs to the code release, not to this repository.
 
 ## 4. Method notes
@@ -179,7 +179,7 @@ angles as still open.
 **Research question.** *Can a cube-grasping skill be learned in simulation from detection-level observations that
 also exist on the real robot, and what actually works when it meets the hardware?*
 
-| Part | Period | What | Code (on request) | Evidence in this repository |
+| Part | Period | What | Code (not public) | Evidence in this repository |
 |---|---|---|---|---|
 | Earlier stage | 2026-06-08 → 06-12 | privileged-state C51-SAC teacher → DAgger camera students; first real-robot attempt | `src/rebot_teacher_student/` | commit-recorded numbers only ([details](docs/stage_2026-06_teacher_student.md)) |
 | **1. RL in simulation** | 2026-07-14 → 08-12 | staged DET-xattn C51-SAC (search → approach, rule grasp/lift); OURS (converted URDF) and OFFICIAL (vendor USD) robot models | `src/rebot_grasp_rl/` | raw bench and sweep logs, 124 heatmaps |
@@ -203,11 +203,12 @@ also exist on the real robot, and what actually works when it meets the hardware
   and OFFICIAL (Seeed's `reBot-Isaacsim` USD, MIT). Neither is redistributed.
 * **Software:** NVIDIA Isaac Sim / Isaac Lab; LeIsaac (Apache-2.0); C51-SAC after Squint (MIT); YOLO-OBB detector
   trained with Ultralytics (AGPL-3.0, installed, not included); OWLv2 open-vocabulary detection in the July deploy.
-* **Authorship:** all code of this project is the author's. Files of the residual-pick repository with lines by a colleague are
+* **Authorship:** the implementation described here was developed by the author; third-party components and contributions
+  are identified in the [provenance](docs/provenance.md) and [third-party](docs/third_party.md) documents. Files of the residual-pick repository with lines by a colleague are
   excluded by `git blame` ([provenance](docs/provenance.md)). Files shared with the author's earlier SO-101 project
   were removed from the code version, except one configuration file.
 
 ## 9. License and citation
 
 
-Licence: [PolyForm Noncommercial 1.0.0](LICENSE) for the documentation, report, media and results here, and for the code shared on request. Credits: [`NOTICE`](NOTICE), [`LICENSES/`](LICENSES/). To cite, use [`CITATION.cff`](CITATION.cff).
+Licence: [PolyForm Noncommercial 1.0.0](LICENSE) for the documentation, report, media and results here. Credits: [`NOTICE`](NOTICE), [`LICENSES/`](LICENSES/). To cite, use [`CITATION.cff`](CITATION.cff).

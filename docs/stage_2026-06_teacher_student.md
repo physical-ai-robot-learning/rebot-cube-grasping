@@ -2,7 +2,7 @@
 
 This page is the documentation of the first stage of the project (2026-06-08 → 06-12), moved here from the README
 when the July–August work became the main pipeline. The code (`src/rebot_teacher_student/`) and the shipped checkpoints
-(`results/checkpoints/teacher/`, `results/checkpoints/student/`) are part of the code release, available on request
+(`results/checkpoints/teacher/`, `results/checkpoints/student/`) are part of the non-public code
 ([README §3](../README.md#3-code-availability)). The July Project 2 trainer imports a later version of this
 stage's environment code (`src/rebot_grasp_env/`; differences in [provenance §9](provenance.md#9-july--august-2026-sources)).
 Section numbers below are those of the earlier README.

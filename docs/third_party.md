@@ -1,6 +1,6 @@
 # Third-party code, assets and licences
 
-Status: 2026-11-02; paths updated to the code layout of 2026-11-05. Code paths below refer to the code release, available on request ([README §3](../README.md#3-code-availability)). Licence of this repository: **PolyForm Noncommercial 1.0.0** ([`LICENSE`](../LICENSE)); credits in
+Status: 2026-11-02; paths updated to the code layout of 2026-11-05. Code paths below refer to the non-public code ([README §3](../README.md#3-code-availability)). Licence of this repository: **PolyForm Noncommercial 1.0.0** ([`LICENSE`](../LICENSE)); credits in
 [`NOTICE`](../NOTICE).
 
 How "derived" was decided: every Python file was compared line by line with the upstream repositories named below
