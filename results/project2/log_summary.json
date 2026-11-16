@@ -1,0 +1,185 @@
+{
+ "bench": {
+  "n_benches": 120,
+  "n_full_coverage": 119,
+  "first_ray_stamp": "2026-08-02 19:27:32",
+  "last_ray_stamp": "2026-08-03 12:43:44",
+  "cells": [
+   86,
+   90
+  ],
+  "approach_step_k": [
+   128,
+   3712
+  ],
+  "search_pct": [
+   92.1,
+   99.4
+  ],
+  "rsr_dcube_pct": [
+   84.0,
+   95.2
+  ],
+  "rsr_pct": [
+   0.0,
+   0.0
+  ],
+  "n_rsr_zero": 120,
+  "full_coverage_only": {
+   "search_pct": [
+    92.1,
+    99.4
+   ],
+   "rsr_dcube_pct": [
+    84.0,
+    95.2
+   ],
+   "rsr_pct": [
+    0.0,
+    0.0
+   ]
+  },
+  "last": {
+   "approach_step_k": 3712,
+   "rsr_pct": 0.0,
+   "rsr_dcube_pct": 89.9,
+   "search_pct": 97.8,
+   "covered": 86,
+   "cells": 86,
+   "after_ray_log": "2026-08-03 12:43:44"
+  }
+ },
+ "sweeps": {
+  "n_posts": 114,
+  "runs": {
+   "8951": {
+    "n": 61,
+    "segments": {
+     "1": {
+      "n": 61,
+      "day_offsets": [
+       0,
+       1
+      ],
+      "step_k": [
+       2032,
+       8037
+      ],
+      "sweep_success_pct": [
+       0,
+       0
+      ],
+      "search_pct": [
+       95,
+       100
+      ]
+     }
+    },
+    "sweep_success_pct": [
+     0,
+     0
+    ],
+    "best": {
+     "run": "8951",
+     "segment": 1,
+     "day_offset": 0,
+     "time": "09:00:28",
+     "step_k": 2032,
+     "sweep_success_pct": 0,
+     "search_pct": 100
+    }
+   },
+   "8953": {
+    "n": 53,
+    "segments": {
+     "1": {
+      "n": 8,
+      "day_offsets": [
+       0
+      ],
+      "step_k": [
+       500,
+       1200
+      ],
+      "sweep_success_pct": [
+       71,
+       76
+      ],
+      "search_pct": [
+       98,
+       100
+      ]
+     },
+     "2": {
+      "n": 6,
+      "day_offsets": [
+       0
+      ],
+      "step_k": [
+       500,
+       1000
+      ],
+      "sweep_success_pct": [
+       62,
+       67
+      ],
+      "search_pct": [
+       98,
+       100
+      ]
+     },
+     "3": {
+      "n": 36,
+      "day_offsets": [
+       0,
+       1
+      ],
+      "step_k": [
+       200,
+       3703
+      ],
+      "sweep_success_pct": [
+       71,
+       81
+      ],
+      "search_pct": [
+       97,
+       100
+      ]
+     },
+     "4": {
+      "n": 3,
+      "day_offsets": [
+       1
+      ],
+      "step_k": [
+       200,
+       400
+      ],
+      "sweep_success_pct": [
+       0,
+       51
+      ],
+      "search_pct": [
+       14,
+       64
+      ]
+     }
+    },
+    "sweep_success_pct": [
+     0,
+     81
+    ],
+    "best": {
+     "run": "8953",
+     "segment": 3,
+     "day_offset": 1,
+     "time": "00:05:26",
+     "step_k": 1101,
+     "sweep_success_pct": 81,
+     "search_pct": 99
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "rsr_pct": 0.0,
+ "rsr_old_pct": 73.00000190734863,
+ "search_pct": 98.50000143051147,
+ "covered": 400,
+ "M": 400,
+ "env": {
+  "EVAL_SET": "<repo>/results/project2/eval_grids/eval_set_400cells_2026-07-21.npy",
+  "EVAL_SEED": "0",
+  "TP_EVAL_DIR": "<repo>/checkpoints/project2",
+  "RSR_DCUBE": "0.07",
+  "RSR_HOLD": "1",
+  "EVAL_SUCC_BY_OLD": "1",
+  "GRASP_ON": "0",
+  "APP_CEN": "0.15",
+  "APP_MZ": "0.07",
+  "FRAC_GRASP": "0.23",
+  "ROBOT_OFFICIAL": null
+ }
+}

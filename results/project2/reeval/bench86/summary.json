@@ -1,0 +1,60 @@
+{
+ "run_dir": "bench86",
+ "episodes": 160,
+ "cases": 86,
+ "seeds": [
+  0
+ ],
+ "search": {
+  "successes": 159,
+  "rate": 0.9938,
+  "wilson95": [
+   0.9655,
+   0.9989
+  ]
+ },
+ "rsr_old": {
+  "successes": 141,
+  "rate": 0.8812,
+  "wilson95": [
+   0.822,
+   0.9226
+  ]
+ },
+ "rsr": {
+  "successes": 0,
+  "rate": 0.0,
+  "wilson95": [
+   0.0,
+   0.0234
+  ]
+ },
+ "lift": {
+  "successes": 0,
+  "rate": 0.0,
+  "wilson95": [
+   0.0,
+   0.0234
+  ]
+ },
+ "trainer_summary": {
+  "rsr_pct": 0.0,
+  "rsr_old_pct": 88.12500238418579,
+  "search_pct": 99.37499761581421,
+  "covered": 86,
+  "M": 86,
+  "env": {
+   "EVAL_SET": "<repo>/results/project2/eval_grids/evalgrid_86cells_2026-08-03.npy",
+   "EVAL_SEED": "0",
+   "TP_EVAL_DIR": "<repo>/checkpoints/project2",
+   "RSR_DCUBE": "0.07",
+   "RSR_HOLD": "1",
+   "EVAL_SUCC_BY_OLD": "1",
+   "GRASP_ON": "0",
+   "APP_CEN": "0.15",
+   "APP_MZ": "0.07",
+   "FRAC_GRASP": "0.23",
+   "ROBOT_OFFICIAL": null
+  }
+ }
+}
